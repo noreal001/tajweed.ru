@@ -512,7 +512,7 @@
     return d ? '+' + d : '—';
   }
 
-  function showLogin() {
+  function showLogin(startupError) {
     setBar('Вход в профиль');
     render(
       '<h1>Вход в профиль</h1>' +
@@ -527,11 +527,30 @@
         '<p class="notice" id="loginErr" role="status" aria-live="polite" hidden></p>' +
         '<div class="btn-row"><button class="btn btn-block" type="submit">Войти</button></div>' +
       '</form>' +
+      '<div class="btn-row" id="yandexRow" hidden>' +
+        '<button class="btn is-ghost btn-block" id="yandexBtn" type="button">Войти через Яндекс</button></div>' +
       '<div class="btn-row"><button class="btn is-ghost btn-block" id="toExam">Сдать экзамен и завести профиль</button></div>' +
       '<p class="kicker">Настройки<span class="cur">_</span></p><div class="settings">' + themeRow() + '</div>'
     );
     wireThemeRow();
     document.getElementById('toExam').onclick = function () { state.phase = 'reg'; show(); };
+
+    if (startupError) {
+      var startErr = document.getElementById('loginErr');
+      startErr.hidden = false;
+      startErr.classList.add('is-error');
+      startErr.textContent = startupError;
+    }
+
+    /* Кнопка Яндекса появляется, только если вход настроен на сервере */
+    apiGet('/api/auth/yandex/enabled').then(function (d) {
+      if (!d || !d.enabled) return;
+      var row = document.getElementById('yandexRow');
+      var btn = document.getElementById('yandexBtn');
+      if (!row || !btn) return;
+      row.hidden = false;
+      btn.onclick = function () { location.href = API + '/api/auth/yandex/start'; };
+    }).catch(function () { /* нет сети — вход по паролю остаётся */ });
 
     var form = document.getElementById('loginForm');
     form.onsubmit = function (e) {
@@ -562,7 +581,7 @@
         err.textContent = e2 && e2.status === 429
           ? 'Слишком много попыток. Попробуйте через 15 минут.'
           : e2 && e2.status === 401 ? 'Неверный пароль.'
-          : e2 && e2.status === 404 ? 'Кабинет с таким номером не найден или пароль ещё не задан.'
+          : e2 && e2.status === 404 ? 'Кабинет с таким номером не найден или пароль ещё не задан. Кабинет появляется после первого экзамена — нажмите «Сдать экзамен и завести профиль» ниже.'
           : 'Не получилось войти. Проверьте интернет и попробуйте ещё раз.';
       });
     };
@@ -2114,7 +2133,17 @@
   hit();
   var hashResult = location.hash.match(/^#r=([0-9a-f-]{36})$/i);
   var hashStudent = location.hash.match(/^#student=([0-9a-f-]{36})$/i);
-  if (hashStudent && state.phase !== 'exam') {
+  var hashYandex = location.hash.match(/^#yandex=([0-9a-f-]{36})$/i);
+  var hashYandexError = location.hash.match(/^#yandex-error=/i);
+  if (hashYandex && state.phase !== 'exam') {
+    /* Вернулись с oauth.yandex.ru: токен кабинета уже выдан сервером */
+    try { localStorage.setItem(STUDENT_KEY, hashYandex[1]); } catch (e) { /* ок */ }
+    if (history.replaceState) history.replaceState(null, '', location.pathname);
+    showStudentCabinet(hashYandex[1]);
+  } else if (hashYandexError && state.phase !== 'exam') {
+    if (history.replaceState) history.replaceState(null, '', location.pathname);
+    showLogin('Не получилось войти через Яндекс. Попробуйте ещё раз или войдите по номеру и паролю.');
+  } else if (hashStudent && state.phase !== 'exam') {
     showStudentCabinet(hashStudent[1]);
   } else if (hashResult && state.phase !== 'exam') {
     showSavedResult(hashResult[1]);
