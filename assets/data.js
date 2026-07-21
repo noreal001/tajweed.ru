@@ -6,8 +6,9 @@ const EXAM = {
   title: 'Экзамен по таджвиду',
   level: 'Первый уровень',
   teacher: 'Деаб Анас Т.',
-  maxScore: 70,
-  writtenMax: 38, // автопроверяемая письменная часть: 5+10+8+7+8
+  // Сумма считается из заданий, чтобы числа не расходились при правках.
+  // Бумажный бланк — 70 баллов, онлайн два устных пункта задания 4 не оцениваются.
+  paperMaxScore: 70,
 
   tasks: [
     {
@@ -169,5 +170,10 @@ const EXAM = {
     }
   ]
 };
+
+EXAM.maxScore = EXAM.tasks.reduce(function (sum, t) { return sum + t.points; }, 0);
+EXAM.writtenMax = EXAM.tasks.reduce(function (sum, t) {
+  return t.kind === 'reading' ? sum : sum + t.points;
+}, 0);
 
 window.EXAM = EXAM;

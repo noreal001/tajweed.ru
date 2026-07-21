@@ -113,6 +113,18 @@
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--bg);
+  transition: transform 0.22s var(--ease), opacity 0.22s var(--ease);
+}
+
+/* при прокрутке вниз меню уходит, чтобы не закрывать контент */
+html.nav-hidden .tabbar {
+  transform: translate(-50%, calc(100% + 24px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabbar { transition: none; }
 }
 
 .tab {
@@ -126,10 +138,10 @@
   background: transparent;
   color: var(--text-faint);
   cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: var(--track-pill);
-  text-transform: uppercase;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   white-space: nowrap;
   touch-action: manipulation;
   transition: color 0.14s, background-color 0.14s;
@@ -170,7 +182,10 @@ html.is-exam body { padding-bottom: 0; }
   }
 
   .sitenav-mark {
-    padding: 0;
+    min-height: 44px;
+    padding: 0 4px;
+    display: inline-flex;
+    align-items: center;
     border: 0;
     background: transparent;
     color: var(--text-faint);
@@ -182,6 +197,7 @@ html.is-exam body { padding-bottom: 0; }
   }
 
   .sitenav-mark:hover { color: var(--text); }
+  .sitenav-mark:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .sitenav-tabs { display: flex; align-self: stretch; }
 
   .sitenav-tabs {
@@ -210,7 +226,7 @@ html.is-exam body { padding-bottom: 0; }
   background: var(--bg);
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: var(--mono-lg);
+  font-size: 12px;
   letter-spacing: var(--track-pill);
   text-transform: uppercase;
   touch-action: manipulation;
@@ -246,7 +262,7 @@ html.is-exam body { padding-bottom: 0; }
   justify-content: start;
 }
 
-.profile-meta dt { color: var(--text-faint); font-family: var(--font-mono); font-size: var(--mono-lg); letter-spacing: var(--track-pill); text-transform: uppercase; }
+.profile-meta dt { color: var(--text-faint); font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--track-pill); text-transform: uppercase; }
 .profile-meta dd { margin-top: 4px; font-size: 16px; }
 
 .settings {
@@ -283,7 +299,7 @@ html.is-exam body { padding-bottom: 0; }
   gap: 8px;
   color: var(--text-soft);
   font-family: var(--font-mono);
-  font-size: var(--mono-lg);
+  font-size: 12px;
   letter-spacing: var(--track-pill);
   text-transform: uppercase;
   white-space: nowrap;
@@ -756,7 +772,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 .welcome-hero h1 { max-width: 11ch; font-size: clamp(32px, 7.4vw, 62px); overflow-wrap: anywhere; }
 .welcome-hero h1 em { font-style: italic; font-weight: 500; }
-.welcome-hero .lede { max-width: 46ch; }
+.welcome-hero .lede { max-width: 46ch; position: relative; }
 
 /* Шапка экзамена: таймер и единственный выход */
 .topbar-right { display: flex; align-items: center; gap: 14px; }
@@ -769,6 +785,9 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 .path:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 .level { cursor: default; }
 
+/* контент баннера поверх сетки, чтобы линии не рассекали текст */
+.welcome-hero > *:not(.hero-cells):not(.marks) { position: relative; z-index: 1; }
+
 /* Мета-блок баннера с перекрестием — деталь эталона */
 .hero-actions { margin-top: 22px; }
 
@@ -779,7 +798,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   gap: 12px;
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.5;
   letter-spacing: var(--track-pill);
 }
@@ -869,7 +888,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   text-wrap: balance;
 }
 
-.path-desc { margin-top: 8px; color: var(--text-soft); font-size: 14px; overflow-wrap: anywhere; }
+.path-desc { margin-top: 8px; color: var(--text-soft); font-size: 14px; overflow-wrap: break-word; hyphens: auto; }
 
 .path-go {
   margin-top: auto;
@@ -889,7 +908,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 .result-list { margin-top: 28px; border-top: 1px solid var(--line); }
 .result-item { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--line); }
-.result-item p { min-width: 0; overflow-wrap: anywhere; }
+.result-item p { min-width: 0; overflow-wrap: break-word; hyphens: auto; }
 .result-item .meta { color: var(--text-soft); font-size: 13px; }
 .result-item .score { font-family: var(--font-mono); font-size: 20px; font-variant-numeric: tabular-nums; }
 
@@ -1006,7 +1025,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   margin-top: 10px;
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: var(--mono-lg);
+  font-size: 12px;
   letter-spacing: var(--track-pill);
   text-transform: uppercase;
 }
@@ -1515,7 +1534,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   margin-left: 4px;
   color: var(--text-soft);
   font-family: var(--font-mono);
-  font-size: var(--mono-lg);
+  font-size: 12px;
   letter-spacing: var(--track-pill);
   text-transform: uppercase;
 }

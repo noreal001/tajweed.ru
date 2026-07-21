@@ -523,7 +523,7 @@
         '<div class="field" data-f="password"><label for="lPass">Пароль</label>' +
           '<input id="lPass" name="password" type="password" autocomplete="current-password" maxlength="200">' +
           '<span class="err">Введите пароль</span></div>' +
-        '<p class="notice" id="loginErr" hidden></p>' +
+        '<p class="notice" id="loginErr" role="status" aria-live="polite" hidden></p>' +
         '<div class="btn-row"><button class="btn btn-block" type="submit">Войти</button></div>' +
       '</form>' +
       '<div class="btn-row"><button class="btn is-ghost btn-block" id="toExam">Сдать экзамен и завести профиль</button></div>' +
@@ -576,7 +576,7 @@
         '<div class="field" data-f="password"><label for="pNew">Новый пароль</label>' +
           '<input id="pNew" name="password" type="password" autocomplete="new-password" maxlength="200">' +
           '<span class="err">Не короче шести знаков</span></div>' +
-        '<p class="notice" id="passErr" hidden></p>' +
+        '<p class="notice" id="passErr" role="status" aria-live="polite" hidden></p>' +
         '<div class="btn-row"><button class="btn btn-block" type="submit">Сохранить пароль</button></div>' +
       '</form>' +
       '<div class="btn-row"><button class="btn is-quiet" id="backBtn">← В профиль</button></div>'
@@ -1311,7 +1311,21 @@
   function bindAnswer(isAnswered) {
     var btn = document.getElementById('answerBtn');
     var armed = false;
-        btn.onclick = function () {
+        var base = btn.textContent;
+    function relax() {
+      if (!armed) return;
+      armed = false;
+      btn.textContent = base;
+      btn.classList.remove('is-warning');
+    }
+    // как только ответ появился, предупреждение снимаем — иначе кнопка врёт
+    app.addEventListener('click', function () {
+      if (typeof isAnswered === 'function' && isAnswered()) relax();
+    }, true);
+    app.addEventListener('change', function () {
+      if (typeof isAnswered === 'function' && isAnswered()) relax();
+    }, true);
+    btn.onclick = function () {
       if (typeof isAnswered === 'function' && !isAnswered() && !armed) {
         armed = true;
         btn.textContent = 'Ответ не выбран — пропустить вопрос?';
@@ -1418,7 +1432,7 @@
       '<p class="ar-hero" lang="ar" dir="rtl">' + esc(task.words[i]) + '</p>' +
       '<div class="stepper">' +
         '<button type="button" id="minus" aria-label="Уменьшить число слогов">−</button>' +
-        '<output id="num" aria-label="Выбранное число слогов" aria-live="polite" class="' + (val == null ? 'is-empty' : '') + '">' + (val == null ? 'выберите число' : val) + '</output>' +
+        '<output id="num" aria-label="Выбранное число слогов" aria-live="polite" class="' + (val == null ? 'is-empty' : '') + '">' + (val == null ? 'Выберите число' : val) + '</output>' +
         '<button type="button" id="plus" aria-label="Увеличить число слогов">+</button>' +
       '</div>' +
       answerFooter()
@@ -1479,7 +1493,7 @@
       (item.hint ? '<p class="q-note">' + esc(item.hint) + '</p>' : '') +
       '</div>' +
       '<p class="compose-given">Дано: <span class="ar" lang="ar" dir="rtl">' + esc(item.given) + '</span></p>' +
-      '<div class="compose-out is-empty" id="composeOut" aria-live="polite">нажимайте на плитки внизу</div>' +
+      '<div class="compose-out is-empty" id="composeOut" aria-live="polite">Нажимайте на плитки внизу</div>' +
       '<div class="compose-tiles" id="composeTiles">' +
         tiles.map(function (t) {
           return '<button type="button" class="opt" data-id="' + t.id + '" aria-pressed="false"><bdi lang="ar" dir="rtl">' + esc(t.v) + '</bdi></button>';
@@ -1524,7 +1538,7 @@
         out.classList.add('is-empty');
         out.removeAttribute('lang');
         out.removeAttribute('dir');
-        out.textContent = 'нажимайте на плитки внизу';
+        out.textContent = 'Нажимайте на плитки внизу';
       }
       Object.keys(btns).forEach(function (id) {
         btns[id].classList.toggle('is-used', picked.indexOf(id) !== -1);
@@ -2082,6 +2096,24 @@
     state.phase = 'welcome';
     show();
   };
+
+  /* Плавающее меню прячется при прокрутке вниз и возвращается при прокрутке
+     вверх — иначе непрозрачная пилюля закрывает контент на каждом экране. */
+  (function watchScroll() {
+    var last = 0;
+    var ticking = false;
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        var y = window.scrollY;
+        var hide = y > last && y > 120;
+        document.documentElement.classList.toggle('nav-hidden', hide);
+        last = y;
+        ticking = false;
+      });
+    }, { passive: true });
+  })();
 
   watchIntegrity();
   restore();
