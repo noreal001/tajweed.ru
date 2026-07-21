@@ -357,7 +357,7 @@
       '<section class="welcome-hero" aria-labelledby="welcomeTitle">' +
         '<p class="kicker">Учебный проект · Первый уровень</p>' +
         '<div class="hero-glyph ar" lang="ar" dir="rtl" aria-hidden="true">ت</div>' +
-        '<h1 id="welcomeTitle">Экзамен по таджвиду</h1>' +
+        '<h1 id="welcomeTitle">Экзамен по <em>таджвиду</em></h1>' +
         '<p class="lede">Таджвид — наука правильного чтения Корана. Сдайте экзамен первого уровня или запишитесь на занятия к преподавателю Деабу Анасу Т.</p>' +
       '</section>' +
       '<div class="paths">' +
@@ -1190,6 +1190,17 @@
       recBtn.classList.toggle('is-recording', !!live);
     }
 
+    // предупреждаем сразу, а не после нажатия на «Начать запись»
+    if (!window.isSecureContext || !navigator.mediaDevices) {
+      setStatus('Микрофон работает только по защищённому адресу (https).');
+      var earlyLink = document.createElement('a');
+      earlyLink.href = 'https://' + location.host + location.pathname;
+      earlyLink.className = 'rec-secure-link';
+      earlyLink.textContent = 'Открыть по https';
+      status.appendChild(document.createTextNode(' '));
+      status.appendChild(earlyLink);
+    }
+
     recBtn.onclick = function () {
       if (!active || permissionPending) return;
       if (recorder && recorder.state === 'recording') {
@@ -1197,8 +1208,22 @@
         recorder.stop();
         return;
       }
-      if (!navigator.mediaDevices || !window.MediaRecorder) {
-        setStatus('Запись не поддерживается этим браузером. Нажмите «Пропустить» и прочитайте преподавателю лично.');
+      // Браузеры дают микрофон только на https (и на localhost).
+      // По http navigator.mediaDevices вообще не существует.
+      if (!window.isSecureContext || !navigator.mediaDevices) {
+        var httpsUrl = 'https://' + location.host + location.pathname;
+        setStatus('Микрофон работает только по защищённому адресу. Откройте сайт по https и вернитесь к этому заданию.');
+        status.appendChild(document.createTextNode(' '));
+        var link = document.createElement('a');
+        link.href = httpsUrl;
+        link.className = 'rec-secure-link';
+        link.textContent = 'Открыть по https';
+        status.appendChild(link);
+        recBtn.disabled = true;
+        return;
+      }
+      if (!window.MediaRecorder) {
+        setStatus('Этот браузер не умеет записывать звук. Нажмите «Пропустить» и прочитайте преподавателю лично.');
         return;
       }
       permissionPending = true;

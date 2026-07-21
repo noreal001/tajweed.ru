@@ -1,27 +1,74 @@
-/* Экзамен по таджвиду · монохромный экзаменационный бланк. */
+/* Экзамен по таджвиду · чертёжный бланк.
+   Палитра и приёмы согласованы с wiki.bahur.store: чёрный лист,
+   волосяные линии, приводные метки, штриховка, узловые точки сетки. */
 
 :root {
-  color-scheme: light;
-  --bg: #f7f7f4;
-  --surface: #ffffff;
-  --surface-strong: #eeeeea;
-  --surface-glass: rgba(255, 255, 255, 0.78);
-  --text: #0d0d0c;
-  --text-soft: #50504c;
-  --text-faint: #6d6d68;
-  --line: #cecec8;
-  --control-line: #6d6d68;
-  --line-strong: #0d0d0c;
-  --inverse-bg: #0d0d0c;
-  --inverse-text: #ffffff;
+  color-scheme: dark;
+  --bg: #0a0a0b;
+  --surface: rgba(255, 255, 255, 0.032);
+  --surface-strong: rgba(255, 255, 255, 0.07);
+  --surface-glass: rgba(255, 255, 255, 0.035);
+  --text: #f2f2f4;
+  --text-soft: rgba(255, 255, 255, 0.62);
+  --text-faint: rgba(255, 255, 255, 0.38);
+  --line: rgba(255, 255, 255, 0.12);
+  --control-line: rgba(255, 255, 255, 0.26);
+  --line-strong: rgba(255, 255, 255, 0.46);
+  --inverse-bg: #f2f2f4;
+  --inverse-text: #0a0a0b;
   --recording: #ff5a4e;
-  --focus: #0d0d0c;
+  --focus: #f2f2f4;
   --radius: 0;
+  --grid-step: 22px;
+  --hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%23ffffff' stroke-opacity='0.13' stroke-width='0.7'/></svg>");
   --font-ui: 'Golos Text', -apple-system, 'Segoe UI', sans-serif;
-  --font-display: 'EB Garamond', Georgia, serif;
+  --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
   --font-ar: 'Amiri', 'Noto Naskh Arabic', serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Точечная сетка по левому краю — «поле чертежа» */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 280px;
+  z-index: -2;
+  pointer-events: none;
+  background-image: radial-gradient(circle, var(--line) 1px, transparent 1.3px);
+  background-size: var(--grid-step) var(--grid-step);
+  -webkit-mask-image: linear-gradient(to right, #000, transparent 92%);
+  mask-image: linear-gradient(to right, #000, transparent 92%);
+}
+
+/* Приводные метки и штриховка по углам листа */
+.marks { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+.marks .tick { position: absolute; background: var(--text-faint); }
+.marks .tick.tl-v { top: 2px; left: 26px; width: 1px; height: 18px; }
+.marks .tick.tl-h { top: 26px; left: 2px; width: 18px; height: 1px; }
+.marks .tick.tr-v { top: 2px; right: 26px; width: 1px; height: 18px; }
+.marks .tick.tr-h { top: 26px; right: 2px; width: 18px; height: 1px; }
+.marks .tick.bl-v { bottom: 2px; left: 26px; width: 1px; height: 18px; }
+.marks .tick.bl-h { bottom: 26px; left: 2px; width: 18px; height: 1px; }
+.marks .tick.br-v { bottom: 2px; right: 26px; width: 1px; height: 18px; }
+.marks .tick.br-h { bottom: 26px; right: 2px; width: 18px; height: 1px; }
+
+.marks .hatch {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  opacity: 0.8;
+  background-image: var(--hatch);
+  background-size: 5px 5px;
+}
+
+.marks .hatch.tr { top: 2px; right: 2px; }
+.marks .hatch.bl { bottom: 2px; left: 2px; }
+
+@media (max-width: 700px) {
+  .marks { display: none; }
+  body::before { width: 120px; opacity: 0.6; }
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -141,7 +188,29 @@ a { color: inherit; }
 }
 
 @media (min-width: 760px) {
-  .sheet { padding: 64px 56px 80px; border-right: 1px solid var(--line); border-left: 1px solid var(--line); background: var(--surface); }
+  .sheet {
+    position: relative;
+    padding: 64px 56px 80px;
+    border-right: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+  /* узловые точки на углах листа — как на чертёжной сетке */
+  .sheet::before, .sheet::after {
+    content: "";
+    position: absolute;
+    left: -4.5px;
+    width: 8px;
+    height: 8px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--bg);
+    box-shadow: calc(100% + 1px) 0 0 -0.5px var(--bg), calc(100% + 1px) 0 0 0.5px transparent;
+  }
+
+  .sheet::before { top: -4.5px; }
+  .sheet::after { bottom: -4.5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -181,13 +250,25 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 .statement { max-width: none; }
 .rule { margin: 28px 0; border: 0; border-top: 1px solid var(--line); }
 
+/* Микро-подписи набраны моноширинным, как на технических листах */
 .kicker {
   margin-bottom: 10px;
-  color: var(--text-soft);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
+}
+
+.kicker::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
 }
 
 .ar { font-family: var(--font-ar); direction: rtl; unicode-bidi: isolate; font-synthesis: none; letter-spacing: normal; font-weight: 400; }
@@ -272,8 +353,8 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 .welcome-hero {
   position: relative;
-  min-height: 310px;
-  padding: 24px 150px 36px 0;
+  min-height: 320px;
+  padding: 34px 150px 40px 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -281,7 +362,24 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   border-bottom: 1px solid var(--line);
 }
 
-.welcome-hero h1 { max-width: 10ch; font-size: clamp(44px, 8vw, 64px); }
+/* поле чертежа за заголовком */
+.welcome-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 -20px;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: 118px 96px;
+  -webkit-mask-image: radial-gradient(120% 100% at 78% 22%, #000 12%, transparent 72%);
+  mask-image: radial-gradient(120% 100% at 78% 22%, #000 12%, transparent 72%);
+  opacity: 0.75;
+}
+
+.welcome-hero h1 { max-width: 11ch; font-size: clamp(44px, 8vw, 66px); }
+.welcome-hero h1 em { font-style: italic; font-weight: 400; }
 .welcome-hero .lede { max-width: 46ch; }
 
 .hero-glyph {
@@ -763,26 +861,48 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 .breakdown-row.is-muted { color: var(--text-faint); }
 
 .notice { margin-top: 22px; padding: 10px 0 10px 16px; border-left: 3px solid var(--line-strong); color: var(--text-soft); font-size: 14px; overflow-wrap: anywhere; }
-.notice.is-error { border-left-style: double; color: var(--text); }
+.notice.is-error { border-left-color: var(--recording); color: var(--text); }
+
+.rec-secure-link { color: var(--text); text-underline-offset: 3px; }
+.rec-secure-link:hover { text-decoration-thickness: 2px; }
 
 /* Оценённый результат: тёмная плашка, чтобы читался цвет уровня */
 
 .score-hero.is-scored {
-  padding: 40px 24px 32px;
-  color: var(--inverse-text);
-  background: var(--inverse-bg);
-  border-color: var(--inverse-bg);
+  position: relative;
+  padding: 44px 24px 34px;
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--score-color) 12%, transparent), transparent 70%),
+    var(--surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+/* штриховка по краям плашки результата */
+.score-hero.is-scored::before,
+.score-hero.is-scored::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  background-image: var(--hatch);
+  background-size: 5px 5px;
+  opacity: 0.85;
+}
+
+.score-hero.is-scored::before { left: 0; }
+.score-hero.is-scored::after { right: 0; }
+
 .score-hero.is-scored .score-percent {
-  color: var(--score-color, var(--inverse-text));
-  text-shadow: 0 0 38px color-mix(in srgb, var(--score-color, #fff) 45%, transparent);
+  color: var(--score-color, var(--text));
+  text-shadow: 0 0 42px color-mix(in srgb, var(--score-color, #fff) 42%, transparent);
 }
 
 .score-percent i { font-style: normal; font-size: 0.42em; letter-spacing: 0.02em; }
-.score-hero.is-scored .score-caption { color: rgba(255, 255, 255, 0.72); }
+.score-hero.is-scored .score-caption { color: var(--text-soft); }
 .score-hero.is-scored .level-bar { max-width: 320px; margin: 22px auto 0; }
-.score-points { margin-top: 14px; color: rgba(255, 255, 255, 0.72); font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.score-points { margin-top: 14px; color: var(--text-faint); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; text-transform: uppercase; }
 
 /* Лестница уровней */
 
@@ -790,11 +910,24 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 .levels { margin-top: 20px; list-style: none; display: grid; gap: 12px; }
 
 .level {
+  position: relative;
   padding: 20px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
+
+/* закрытые уровни залиты штриховкой — «участок ещё не начерчен» */
+.level.is-locked::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--hatch);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.level.is-locked > * { position: relative; z-index: 1; }
 
 .level-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 
@@ -828,15 +961,15 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 /* Пройденный уровень горит цветом результата */
 
 .level.is-scored {
-  color: var(--inverse-text);
-  background: var(--inverse-bg);
-  border-color: var(--inverse-bg);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--score-color) 35%, transparent),
-              0 14px 40px color-mix(in srgb, var(--score-color) 18%, transparent);
+  border-color: color-mix(in srgb, var(--score-color) 40%, var(--line));
+  background:
+    radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--score-color) 9%, transparent), transparent 65%),
+    var(--surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .level.is-scored .level-verdict { color: var(--score-color); }
-.level.is-scored .level-topic { color: rgba(255, 255, 255, 0.66); }
+.level.is-scored .level-topic { color: var(--text-soft); }
 
 .level-score { margin-top: 18px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; }
 
@@ -851,14 +984,13 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 }
 
 .level-percent i { font-style: normal; font-size: 0.42em; }
-.level-points { color: rgba(255, 255, 255, 0.66); font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.level-points { color: var(--text-faint); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; text-transform: uppercase; }
 
 .level-bar {
-  height: 6px;
+  height: 4px;
   margin-top: 16px;
   overflow: hidden;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.09);
 }
 
 .level-bar span {
