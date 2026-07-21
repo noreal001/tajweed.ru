@@ -8,6 +8,16 @@
   var CFG = window.TAJWEED_CONFIG || { API_BASE: '', SITE_URL: '' };
   var API = (CFG.API_BASE || '').replace(/\/+$/, '');
   var LS_KEY = 'tajweed_exam_v1';
+
+  /* В приватном режиме запись в localStorage бросает исключение. Проверяем
+     один раз, чтобы не обещать ученику сохранение, которого не будет. */
+  var storageWorks = (function () {
+    try {
+      localStorage.setItem('tajweed_probe', '1');
+      localStorage.removeItem('tajweed_probe');
+      return true;
+    } catch (e) { return false; }
+  })();
   var STUDENT_KEY = 'tajweed_student_token';
   var QUESTION_TIME = 180; // секунд на вопрос
   var app = document.getElementById('app');
@@ -49,6 +59,16 @@
 
   function isStale(token) {
     return token !== navSeq;
+  }
+
+  /* Короткое объявление для экранной читалки через уже существующий
+     live-регион: используется там, где смена текста кнопки объявляется
+     ненадёжно, а действие необратимо. */
+  function announce(text) {
+    var region = document.getElementById('timeAlert');
+    if (!region) return;
+    region.textContent = '';
+    setTimeout(function () { region.textContent = text; }, 60);
   }
 
   /* Ошибка поля: класс, aria-invalid и ТЕКСТ в live-регионе включаются
@@ -285,7 +305,18 @@
       return Array.isArray(saved) && saved.length === sample.length;
     }
     if (sample && typeof sample === 'object') {
-      return !!saved && typeof saved === 'object' && !Array.isArray(saved);
+      /* match и sifat — словари, где значение обязано быть строкой или
+         массивом строк: иначе клик по варианту падает с TypeError,
+         а генерация отчёта — на .join(). */
+      if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return false;
+      for (var key in saved) {
+        if (!Object.prototype.hasOwnProperty.call(saved, key)) continue;
+        var v = saved[key];
+        var okValue = typeof v === 'string' ||
+          (Array.isArray(v) && v.every(function (item) { return typeof item === 'string'; }));
+        if (!okValue) return false;
+      }
+      return true;
     }
     return typeof saved === typeof sample;
   }
@@ -551,7 +582,7 @@
       results.forEach(function (r) { if (!best || r.percent > best.percent) best = r; });
 
       var html = '<h1>Профиль</h1>' +
-        '<section class="frame profile-card">' + marks() +
+        '<section class="frame profile-card">' +
           '<p class="kicker">Ученик<span class="cur">_</span></p>' +
           '<p class="profile-name">' + esc(s.lastName) + ' ' + esc(s.firstName) + '</p>' +
           '<dl class="profile-meta">' +
@@ -881,6 +912,7 @@
     loadingScreen('Личный кабинет', 'Загружаем историю экзаменов…');
     var seq = screenToken();
     apiGet('/api/student/' + encodeURIComponent(token)).then(function (d) {
+      if (isStale(seq)) return; // пользователь уже ушёл на другой экран
       if (!d.ok) throw new Error('нет данных');
       try { localStorage.setItem(STUDENT_KEY, token); } catch (e) { /* ок */ }
       if (history.replaceState) history.replaceState(null, '', '#student=' + token);
@@ -948,7 +980,6 @@
           '<p class="lede">' + esc(res.lastName) + ' ' + esc(res.firstName) + ' (' + esc(res.city) + ') · ' +
             new Date(res.createdAt).toLocaleString('ru-RU') + '</p>' +
           '<div class="score-hero is-scored frame" style="--score-color: ' + scoreColor(pct) + '">' +
-            marks() +
             '<div class="score-percent">' + pct + '<i>%</i></div>' +
             '<p class="score-caption">Первый уровень · ' + scoreVerdict(pct) + '</p>' +
             '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
@@ -1046,7 +1077,11 @@
       var st = WIZARD_STEPS[idx];
       // на последнем шаге честно говорим, что фиксируется во время экзамена
       var rules = (idx === 0 && opts.isExam)
-        ? '<p class="notice">Вопросы идут по одному, вернуться к предыдущему нельзя. На каждый — до 3 минут. Ответы сохраняются на этом устройстве, экзамен можно продолжить после перезагрузки.</p>'
+        ? '<p class="notice">Вопросы идут по одному, вернуться к предыдущему нельзя. На каждый — до 3 минут. ' +
+          (storageWorks
+            ? 'Ответы сохраняются на этом устройстве, экзамен можно продолжить после перезагрузки.'
+            : 'Браузер запретил сохранение (приватный режим): при перезагрузке ответы пропадут — проходите экзамен за один раз.') +
+          '</p>'
         : '';
       var honesty = (idx === WIZARD_STEPS.length - 1 && opts.isExam)
         ? '<p class="notice">Имя, фамилия, город и телефон уйдут преподавателю Деабу Анасу Т. вместе с ответами — чтобы он знал, чью работу проверяет, и мог связаться. Ещё сайт отметит, сколько раз вы уходили со вкладки, и покажет это ему. Больше никуда данные не передаются.</p>'
@@ -1451,7 +1486,12 @@
     if (task.kind === 'sifat') renderSifat(task, step.sub);
     if (task.kind === 'compose') renderCompose(task, step.sub);
     if (task.kind === 'yesno') renderYesno(task, step.sub);
-    if (task.kind === 'reading') { stampWatermark(); return renderReading(task); }
+    if (task.kind === 'reading') {
+      // render() внутри renderReading перетирает содержимое, поэтому знак
+      // ставим после отрисовки — иначе на этом экране его просто нет
+      renderReading(task);
+      return stampWatermark();
+    }
     stampWatermark();
     startTimer(QUESTION_TIME, commitAndNext);
   }
@@ -1508,11 +1548,20 @@
     Object.keys(state.answers.match).forEach(function (f) { pairs[f] = state.answers.match[f]; });
     var selForm = null, selName = null;
 
+    var LETTERS = ['А', 'Б', 'В', 'Г', 'Д', 'Е'];
     var formsHtml = task.forms.map(function (f, i) {
-      return '<button type="button" class="opt opt-form" data-v="' + esc(f) + '" aria-pressed="false"><span class="ar" lang="ar" dir="rtl">' + esc(f) + '</span><span class="tag" lang="ar" dir="rtl"></span><span class="pair-status visually-hidden">Связь не выбрана</span></button>';
+      return '<button type="button" class="opt opt-form" data-v="' + esc(f) + '" aria-pressed="false">' +
+        '<span class="opt-num" aria-hidden="true">' + (i + 1) + '</span>' +
+        '<span class="ar" lang="ar" dir="rtl">' + esc(f) + '</span>' +
+        '<span class="tag" lang="ar" dir="rtl"></span>' +
+        '<span class="pair-status visually-hidden">Буква ' + (i + 1) + ', связь не выбрана</span></button>';
     }).join('');
     var namesHtml = task.names.map(function (n, i) {
-      return '<button type="button" class="opt opt-name" data-v="' + esc(n) + '" aria-pressed="false"><span class="ar" lang="ar" dir="rtl">' + esc(n) + '</span><span class="tag" lang="ar" dir="rtl"></span><span class="pair-status visually-hidden">Связь не выбрана</span></button>';
+      return '<button type="button" class="opt opt-name" data-v="' + esc(n) + '" aria-pressed="false">' +
+        '<span class="opt-num" aria-hidden="true">' + LETTERS[i] + '</span>' +
+        '<span class="ar" lang="ar" dir="rtl">' + esc(n) + '</span>' +
+        '<span class="tag" lang="ar" dir="rtl"></span>' +
+        '<span class="pair-status visually-hidden">Название ' + LETTERS[i] + ', связь не выбрана</span></button>';
     }).join('');
 
     render(
@@ -1533,13 +1582,16 @@
       var used = {};
       var n = 0;
       Object.keys(pairs).forEach(function (f) { used[pairs[f]] = f; n++; });
+      // сохраняем сразу: иначе закрытая посреди задания вкладка уносит все пары
+      state.answers.match = pairs;
+      save();
       formBtns.forEach(function (b) {
         var f = b.getAttribute('data-v');
         var paired = !!pairs[f];
         b.classList.toggle('is-paired', paired);
         b.classList.toggle('is-on', selForm === f);
         b.setAttribute('aria-pressed', selForm === f ? 'true' : 'false');
-        b.querySelector('.pair-status').textContent = paired ? 'Связано' : 'Связь не выбрана';
+        b.querySelector('.pair-status').textContent = paired ? 'Связано с ' + pairs[f] : 'Связь не выбрана';
         b.querySelector('.tag').textContent = paired ? pairs[f] : '';
       });
       nameBtns.forEach(function (b) {
@@ -1745,7 +1797,10 @@
 
   function renderReading(task) {
     var rowsHtml = task.rows.map(function (r) {
-      return '<li class="read-row"><p class="ar-line" lang="ar" dir="rtl">' + esc(r.text) + '</p></li>';
+      // номер строки берём из данных: в бланке они идут с пропусками (1,2,5,7…),
+      // а сквозная нумерация <ol> показывала бы ученику и преподавателю разное
+      return '<li class="read-row"' + (r.n ? ' value="' + (r.n | 0) + '"' : '') +
+        '><p class="ar-line" lang="ar" dir="rtl">' + esc(r.text) + '</p></li>';
     }).join('');
 
     render(
@@ -2144,7 +2199,6 @@
       var pct = Math.round(serverResult.percent);
       html += 'Ответы отправлены преподавателю. Вот ваш уровень:</p>';
       html += '<div class="score-hero is-scored frame" style="--score-color: ' + scoreColor(pct) + '">' +
-        marks() +
         '<div class="score-percent">' + pct + '<i>%</i></div>' +
         '<p class="score-caption">Первый уровень · ' + scoreVerdict(pct) + '</p>' +
         '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
@@ -2156,7 +2210,7 @@
         html += '<div class="breakdown">';
         serverResult.breakdown.forEach(function (b) {
           html += '<div class="breakdown-row"><span>' + esc(b.label) + '</span>' +
-            '<span class="pts">' + b.points + ' / ' + b.max + '</span></div>';
+            '<span class="pts">' + esc(b.points) + ' / ' + esc(b.max) + '</span></div>';
         });
         html += '<div class="breakdown-row is-muted"><span>Устное чтение и диктант</span><span class="pts">оценит преподаватель</span></div>';
         html += '</div>';
@@ -2176,7 +2230,9 @@
           ? 'Эта работа уже отправлена раньше. Откройте свой результат в профиле — повторная отправка не нужна.'
         : code >= 400 && code < 500
           ? 'Сервер не принял работу: возможно, анкета заполнена не полностью. Ответы сохранены — передайте отчёт преподавателю вручную.'
-        : 'Сервер сейчас недоступен — мы пробовали несколько раз. Ответы не потеряны: они останутся здесь, даже если закрыть вкладку. Попробуйте отправку через минуту или передайте отчёт преподавателю вручную.'
+        : storageWorks
+          ? 'Сервер сейчас недоступен — мы пробовали несколько раз. Ответы не потеряны: они останутся здесь, даже если закрыть вкладку. Попробуйте отправку через минуту или передайте отчёт преподавателю вручную.'
+          : 'Сервер сейчас недоступен — мы пробовали несколько раз. Браузер запретил сохранение, поэтому НЕ закрывайте вкладку: скачайте отчёт кнопкой ниже или передайте его преподавателю сейчас.'
       ) + '</p>';
       html += '<div class="btn-row"><button class="btn" id="retrySubmitBtn">Повторить отправку</button></div>';
     }

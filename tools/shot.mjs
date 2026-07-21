@@ -80,6 +80,10 @@ await send('Emulation.setDeviceMetricsOverride', {
 if (mobile) await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
 await send('Page.enable');
 await send('Runtime.enable');
+/* Профиль Chrome общий и кэширует assets — без этого снимок показывает
+   ПРЕДЫДУЩУЮ версию стилей и скриптов, и проверка врёт. */
+await send('Network.enable');
+await send('Network.setCacheDisabled', { cacheDisabled: true });
 await send('Page.navigate', { url });
 await wait(settle);
 
@@ -92,7 +96,7 @@ await evaluate(
 );
 
 await evaluate(prepBefore.trim() || '0');
-await send('Page.reload');
+await send('Page.reload', { ignoreCache: true });
 await wait(settle);
 
 if (prepAfter.trim()) {
