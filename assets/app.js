@@ -15,7 +15,16 @@
   var topbarLabel = document.getElementById('topbarLabel');
   var topbarTimer = document.getElementById('topbarTimer');
   var timebar = document.getElementById('timebar');
-  var timebarFill = document.getElementById('timebarFill');
+  var WEEK_DAYS = [
+    { value: 'mon', short: 'Пн', full: 'Понедельник' },
+    { value: 'tue', short: 'Вт', full: 'Вторник' },
+    { value: 'wed', short: 'Ср', full: 'Среда' },
+    { value: 'thu', short: 'Чт', full: 'Четверг' },
+    { value: 'fri', short: 'Пт', full: 'Пятница' },
+    { value: 'sat', short: 'Сб', full: 'Суббота' },
+    { value: 'sun', short: 'Вс', full: 'Воскресенье' }
+  ];
+  var scheduleAudioContext = null;
 
   /* ── Состояние ─────────────────────────────────────────── */
 
@@ -41,6 +50,7 @@
   var timerId = null;
   var deadline = 0;
   var cur = null; // { collect: fn } — сборщик ответа текущего экрана
+  var screenCleanup = null;
   var serverResult = null;
   var submitError = null;
 
@@ -56,6 +66,13 @@
     var m = Math.floor(sec / 60);
     var s = sec % 60;
     return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function fmtMinutes(value) {
+    var minutes = Number(value) || 0;
+    var hours = Math.floor(minutes / 60);
+    var rest = minutes % 60;
+    return (hours < 10 ? '0' : '') + hours + ':' + (rest < 10 ? '0' : '') + rest;
   }
 
   function uuid() {
@@ -125,21 +142,39 @@
 
   function api(path, body) {
     if (!API) return Promise.reject(new Error('API не настроен'));
-    return fetch(API + path, {
+    return fetchWithTimeout(API + path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
-    }).then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+    }, 15000).then(function (r) {
+      if (!r.ok) {
+        var error = new Error('HTTP ' + r.status);
+        error.status = r.status;
+        throw error;
+      }
       return r.json();
     });
   }
 
   function apiGet(path) {
     if (!API) return Promise.reject(new Error('API не настроен'));
-    return fetch(API + path).then(function (r) {
+    return fetchWithTimeout(API + path, {}, 15000).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
+    });
+  }
+
+  function fetchWithTimeout(url, options, timeout) {
+    if (typeof AbortController === 'undefined') return fetch(url, options);
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, timeout || 15000);
+    var requestOptions = Object.assign({}, options || {}, { signal: controller.signal });
+    return fetch(url, requestOptions).then(function (response) {
+      clearTimeout(timer);
+      return response;
+    }, function (error) {
+      clearTimeout(timer);
+      throw error;
     });
   }
 
@@ -182,20 +217,21 @@
     deadline = Date.now() + seconds * 1000;
     topbarTimer.hidden = false;
     timebar.hidden = false;
-    var total = seconds * 1000;
+    timebar.max = seconds;
+    timebar.value = seconds;
     timerId = setInterval(function () {
       var left = deadline - Date.now();
       if (left <= 0) {
         stopTimer();
         topbarTimer.textContent = '0:00';
-        timebarFill.style.transform = 'scaleX(0)';
+        timebar.value = 0;
         onExpire();
         return;
       }
       var sec = Math.ceil(left / 1000);
       topbarTimer.textContent = fmtTime(sec);
       topbarTimer.classList.toggle('is-low', sec <= 30);
-      timebarFill.style.transform = 'scaleX(' + (left / total) + ')';
+      timebar.value = sec;
     }, 200);
   }
 
@@ -213,6 +249,10 @@
   /* ── Рендер ────────────────────────────────────────────── */
 
   function render(html) {
+    if (screenCleanup) {
+      try { screenCleanup(); } catch (e) { /* экран всё равно должен смениться */ }
+      screenCleanup = null;
+    }
     cur = null;
     app.innerHTML = '<div class="screen">' + html + '</div>';
     window.scrollTo(0, 0);
@@ -250,8 +290,12 @@
       studentToken = localStorage.getItem(STUDENT_KEY) || '';
     } catch (e) { /* ок */ }
     render(
-      '<h1>Экзамен по таджвиду</h1>' +
-      '<p class="lede">Таджвид — наука правильного чтения Корана. Здесь можно сдать экзамен первого уровня или записаться на занятия к преподавателю Деабу Анасу Т.</p>' +
+      '<section class="welcome-hero" aria-labelledby="welcomeTitle">' +
+        '<p class="kicker">Учебный проект · Первый уровень</p>' +
+        '<div class="hero-glyph ar" lang="ar" dir="rtl" aria-hidden="true">ت</div>' +
+        '<h1 id="welcomeTitle">Экзамен по таджвиду</h1>' +
+        '<p class="lede">Таджвид — наука правильного чтения Корана. Сдайте экзамен первого уровня или запишитесь на занятия к преподавателю Деабу Анасу Т.</p>' +
+      '</section>' +
       '<div class="paths">' +
         '<button class="path" id="goExam">' +
           '<span class="path-title">Проверить свой уровень</span>' +
@@ -326,7 +370,7 @@
   function showSavedResult(id, cabinetToken) {
     setBar('Мой результат');
     render('<h1>Загружаем результат…</h1>');
-    fetch(API + '/api/result/' + encodeURIComponent(id))
+    fetchWithTimeout(API + '/api/result/' + encodeURIComponent(id), {}, 15000)
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (d) {
         if (!d.ok) throw new Error('нет данных');
@@ -369,20 +413,51 @@
       });
   }
 
-  function personForm(submitLabel) {
-    return '<form class="form" id="personForm" novalidate>' +
+  function scheduleFields() {
+    var days = WEEK_DAYS.map(function (day, index) {
+      var id = 'day' + index;
+      return '<label class="day-option" for="' + id + '">' +
+        '<input id="' + id + '" name="scheduleDays" type="checkbox" value="' + day.value + '">' +
+        '<span class="day-face"><span class="day-short" aria-hidden="true">' + day.short + '</span>' +
+        '<span class="day-full">' + day.full + '</span></span></label>';
+    }).join('');
+    return '<fieldset class="schedule-picker" data-schedule aria-describedby="daysHint errScheduleDays">' +
+      '<legend>Когда удобно заниматься?</legend>' +
+      '<p class="field-hint" id="daysHint">Выберите один или несколько дней.</p>' +
+      '<div class="day-strip">' + days + '</div>' +
+      '<span class="err" id="errScheduleDays" role="alert">Выберите хотя бы один день</span>' +
+      '<div class="time-window">' +
+        '<div class="time-heading"><span>Диапазон времени</span>' +
+          '<strong id="scheduleSummary">10:00—20:00</strong></div>' +
+        '<label class="time-slider" for="timeFrom"><span>Не раньше</span><output id="timeFromOutput" for="timeFrom">10:00</output>' +
+          '<input id="timeFrom" name="timeFromMinutes" type="range" min="360" max="1380" step="30" value="600" autocomplete="off"></label>' +
+        '<label class="time-slider" for="timeTo"><span>Не позже</span><output id="timeToOutput" for="timeTo">20:00</output>' +
+          '<input id="timeTo" name="timeToMinutes" type="range" min="360" max="1380" step="30" value="1200" autocomplete="off"></label>' +
+        '<div class="time-scale" aria-hidden="true"><span>06:00</span><span>день</span><span>23:00</span></div>' +
+        '<input id="timeZone" name="timeZone" type="hidden" value="Europe/Moscow">' +
+        '<button class="sound-toggle" id="scheduleSound" type="button" aria-pressed="false">' +
+          '<span><b>Звук ползунка</b><small>Тихий отклик при смене времени</small></span>' +
+          '<span class="sound-switch" aria-hidden="true"><span></span></span>' +
+        '</button>' +
+      '</div>' +
+    '</fieldset>';
+  }
+
+  function personForm(submitLabel, includeSchedule) {
+    return '<form class="form" id="personForm" method="post" action="' + (includeSchedule ? esc(API + '/apply') : '') + '" novalidate>' +
       '<div class="field" data-f="firstName"><label for="fFirst">Имя</label>' +
-        '<input id="fFirst" name="firstName" autocomplete="given-name" maxlength="60" aria-describedby="errFirst">' +
+        '<input id="fFirst" name="firstName" autocomplete="given-name" maxlength="60" aria-describedby="errFirst" required>' +
         '<span class="err" id="errFirst">Укажите имя</span></div>' +
       '<div class="field" data-f="lastName"><label for="fLast">Фамилия</label>' +
-        '<input id="fLast" name="lastName" autocomplete="family-name" maxlength="60" aria-describedby="errLast">' +
+        '<input id="fLast" name="lastName" autocomplete="family-name" maxlength="60" aria-describedby="errLast" required>' +
         '<span class="err" id="errLast">Укажите фамилию</span></div>' +
       '<div class="field" data-f="city"><label for="fCity">Город</label>' +
-        '<input id="fCity" name="city" autocomplete="address-level2" maxlength="60" aria-describedby="errCity">' +
+        '<input id="fCity" name="city" autocomplete="address-level2" maxlength="60" aria-describedby="errCity" required>' +
         '<span class="err" id="errCity">Укажите город</span></div>' +
       '<div class="field" data-f="phone"><label for="fPhone">Телефон</label>' +
-        '<input id="fPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00…" maxlength="20" aria-describedby="errPhone">' +
+        '<input id="fPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00…" maxlength="20" aria-describedby="errPhone" required>' +
         '<span class="err" id="errPhone">Укажите телефон полностью</span></div>' +
+      (includeSchedule ? '<input name="requestId" type="hidden" value="">' + scheduleFields() : '') +
       '<div class="btn-row"><button type="submit" class="btn btn-block">' + submitLabel + '</button></div>' +
     '</form>';
   }
@@ -403,38 +478,172 @@
       field.querySelector('input').setAttribute('aria-invalid', bad ? 'true' : 'false');
       if (bad) { ok = false; if (!firstInvalid) firstInvalid = field.querySelector('input'); }
     });
+    var schedule = form.querySelector('[data-schedule]');
+    if (schedule) {
+      var selectedDays = [].slice.call(form.querySelectorAll('[name="scheduleDays"]:checked')).map(function (input) {
+        return input.value;
+      });
+      var daysBad = selectedDays.length === 0;
+      schedule.classList.toggle('is-invalid', daysBad);
+      schedule.setAttribute('aria-invalid', daysBad ? 'true' : 'false');
+      if (daysBad) {
+        ok = false;
+        if (!firstInvalid) firstInvalid = form.querySelector('[name="scheduleDays"]');
+      }
+      var startMinute = Number(form.timeFromMinutes.value);
+      var endMinute = Number(form.timeToMinutes.value);
+      if (startMinute >= endMinute) {
+        ok = false;
+        schedule.classList.add('is-invalid');
+        schedule.setAttribute('aria-invalid', 'true');
+        if (!firstInvalid) firstInvalid = form.timeFromMinutes;
+      }
+      data.requestId = form.requestId.value || form.getAttribute('data-request-id') || uuid();
+      data.availability = {
+        version: 1,
+        days: selectedDays,
+        startMinute: startMinute,
+        endMinute: endMinute,
+        timeZone: form.timeZone.value || 'Europe/Moscow'
+      };
+    }
     if (firstInvalid) firstInvalid.focus();
     return ok ? data : null;
+  }
+
+  function playScheduleTick(enabled, value) {
+    if (!enabled) return;
+    var AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtor) return;
+    try {
+      if (!scheduleAudioContext) scheduleAudioContext = new AudioCtor();
+      if (scheduleAudioContext.state === 'suspended') scheduleAudioContext.resume();
+      var now = scheduleAudioContext.currentTime;
+      var oscillator = scheduleAudioContext.createOscillator();
+      var gain = scheduleAudioContext.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 520 + ((Math.round(Number(value) / 30) % 8) * 12);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+      oscillator.connect(gain);
+      gain.connect(scheduleAudioContext.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.04);
+    } catch (e) { /* звук — необязательное улучшение */ }
+  }
+
+  function initSchedule(form) {
+    var picker = form.querySelector('[data-schedule]');
+    if (!picker) return;
+    var from = form.timeFromMinutes;
+    var to = form.timeToMinutes;
+    var fromOutput = document.getElementById('timeFromOutput');
+    var toOutput = document.getElementById('timeToOutput');
+    var summary = document.getElementById('scheduleSummary');
+    var soundButton = document.getElementById('scheduleSound');
+    var soundEnabled = false;
+    var lastTickAt = 0;
+    try { soundEnabled = localStorage.getItem('tajweed_schedule_sound') === 'on'; } catch (e) { /* ок */ }
+    try { form.timeZone.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Moscow'; } catch (e) { /* ок */ }
+
+    function updateSoundButton() {
+      soundButton.setAttribute('aria-pressed', soundEnabled ? 'true' : 'false');
+    }
+
+    function updateSummary() {
+      var labels = [].slice.call(form.querySelectorAll('[name="scheduleDays"]:checked')).map(function (input) {
+        var day = WEEK_DAYS.filter(function (item) { return item.value === input.value; })[0];
+        return day ? day.short : input.value;
+      });
+      var range = fmtMinutes(from.value) + '—' + fmtMinutes(to.value);
+      fromOutput.textContent = fmtMinutes(from.value);
+      toOutput.textContent = fmtMinutes(to.value);
+      from.setAttribute('aria-valuetext', 'Не раньше ' + fmtMinutes(from.value));
+      to.setAttribute('aria-valuetext', 'Не позже ' + fmtMinutes(to.value));
+      summary.textContent = (labels.length ? labels.join(', ') + ' · ' : '') + range;
+      if (labels.length) picker.classList.remove('is-invalid');
+    }
+
+    function onRangeInput(changed) {
+      if (changed === from && Number(from.value) > Number(to.value) - 60) {
+        from.value = Math.max(Number(from.min), Number(to.value) - 60);
+      }
+      if (changed === to && Number(to.value) < Number(from.value) + 60) {
+        to.value = Math.min(Number(to.max), Number(from.value) + 60);
+      }
+      updateSummary();
+      var now = Date.now();
+      if (now - lastTickAt >= 45) {
+        lastTickAt = now;
+        playScheduleTick(soundEnabled, changed.value);
+      }
+    }
+
+    [].slice.call(form.querySelectorAll('[name="scheduleDays"]')).forEach(function (input) {
+      input.addEventListener('change', updateSummary);
+    });
+    from.addEventListener('input', function () { onRangeInput(from); });
+    to.addEventListener('input', function () { onRangeInput(to); });
+    soundButton.addEventListener('click', function () {
+      soundEnabled = !soundEnabled;
+      try { localStorage.setItem('tajweed_schedule_sound', soundEnabled ? 'on' : 'off'); } catch (e) { /* ок */ }
+      updateSoundButton();
+      if (soundEnabled) playScheduleTick(true, from.value);
+    });
+    updateSoundButton();
+    updateSummary();
   }
 
   function showLead() {
     setBar('Запись на уроки');
     render(
       '<h1>Запись на уроки</h1>' +
-      '<p class="lede">Оставьте контакты — преподаватель свяжется с вами и подберёт группу.</p>' +
-      personForm('Отправить заявку') +
-      '<p class="notice" id="leadErr" hidden></p>' +
+      '<p class="lede">Оставьте контакты и отметьте удобное время — преподаватель свяжется с вами и подберёт группу.</p>' +
+      personForm('Отправить заявку', true) +
+      '<p class="notice" id="leadErr" role="status" aria-live="polite" hidden></p>' +
       '<div class="btn-row"><button class="btn is-ghost" id="backBtn">← Назад</button></div>'
     );
     document.getElementById('backBtn').onclick = function () { state.phase = 'welcome'; show(); };
     var form = document.getElementById('personForm');
+    var requestId = '';
+    try {
+      requestId = localStorage.getItem('tajweed_lead_request_id') || uuid();
+      localStorage.setItem('tajweed_lead_request_id', requestId);
+    } catch (e) { requestId = uuid(); }
+    form.setAttribute('data-request-id', requestId);
+    form.requestId.value = requestId;
+    initSchedule(form);
     form.onsubmit = function (e) {
       e.preventDefault();
+      var previousError = document.getElementById('leadErr');
+      previousError.hidden = true;
+      previousError.textContent = '';
       var data = readPersonForm(form);
       if (!data) return;
       var btn = form.querySelector('button[type="submit"]');
       btn.disabled = true;
       btn.textContent = 'Отправляем…';
       api('/api/lead', data).then(function () {
+        try { localStorage.removeItem('tajweed_lead_request_id'); } catch (e) { /* ок */ }
         state.phase = 'leadDone';
         show();
-      }).catch(function () {
+      }).catch(function (error) {
         btn.disabled = false;
-        btn.textContent = 'Отправить заявку';
         var err = document.getElementById('leadErr');
         err.hidden = false;
         err.classList.add('is-error');
-        err.textContent = 'Не получилось отправить заявку. Проверьте интернет и попробуйте ещё раз, либо напишите преподавателю напрямую.';
+        if (error && error.status === 409) {
+          var nextRequestId = uuid();
+          form.requestId.value = nextRequestId;
+          form.setAttribute('data-request-id', nextRequestId);
+          try { localStorage.setItem('tajweed_lead_request_id', nextRequestId); } catch (e) { /* ок */ }
+          btn.textContent = 'Отправить обновлённую заявку';
+          err.textContent = 'Первая версия заявки уже сохранена. Вы изменили данные после отправки; проверьте их и нажмите кнопку ещё раз, чтобы отправить обновлённую заявку отдельно.';
+        } else {
+          btn.textContent = 'Отправить заявку';
+          err.textContent = 'Не получилось отправить заявку. Проверьте интернет и попробуйте ещё раз, либо напишите преподавателю напрямую.';
+        }
       });
     };
   }
@@ -454,7 +663,7 @@
     render(
       '<h1>Анкета перед экзаменом</h1>' +
       '<p class="lede">Экзамен состоит из шести заданий. Вопросы идут по одному, на каждый даётся 3 минуты, вернуться назад нельзя. Не закрывайте вкладку: ответы сохраняются на этом устройстве.</p>' +
-      personForm('Начать экзамен')
+      personForm('Начать экзамен', false)
     );
     var form = document.getElementById('personForm');
     form.onsubmit = function (e) {
@@ -538,7 +747,7 @@
   }
 
   function answerFooter() {
-    return '<div class="btn-row"><button class="btn btn-block" id="answerBtn">Ответить</button></div>';
+    return '<div class="btn-row"><button class="btn btn-block" id="answerBtn">Сохранить ответ и продолжить</button></div>';
   }
 
   function bindAnswer() {
@@ -556,20 +765,20 @@
     var selForm = null, selName = null;
 
     var formsHtml = task.forms.map(function (f, i) {
-      return '<button type="button" class="opt opt-form" data-v="' + esc(f) + '" aria-pressed="false"><span class="ar">' + esc(f) + '</span><span class="tag"></span></button>';
+      return '<button type="button" class="opt opt-form" data-v="' + esc(f) + '" aria-pressed="false"><span class="ar" lang="ar" dir="rtl">' + esc(f) + '</span><span class="tag" lang="ar" dir="rtl"></span><span class="pair-status visually-hidden">Связь не выбрана</span></button>';
     }).join('');
     var namesHtml = task.names.map(function (n, i) {
-      return '<button type="button" class="opt opt-name" data-v="' + esc(n) + '" aria-pressed="false"><span class="ar">' + esc(n) + '</span><span class="tag"></span></button>';
+      return '<button type="button" class="opt opt-name" data-v="' + esc(n) + '" aria-pressed="false"><span class="ar" lang="ar" dir="rtl">' + esc(n) + '</span><span class="tag" lang="ar" dir="rtl"></span><span class="pair-status visually-hidden">Связь не выбрана</span></button>';
     }).join('');
 
     render(
-      '<div class="q-head"><p class="q-title">' + esc(task.title) + '</p>' +
+      '<div class="q-head"><h1 class="q-title">' + esc(task.title) + '</h1>' +
       '<p class="q-note">' + esc(task.note) + '</p></div>' +
       '<div class="match">' +
         '<div class="col" id="colForms">' + formsHtml + '</div>' +
         '<div class="col" id="colNames">' + namesHtml + '</div>' +
       '</div>' +
-      '<p class="match-hint">Составлено пар: <span id="pairCount">0</span> из ' + task.names.length + '</p>' +
+      '<p class="match-hint">Составлено пар: <span id="pairCount" aria-live="polite">0</span> из ' + task.names.length + '</p>' +
       answerFooter()
     );
 
@@ -586,6 +795,7 @@
         b.classList.toggle('is-paired', paired);
         b.classList.toggle('is-on', selForm === f);
         b.setAttribute('aria-pressed', selForm === f ? 'true' : 'false');
+        b.querySelector('.pair-status').textContent = paired ? 'Связано' : 'Связь не выбрана';
         b.querySelector('.tag').textContent = paired ? pairs[f] : '';
       });
       nameBtns.forEach(function (b) {
@@ -594,6 +804,7 @@
         b.classList.toggle('is-paired', paired);
         b.classList.toggle('is-on', selName === v);
         b.setAttribute('aria-pressed', selName === v ? 'true' : 'false');
+        b.querySelector('.pair-status').textContent = paired ? 'Связано' : 'Связь не выбрана';
         b.querySelector('.tag').textContent = paired ? used[v] : '';
       });
       document.getElementById('pairCount').textContent = n;
@@ -637,12 +848,12 @@
   function renderSyllables(task, i) {
     var val = state.answers.syllables[i];
     render(
-      '<div class="q-head"><p class="q-title">Сколько слогов в этом слове?</p></div>' +
-      '<p class="ar-hero">' + esc(task.words[i]) + '</p>' +
+      '<div class="q-head"><h1 class="q-title">Сколько слогов в этом слове?</h1></div>' +
+      '<p class="ar-hero" lang="ar" dir="rtl">' + esc(task.words[i]) + '</p>' +
       '<div class="stepper">' +
-        '<button type="button" id="minus" aria-label="Меньше">−</button>' +
-        '<output id="num" aria-live="polite" class="' + (val == null ? 'is-empty' : '') + '">' + (val == null ? 'выберите число' : val) + '</output>' +
-        '<button type="button" id="plus" aria-label="Больше">+</button>' +
+        '<button type="button" id="minus" aria-label="Уменьшить число слогов">−</button>' +
+        '<output id="num" aria-label="Выбранное число слогов" aria-live="polite" class="' + (val == null ? 'is-empty' : '') + '">' + (val == null ? 'выберите число' : val) + '</output>' +
+        '<button type="button" id="plus" aria-label="Увеличить число слогов">+</button>' +
       '</div>' +
       answerFooter()
     );
@@ -665,24 +876,23 @@
     var chosen = (state.answers.sifat[letter] || []).slice();
     var rows = task.sifat.map(function (s) {
       var on = chosen.indexOf(s.ar) !== -1;
-      return '<button type="button" class="check' + (on ? ' is-on' : '') + '" data-v="' + esc(s.ar) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' +
-        '<span class="box">✓</span><span class="ru">' + esc(s.ru) + '</span><span class="ar">' + esc(s.ar) + '</span>' +
-      '</button>';
+      return '<label class="check' + (on ? ' is-on' : '') + '"><input type="checkbox" name="sifat" value="' + esc(s.ar) + '" data-v="' + esc(s.ar) + '"' + (on ? ' checked' : '') + '>' +
+        '<span class="box">✓</span><span class="ru">' + esc(s.ru) + '</span><span class="ar" lang="ar" dir="rtl">' + esc(s.ar) + '</span>' +
+      '</label>';
     }).join('');
     render(
-      '<div class="q-head"><p class="q-title">Отметьте сифаты буквы</p>' +
+      '<div class="q-head"><h1 class="q-title">Отметьте сифаты буквы</h1>' +
       '<p class="q-note">' + esc(task.note) + '</p></div>' +
-      '<p class="ar-hero">' + esc(letter) + '</p>' +
-      '<div class="checks">' + rows + '</div>' +
+      '<p class="ar-hero" lang="ar" dir="rtl">' + esc(letter) + '</p>' +
+      '<fieldset class="checks"><legend class="visually-hidden">Сифаты буквы</legend>' + rows + '</fieldset>' +
       answerFooter()
     );
-    [].slice.call(app.querySelectorAll('.check')).forEach(function (b) {
-      b.onclick = function () {
-        var v = b.getAttribute('data-v');
+    [].slice.call(app.querySelectorAll('.check input')).forEach(function (input) {
+      input.onchange = function () {
+        var v = input.getAttribute('data-v');
         var idx = chosen.indexOf(v);
         if (idx === -1) chosen.push(v); else chosen.splice(idx, 1);
-        b.classList.toggle('is-on', idx === -1);
-        b.setAttribute('aria-pressed', idx === -1 ? 'true' : 'false');
+        input.closest('.check').classList.toggle('is-on', input.checked);
       };
     });
     cur = { collect: function () { state.answers.sifat[letter] = chosen; } };
@@ -699,14 +909,14 @@
     var picked = []; // массив id в порядке нажатия
 
     render(
-      '<div class="q-head"><p class="q-title">Соберите слово</p>' +
+      '<div class="q-head"><h1 class="q-title">Соберите слово</h1>' +
       (item.hint ? '<p class="q-note">' + esc(item.hint) + '</p>' : '') +
       '</div>' +
-      '<p class="compose-given">Дано: <span class="ar">' + esc(item.given) + '</span></p>' +
-      '<div class="compose-out is-empty" id="composeOut">нажимайте на плитки внизу</div>' +
+      '<p class="compose-given">Дано: <span class="ar" lang="ar" dir="rtl">' + esc(item.given) + '</span></p>' +
+      '<div class="compose-out is-empty" id="composeOut" aria-live="polite">нажимайте на плитки внизу</div>' +
       '<div class="compose-tiles" id="composeTiles">' +
         tiles.map(function (t) {
-          return '<button type="button" class="opt" data-id="' + t.id + '" aria-pressed="false"><bdi>' + esc(t.v) + '</bdi></button>';
+          return '<button type="button" class="opt" data-id="' + t.id + '" aria-pressed="false"><bdi lang="ar" dir="rtl">' + esc(t.v) + '</bdi></button>';
         }).join('') +
       '</div>' +
       '<div class="compose-ctrl">' +
@@ -741,9 +951,13 @@
       var w = word();
       if (w) {
         out.classList.remove('is-empty');
+        out.setAttribute('lang', 'ar');
+        out.setAttribute('dir', 'rtl');
         out.textContent = w;
       } else {
         out.classList.add('is-empty');
+        out.removeAttribute('lang');
+        out.removeAttribute('dir');
         out.textContent = 'нажимайте на плитки внизу';
       }
       Object.keys(btns).forEach(function (id) {
@@ -762,24 +976,22 @@
     var st = task.statements[i];
     var val = state.answers.yesno[i];
     render(
-      '<div class="q-head"><p class="q-title">Верно ли утверждение?</p></div>' +
+      '<div class="q-head"><h1 class="q-title">Верно ли утверждение?</h1></div>' +
       '<p class="lede statement">' + esc(st.text) + '</p>' +
-      (st.ar ? '<p class="ar-hero is-compact">' + esc(st.ar) + '</p>' : '') +
-      '<div class="yesno">' +
-        '<button type="button" class="opt' + (val === true ? ' is-on' : '') + '" id="optYes" aria-pressed="' + (val === true ? 'true' : 'false') + '">Да</button>' +
-        '<button type="button" class="opt' + (val === false ? ' is-on' : '') + '" id="optNo" aria-pressed="' + (val === false ? 'true' : 'false') + '">Нет</button>' +
-      '</div>' +
+      (st.ar ? '<p class="ar-hero is-compact" lang="ar" dir="rtl">' + esc(st.ar) + '</p>' : '') +
+      '<fieldset class="yesno"><legend class="visually-hidden">Верно ли утверждение</legend>' +
+        '<label class="opt' + (val === true ? ' is-on' : '') + '"><input type="radio" name="yesno" value="yes"' + (val === true ? ' checked' : '') + '><span>Да</span></label>' +
+        '<label class="opt' + (val === false ? ' is-on' : '') + '"><input type="radio" name="yesno" value="no"' + (val === false ? ' checked' : '') + '><span>Нет</span></label>' +
+      '</fieldset>' +
       answerFooter()
     );
-    var yes = document.getElementById('optYes');
-    var no = document.getElementById('optNo');
-    yes.onclick = function () {
-      val = true; yes.classList.add('is-on'); no.classList.remove('is-on');
-      yes.setAttribute('aria-pressed', 'true'); no.setAttribute('aria-pressed', 'false');
+    var yes = app.querySelector('input[name="yesno"][value="yes"]');
+    var no = app.querySelector('input[name="yesno"][value="no"]');
+    yes.onchange = function () {
+      val = true; yes.closest('.opt').classList.add('is-on'); no.closest('.opt').classList.remove('is-on');
     };
-    no.onclick = function () {
-      val = false; no.classList.add('is-on'); yes.classList.remove('is-on');
-      no.setAttribute('aria-pressed', 'true'); yes.setAttribute('aria-pressed', 'false');
+    no.onchange = function () {
+      val = false; no.closest('.opt').classList.add('is-on'); yes.closest('.opt').classList.remove('is-on');
     };
     cur = { collect: function () { state.answers.yesno[i] = val; } };
     bindAnswer();
@@ -789,15 +1001,15 @@
 
   function renderReading(task) {
     var rowsHtml = task.rows.map(function (r) {
-      return '<div class="read-row"><p class="ar-line">' + esc(r.text) + '</p></div>';
+      return '<li class="read-row"><p class="ar-line" lang="ar" dir="rtl">' + esc(r.text) + '</p></li>';
     }).join('');
 
     render(
-      '<div class="q-head"><p class="q-title">' + esc(task.title) + '</p>' +
+      '<div class="q-head"><h1 class="q-title">' + esc(task.title) + '</h1>' +
       '<p class="q-note">' + esc(task.note) + '</p></div>' +
-      '<div class="read-rows">' + rowsHtml + '</div>' +
+      '<ol class="read-rows">' + rowsHtml + '</ol>' +
       '<div class="recorder">' +
-        '<p class="rec-status" id="recStatus">Микрофон ещё не включён</p>' +
+        '<p class="rec-status" id="recStatus" role="status" aria-live="polite">Микрофон ещё не включён</p>' +
         '<div class="btn-row reading-actions">' +
           '<button type="button" class="btn" id="recBtn">Начать запись</button>' +
         '</div>' +
@@ -814,9 +1026,36 @@
     var playback = document.getElementById('recPlayback');
     var answerBtn = document.getElementById('answerBtn');
     var recorder = null;
+    var stream = null;
     var chunks = [];
     var advanceAfterStop = false;
     var skipped = false;
+    var active = true;
+    var permissionPending = false;
+    var playbackUrl = '';
+
+    function stopStream() {
+      if (!stream) return;
+      stream.getTracks().forEach(function (track) { track.stop(); });
+      stream = null;
+    }
+
+    screenCleanup = function () {
+      active = false;
+      permissionPending = false;
+      if (recorder) {
+        recorder.ondataavailable = null;
+        recorder.onstop = null;
+        if (recorder.state === 'recording') {
+          try { recorder.stop(); } catch (e) { /* поток остановим ниже */ }
+        }
+      }
+      stopStream();
+      if (playbackUrl) {
+        URL.revokeObjectURL(playbackUrl);
+        playbackUrl = '';
+      }
+    };
 
     function pickMime() {
       if (window.MediaRecorder && MediaRecorder.isTypeSupported) {
@@ -828,6 +1067,7 @@
     }
 
     function setStatus(html, live) {
+      if (!active) return;
       status.replaceChildren();
       if (live) {
         var dot = document.createElement('span');
@@ -840,7 +1080,9 @@
     }
 
     recBtn.onclick = function () {
+      if (!active || permissionPending) return;
       if (recorder && recorder.state === 'recording') {
+        recBtn.disabled = true;
         recorder.stop();
         return;
       }
@@ -848,25 +1090,37 @@
         setStatus('Запись не поддерживается этим браузером. Нажмите «Пропустить» и прочитайте преподавателю лично.');
         return;
       }
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      permissionPending = true;
+      recBtn.disabled = true;
+      setStatus('Запрашиваем доступ к микрофону…');
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (mediaStream) {
+        permissionPending = false;
+        stream = mediaStream;
+        if (!active || skipped) {
+          stopStream();
+          return;
+        }
         var mime = pickMime();
         recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
         audioMime = recorder.mimeType || mime || 'audio/webm';
         chunks = [];
         recorder.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
         recorder.onstop = function () {
-          stream.getTracks().forEach(function (t) { t.stop(); });
-          if (skipped) return; // ученик отказался от записи — ничего не сохраняем
+          stopStream();
+          if (!active || skipped) return; // экран ушёл или ученик отказался от записи
           audioBlob = new Blob(chunks, { type: audioMime });
           state.answers.readingRecorded = true;
           save();
           setStatus('Запись готова. Можно прослушать или перезаписать.');
           recBtn.textContent = 'Перезаписать';
+          recBtn.disabled = false;
           playback.hidden = false;
           playback.innerHTML = '';
+          if (playbackUrl) URL.revokeObjectURL(playbackUrl);
           var audio = document.createElement('audio');
           audio.controls = true;
-          audio.src = URL.createObjectURL(audioBlob);
+          playbackUrl = URL.createObjectURL(audioBlob);
+          audio.src = playbackUrl;
           playback.appendChild(audio);
           answerBtn.disabled = false;
           if (advanceAfterStop) { advanceAfterStop = false; stopTimer(); commitAndNext(); }
@@ -874,10 +1128,15 @@
         recorder.start();
         setStatus('Идёт запись — читайте строки вслух', true);
         recBtn.textContent = 'Остановить запись';
+        recBtn.disabled = false;
         playback.hidden = true;
         audioBlob = null;
         answerBtn.disabled = true;
       }).catch(function () {
+        permissionPending = false;
+        stopStream();
+        if (!active) return;
+        recBtn.disabled = false;
         setStatus('Нет доступа к микрофону. Разрешите доступ или нажмите «Пропустить».');
       });
     };
@@ -949,7 +1208,11 @@
         var fd = new FormData();
         var ext = /mp4|aac/.test(audioMime) ? 'm4a' : 'webm';
         fd.append('audio', audioBlob, 'reading.' + ext);
-        return fetch(API + '/api/audio/' + encodeURIComponent(res.id), { method: 'POST', body: fd })
+        return fetchWithTimeout(API + '/api/audio/' + encodeURIComponent(res.id), {
+          method: 'POST',
+          headers: { 'X-Audio-Upload-Token': res.audioUploadToken || '' },
+          body: fd
+        }, 60000)
           .then(function (r) { serverResult.audioUploaded = r.ok; })
           .catch(function () { serverResult.audioUploaded = false; });
       }
@@ -1115,6 +1378,12 @@
       e.preventDefault();
       e.returnValue = '';
     }
+  });
+  window.addEventListener('pagehide', function () {
+    if (screenCleanup) screenCleanup();
+  });
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted) show();
   });
 
   restore();
