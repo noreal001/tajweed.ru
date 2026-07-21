@@ -1878,11 +1878,11 @@
 
   function reportButtonsHtml(withAudio) {
     return '<div class="btn-row">' +
-      '<button class="btn is-ghost" id="copyBtn">Скопировать отчёт</button>' +
-      '<button class="btn is-ghost" id="dlBtn">Скачать отчёт</button>' +
+      '<button class="btn is-pill" id="copyBtn">Скопировать отчёт</button>' +
+      '<button class="btn is-pill" id="dlBtn">Скачать отчёт</button>' +
       (withAudio ? '<button class="btn is-ghost" id="dlAudioBtn">Скачать аудио</button>' : '') +
-      '<a class="btn is-ghost" id="waBtn" target="_blank" rel="noopener">WhatsApp</a>' +
-      '<a class="btn is-ghost" id="tgBtn" target="_blank" rel="noopener">Telegram</a>' +
+      '<a class="btn is-pill" id="waBtn" target="_blank" rel="noopener">WhatsApp</a>' +
+      '<a class="btn is-pill" id="tgBtn" target="_blank" rel="noopener">Telegram</a>' +
     '</div>';
   }
 
