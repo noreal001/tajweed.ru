@@ -8,6 +8,7 @@
   var CFG = window.TAJWEED_CONFIG || { API_BASE: '', SITE_URL: '' };
   var API = (CFG.API_BASE || '').replace(/\/+$/, '');
   var LS_KEY = 'tajweed_exam_v1';
+  var STUDENT_KEY = 'tajweed_student_token';
   var QUESTION_TIME = 180; // секунд на вопрос
   var app = document.getElementById('app');
   var topbar = document.getElementById('topbar');
@@ -24,6 +25,7 @@
     stepIdx: 0,
     student: null,
     startedAt: null,
+    submissionId: null,
     answers: {
       match: {},
       syllables: EXAM.tasks[1].words.map(function () { return null; }),
@@ -56,6 +58,25 @@
     return m + ':' + (s < 10 ? '0' : '') + s;
   }
 
+  function uuid() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+    });
+  }
+
+  function freshAnswers() {
+    return {
+      match: {},
+      syllables: EXAM.tasks[1].words.map(function () { return null; }),
+      sifat: {},
+      compose: EXAM.tasks[3].items.map(function () { return ''; }),
+      yesno: EXAM.tasks[4].statements.map(function () { return null; }),
+      readingRecorded: false
+    };
+  }
+
   function shuffled(arr, seed) {
     var a = arr.slice();
     var r = seed * 2654435761 % 4294967296;
@@ -74,6 +95,7 @@
         stepIdx: state.stepIdx,
         student: state.student,
         startedAt: state.startedAt,
+        submissionId: state.submissionId,
         answers: state.answers
       }));
     } catch (e) { /* приватный режим — работаем без сохранения */ }
@@ -84,11 +106,12 @@
       var raw = localStorage.getItem(LS_KEY);
       if (!raw) return;
       var saved = JSON.parse(raw);
-      if (saved && saved.phase === 'exam' && saved.student) {
-        state.phase = 'exam';
+      if (saved && (saved.phase === 'exam' || saved.phase === 'done') && saved.student) {
+        state.phase = saved.phase;
         state.stepIdx = Math.min(saved.stepIdx || 0, steps.length - 1);
         state.student = saved.student;
         state.startedAt = saved.startedAt;
+        state.submissionId = saved.submissionId || uuid();
         if (saved.answers) {
           for (var k in state.answers) {
             if (saved.answers[k] !== undefined) state.answers[k] = saved.answers[k];
@@ -107,6 +130,14 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
+  function apiGet(path) {
+    if (!API) return Promise.reject(new Error('API не настроен'));
+    return fetch(API + path).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     });
@@ -185,6 +216,11 @@
     cur = null;
     app.innerHTML = '<div class="screen">' + html + '</div>';
     window.scrollTo(0, 0);
+    var heading = app.querySelector('h1, h2');
+    if (heading) {
+      heading.setAttribute('tabindex', '-1');
+      try { heading.focus({ preventScroll: true }); } catch (e) { heading.focus(); }
+    }
   }
 
   function setBar(label) {
@@ -208,7 +244,11 @@
   function showWelcome() {
     setBar(null);
     var lastId = '';
-    try { lastId = localStorage.getItem('tajweed_last_result') || ''; } catch (e) { /* ок */ }
+    var studentToken = '';
+    try {
+      lastId = localStorage.getItem('tajweed_last_result') || '';
+      studentToken = localStorage.getItem(STUDENT_KEY) || '';
+    } catch (e) { /* ок */ }
     render(
       '<h1>Экзамен по таджвиду</h1>' +
       '<p class="lede">Таджвид — наука правильного чтения Корана. Здесь можно сдать экзамен первого уровня или записаться на занятия к преподавателю Деабу Анасу Т.</p>' +
@@ -221,27 +261,77 @@
           '<span class="path-title">Записаться на уроки</span>' +
           '<span class="path-desc">Для новичков. Оставьте контакты, и преподаватель свяжется с вами.</span>' +
         '</button>' +
-        (lastId ? '<button class="path" id="goResult">' +
+        (studentToken ? '<button class="path" id="goCabinet">' +
+          '<span class="path-title">Личный кабинет</span>' +
+          '<span class="path-desc">История экзаменов, баллы и разбор по заданиям.</span>' +
+        '</button>' : (lastId ? '<button class="path" id="goResult">' +
           '<span class="path-title">Мой результат</span>' +
           '<span class="path-desc">Посмотреть итог последнего сданного экзамена.</span>' +
-        '</button>' : '') +
+        '</button>' : '')) +
       '</div>'
     );
     document.getElementById('goExam').onclick = function () { state.phase = 'reg'; show(); };
     document.getElementById('goLead').onclick = function () { state.phase = 'lead'; show(); };
+    var goCabinet = document.getElementById('goCabinet');
+    if (goCabinet) goCabinet.onclick = function () { showStudentCabinet(studentToken); };
     var goResult = document.getElementById('goResult');
     if (goResult) goResult.onclick = function () { showSavedResult(lastId); };
   }
 
-  function showSavedResult(id) {
+  function showStudentCabinet(token) {
+    setBar('Личный кабинет');
+    render('<h1>Личный кабинет</h1><p class="lede">Загружаем историю экзаменов…</p>');
+    apiGet('/api/student/' + encodeURIComponent(token)).then(function (d) {
+      if (!d.ok) throw new Error('нет данных');
+      try { localStorage.setItem(STUDENT_KEY, token); } catch (e) { /* ок */ }
+      if (history.replaceState) history.replaceState(null, '', '#student=' + token);
+      var s = d.student;
+      var html = '<h1>Личный кабинет</h1>' +
+        '<p class="lede">' + esc(s.lastName) + ' ' + esc(s.firstName) + ' · ' + esc(s.city) + '</p>';
+      if (!d.results || !d.results.length) {
+        html += '<p class="notice">В кабинете пока нет завершённых экзаменов.</p>';
+      } else {
+        html += '<div class="result-list">';
+        d.results.forEach(function (r) {
+          html += '<button class="path result-item" data-result-id="' + esc(r.id) + '">' +
+            '<span><b>Экзамен первого уровня</b><br><span class="meta">' +
+            esc(new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(r.createdAt))) +
+            ' · ' + (r.hasAudio ? 'чтение записано' : 'без аудиозаписи') + '</span></span>' +
+            '<span class="score">' + Math.round(r.percent) + '%</span></button>';
+        });
+        html += '</div>';
+      }
+      html += '<div class="btn-row"><button class="btn" id="newExamBtn">Пройти ещё раз</button>' +
+        '<button class="btn is-ghost" id="homeBtn">На главную</button></div>';
+      render(html);
+      [].slice.call(app.querySelectorAll('[data-result-id]')).forEach(function (b) {
+        b.onclick = function () { showSavedResult(b.getAttribute('data-result-id'), token); };
+      });
+      document.getElementById('newExamBtn').onclick = function () { state.phase = 'reg'; show(); };
+      document.getElementById('homeBtn').onclick = function () {
+        if (history.replaceState) history.replaceState(null, '', location.pathname);
+        state.phase = 'welcome';
+        show();
+      };
+    }).catch(function () {
+      render('<h1>Кабинет недоступен</h1>' +
+        '<p class="lede">Не удалось загрузить историю. Проверьте интернет и попробуйте ещё раз.</p>' +
+        '<div class="btn-row"><button class="btn" id="retryCabinet">Повторить</button>' +
+        '<button class="btn is-ghost" id="homeBtn">На главную</button></div>');
+      document.getElementById('retryCabinet').onclick = function () { showStudentCabinet(token); };
+      document.getElementById('homeBtn').onclick = function () { state.phase = 'welcome'; show(); };
+    });
+  }
+
+  function showSavedResult(id, cabinetToken) {
     setBar('Мой результат');
-    render('<h2>Загружаем результат…</h2>');
+    render('<h1>Загружаем результат…</h1>');
     fetch(API + '/api/result/' + encodeURIComponent(id))
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (d) {
         if (!d.ok) throw new Error('нет данных');
         var res = d.result;
-        var html = '<h2>Результат экзамена</h2>' +
+        var html = '<h1>Результат экзамена</h1>' +
           '<p class="lede">' + esc(res.lastName) + ' ' + esc(res.firstName) + ' (' + esc(res.city) + ') · ' +
             new Date(res.createdAt).toLocaleString('ru-RU') + '</p>' +
           '<div class="score-hero">' +
@@ -258,16 +348,17 @@
           html += '</div>';
         }
         html += '<p class="notice">Сохраните адрес этой страницы — по нему результат откроется снова.</p>' +
-          '<div class="btn-row"><button class="btn is-ghost" id="homeBtn">← На главную</button></div>';
+          '<div class="btn-row"><button class="btn is-ghost" id="homeBtn">' +
+          (cabinetToken ? '← В кабинет' : '← На главную') + '</button></div>';
         render(html);
         document.getElementById('homeBtn').onclick = function () {
           if (history.replaceState) history.replaceState(null, '', location.pathname);
-          state.phase = 'welcome';
-          show();
+          if (cabinetToken) return showStudentCabinet(cabinetToken);
+          state.phase = 'welcome'; show();
         };
       })
       .catch(function () {
-        render('<h2>Результат не найден</h2>' +
+        render('<h1>Результат не найден</h1>' +
           '<p class="lede">Ссылка устарела или сервер недоступен. Попробуйте позже.</p>' +
           '<div class="btn-row"><button class="btn is-ghost" id="homeBtn">← На главную</button></div>');
         document.getElementById('homeBtn').onclick = function () {
@@ -281,17 +372,17 @@
   function personForm(submitLabel) {
     return '<form class="form" id="personForm" novalidate>' +
       '<div class="field" data-f="firstName"><label for="fFirst">Имя</label>' +
-        '<input id="fFirst" name="firstName" autocomplete="given-name" maxlength="60">' +
-        '<span class="err">Укажите имя</span></div>' +
+        '<input id="fFirst" name="firstName" autocomplete="given-name" maxlength="60" aria-describedby="errFirst">' +
+        '<span class="err" id="errFirst">Укажите имя</span></div>' +
       '<div class="field" data-f="lastName"><label for="fLast">Фамилия</label>' +
-        '<input id="fLast" name="lastName" autocomplete="family-name" maxlength="60">' +
-        '<span class="err">Укажите фамилию</span></div>' +
+        '<input id="fLast" name="lastName" autocomplete="family-name" maxlength="60" aria-describedby="errLast">' +
+        '<span class="err" id="errLast">Укажите фамилию</span></div>' +
       '<div class="field" data-f="city"><label for="fCity">Город</label>' +
-        '<input id="fCity" name="city" autocomplete="address-level2" maxlength="60">' +
-        '<span class="err">Укажите город</span></div>' +
+        '<input id="fCity" name="city" autocomplete="address-level2" maxlength="60" aria-describedby="errCity">' +
+        '<span class="err" id="errCity">Укажите город</span></div>' +
       '<div class="field" data-f="phone"><label for="fPhone">Телефон</label>' +
-        '<input id="fPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00" maxlength="20">' +
-        '<span class="err">Укажите телефон полностью</span></div>' +
+        '<input id="fPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00…" maxlength="20" aria-describedby="errPhone">' +
+        '<span class="err" id="errPhone">Укажите телефон полностью</span></div>' +
       '<div class="btn-row"><button type="submit" class="btn btn-block">' + submitLabel + '</button></div>' +
     '</form>';
   }
@@ -304,19 +395,22 @@
       phone: form.phone.value.trim()
     };
     var ok = true;
+    var firstInvalid = null;
     ['firstName', 'lastName', 'city', 'phone'].forEach(function (f) {
       var field = form.querySelector('[data-f="' + f + '"]');
       var bad = !data[f] || (f === 'phone' && data[f].replace(/\D/g, '').length < 10);
       field.classList.toggle('is-invalid', bad);
-      if (bad) ok = false;
+      field.querySelector('input').setAttribute('aria-invalid', bad ? 'true' : 'false');
+      if (bad) { ok = false; if (!firstInvalid) firstInvalid = field.querySelector('input'); }
     });
+    if (firstInvalid) firstInvalid.focus();
     return ok ? data : null;
   }
 
   function showLead() {
     setBar('Запись на уроки');
     render(
-      '<h2>Запись на уроки</h2>' +
+      '<h1>Запись на уроки</h1>' +
       '<p class="lede">Оставьте контакты — преподаватель свяжется с вами и подберёт группу.</p>' +
       personForm('Отправить заявку') +
       '<p class="notice" id="leadErr" hidden></p>' +
@@ -348,7 +442,7 @@
   function showLeadDone() {
     setBar(null);
     render(
-      '<h2>Заявка отправлена</h2>' +
+      '<h1>Заявка отправлена</h1>' +
       '<p class="lede">Спасибо! Преподаватель свяжется с вами в ближайшее время.</p>' +
       '<div class="btn-row"><button class="btn is-ghost" id="homeBtn">← На главную</button></div>'
     );
@@ -358,7 +452,7 @@
   function showReg() {
     setBar('Анкета перед экзаменом');
     render(
-      '<h2>Анкета перед экзаменом</h2>' +
+      '<h1>Анкета перед экзаменом</h1>' +
       '<p class="lede">Экзамен состоит из шести заданий. Вопросы идут по одному, на каждый даётся 3 минуты, вернуться назад нельзя. Не закрывайте вкладку: ответы сохраняются на этом устройстве.</p>' +
       personForm('Начать экзамен')
     );
@@ -369,8 +463,11 @@
       if (!data) return;
       state.student = data;
       state.startedAt = new Date().toISOString();
+      state.submissionId = uuid();
+      state.answers = freshAnswers();
       state.phase = 'exam';
       state.stepIdx = 0;
+      examFinished = false;
       save();
       show();
     };
@@ -397,7 +494,7 @@
       : 3;
     render(
       '<p class="kicker">Задание ' + taskIndex(task) + ' из ' + EXAM.tasks.length + '</p>' +
-      '<h2>' + esc(task.title) + '</h2>' +
+      '<h1>' + esc(task.title) + '</h1>' +
       (task.note ? '<p class="lede">' + esc(task.note) + '</p>' : '') +
       '<dl class="task-meta">' +
         '<div><dt>Баллы</dt><dd>' + task.points + '</dd></div>' +
@@ -459,10 +556,10 @@
     var selForm = null, selName = null;
 
     var formsHtml = task.forms.map(function (f, i) {
-      return '<button class="opt opt-form" data-v="' + esc(f) + '"><span class="ar">' + esc(f) + '</span><span class="tag"></span></button>';
+      return '<button type="button" class="opt opt-form" data-v="' + esc(f) + '" aria-pressed="false"><span class="ar">' + esc(f) + '</span><span class="tag"></span></button>';
     }).join('');
     var namesHtml = task.names.map(function (n, i) {
-      return '<button class="opt opt-name" data-v="' + esc(n) + '"><span class="ar">' + esc(n) + '</span><span class="tag"></span></button>';
+      return '<button type="button" class="opt opt-name" data-v="' + esc(n) + '" aria-pressed="false"><span class="ar">' + esc(n) + '</span><span class="tag"></span></button>';
     }).join('');
 
     render(
@@ -488,6 +585,7 @@
         var paired = !!pairs[f];
         b.classList.toggle('is-paired', paired);
         b.classList.toggle('is-on', selForm === f);
+        b.setAttribute('aria-pressed', selForm === f ? 'true' : 'false');
         b.querySelector('.tag').textContent = paired ? pairs[f] : '';
       });
       nameBtns.forEach(function (b) {
@@ -495,6 +593,7 @@
         var paired = !!used[v];
         b.classList.toggle('is-paired', paired);
         b.classList.toggle('is-on', selName === v);
+        b.setAttribute('aria-pressed', selName === v ? 'true' : 'false');
         b.querySelector('.tag').textContent = paired ? used[v] : '';
       });
       document.getElementById('pairCount').textContent = n;
@@ -542,7 +641,7 @@
       '<p class="ar-hero">' + esc(task.words[i]) + '</p>' +
       '<div class="stepper">' +
         '<button type="button" id="minus" aria-label="Меньше">−</button>' +
-        '<output id="num" class="' + (val == null ? 'is-empty' : '') + '">' + (val == null ? 'выберите число' : val) + '</output>' +
+        '<output id="num" aria-live="polite" class="' + (val == null ? 'is-empty' : '') + '">' + (val == null ? 'выберите число' : val) + '</output>' +
         '<button type="button" id="plus" aria-label="Больше">+</button>' +
       '</div>' +
       answerFooter()
@@ -566,7 +665,7 @@
     var chosen = (state.answers.sifat[letter] || []).slice();
     var rows = task.sifat.map(function (s) {
       var on = chosen.indexOf(s.ar) !== -1;
-      return '<button type="button" class="check' + (on ? ' is-on' : '') + '" data-v="' + esc(s.ar) + '">' +
+      return '<button type="button" class="check' + (on ? ' is-on' : '') + '" data-v="' + esc(s.ar) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' +
         '<span class="box">✓</span><span class="ru">' + esc(s.ru) + '</span><span class="ar">' + esc(s.ar) + '</span>' +
       '</button>';
     }).join('');
@@ -583,6 +682,7 @@
         var idx = chosen.indexOf(v);
         if (idx === -1) chosen.push(v); else chosen.splice(idx, 1);
         b.classList.toggle('is-on', idx === -1);
+        b.setAttribute('aria-pressed', idx === -1 ? 'true' : 'false');
       };
     });
     cur = { collect: function () { state.answers.sifat[letter] = chosen; } };
@@ -606,7 +706,7 @@
       '<div class="compose-out is-empty" id="composeOut">нажимайте на плитки внизу</div>' +
       '<div class="compose-tiles" id="composeTiles">' +
         tiles.map(function (t) {
-          return '<button type="button" class="opt" data-id="' + t.id + '"><bdi>' + esc(t.v) + '</bdi></button>';
+          return '<button type="button" class="opt" data-id="' + t.id + '" aria-pressed="false"><bdi>' + esc(t.v) + '</bdi></button>';
         }).join('') +
       '</div>' +
       '<div class="compose-ctrl">' +
@@ -648,6 +748,7 @@
       }
       Object.keys(btns).forEach(function (id) {
         btns[id].classList.toggle('is-used', picked.indexOf(id) !== -1);
+        btns[id].setAttribute('aria-pressed', picked.indexOf(id) !== -1 ? 'true' : 'false');
       });
     }
 
@@ -662,18 +763,24 @@
     var val = state.answers.yesno[i];
     render(
       '<div class="q-head"><p class="q-title">Верно ли утверждение?</p></div>' +
-      '<p class="lede" style="max-width:none">' + esc(st.text) + '</p>' +
-      (st.ar ? '<p class="ar-hero" style="font-size:clamp(34px,8vw,50px)">' + esc(st.ar) + '</p>' : '') +
+      '<p class="lede statement">' + esc(st.text) + '</p>' +
+      (st.ar ? '<p class="ar-hero is-compact">' + esc(st.ar) + '</p>' : '') +
       '<div class="yesno">' +
-        '<button type="button" class="opt' + (val === true ? ' is-on' : '') + '" id="optYes">Да</button>' +
-        '<button type="button" class="opt' + (val === false ? ' is-on' : '') + '" id="optNo">Нет</button>' +
+        '<button type="button" class="opt' + (val === true ? ' is-on' : '') + '" id="optYes" aria-pressed="' + (val === true ? 'true' : 'false') + '">Да</button>' +
+        '<button type="button" class="opt' + (val === false ? ' is-on' : '') + '" id="optNo" aria-pressed="' + (val === false ? 'true' : 'false') + '">Нет</button>' +
       '</div>' +
       answerFooter()
     );
     var yes = document.getElementById('optYes');
     var no = document.getElementById('optNo');
-    yes.onclick = function () { val = true; yes.classList.add('is-on'); no.classList.remove('is-on'); };
-    no.onclick = function () { val = false; no.classList.add('is-on'); yes.classList.remove('is-on'); };
+    yes.onclick = function () {
+      val = true; yes.classList.add('is-on'); no.classList.remove('is-on');
+      yes.setAttribute('aria-pressed', 'true'); no.setAttribute('aria-pressed', 'false');
+    };
+    no.onclick = function () {
+      val = false; no.classList.add('is-on'); yes.classList.remove('is-on');
+      no.setAttribute('aria-pressed', 'true'); yes.setAttribute('aria-pressed', 'false');
+    };
     cur = { collect: function () { state.answers.yesno[i] = val; } };
     bindAnswer();
   }
@@ -691,10 +798,10 @@
       '<div class="read-rows">' + rowsHtml + '</div>' +
       '<div class="recorder">' +
         '<p class="rec-status" id="recStatus">Микрофон ещё не включён</p>' +
-        '<div class="btn-row" style="margin-top:0;justify-content:center">' +
+        '<div class="btn-row reading-actions">' +
           '<button type="button" class="btn" id="recBtn">Начать запись</button>' +
         '</div>' +
-        '<div id="recPlayback" hidden style="width:100%"></div>' +
+        '<div id="recPlayback" class="recording-playback" hidden></div>' +
       '</div>' +
       '<div class="btn-row">' +
         '<button class="btn btn-block" id="answerBtn" disabled>Завершить экзамен</button>' +
@@ -721,7 +828,15 @@
     }
 
     function setStatus(html, live) {
-      status.innerHTML = (live ? '<span class="rec-dot"></span>' : '') + html;
+      status.replaceChildren();
+      if (live) {
+        var dot = document.createElement('span');
+        dot.className = 'rec-dot';
+        dot.setAttribute('aria-hidden', 'true');
+        status.appendChild(dot);
+      }
+      status.appendChild(document.createTextNode(html));
+      recBtn.classList.toggle('is-recording', !!live);
     }
 
     recBtn.onclick = function () {
@@ -808,14 +923,18 @@
     save();
     setBar('Экзамен завершён');
     render(
-      '<h2>Отправляем ответы…</h2>' +
+      '<h1>Отправляем ответы…</h1>' +
       '<p class="lede">Не закрывайте вкладку, это займёт несколько секунд.</p>'
     );
     submitAll().then(function () { showDone(); });
   }
 
   function submitAll() {
+    var savedStudentToken = '';
+    try { savedStudentToken = localStorage.getItem(STUDENT_KEY) || ''; } catch (e) { /* ок */ }
     var payload = {
+      submissionId: state.submissionId,
+      studentToken: savedStudentToken,
       student: state.student,
       startedAt: state.startedAt,
       finishedAt: new Date().toISOString(),
@@ -881,12 +1000,15 @@
 
   function showDone() {
     setBar('Экзамен завершён');
-    var html = '<h2>Экзамен завершён</h2>';
+    var html = '<h1>Экзамен завершён</h1>';
     var s = state.student || {};
     html += '<p class="lede">' + esc(s.firstName) + ', спасибо! ';
 
     if (serverResult && serverResult.id) {
       try { localStorage.setItem('tajweed_last_result', serverResult.id); } catch (e) { /* ок */ }
+      if (serverResult.studentToken) {
+        try { localStorage.setItem(STUDENT_KEY, serverResult.studentToken); } catch (e) { /* ок */ }
+      }
       if (history.replaceState) history.replaceState(null, '', '#r=' + serverResult.id);
     }
 
@@ -913,7 +1035,8 @@
       }
     } else {
       html += 'Ответы сохранены на этом устройстве.</p>';
-      html += '<p class="notice is-error">Не получилось связаться с сервером. Отправьте отчёт преподавателю вручную — кнопки ниже.</p>';
+      html += '<p class="notice is-error">Не получилось связаться с сервером. Ответы не потеряны: повторите отправку или передайте отчёт преподавателю вручную.</p>';
+      html += '<div class="btn-row"><button class="btn" id="retrySubmitBtn">Повторить отправку</button></div>';
     }
 
     html += '<hr class="rule">';
@@ -926,6 +1049,13 @@
       '<a class="btn is-ghost" id="waBtn" target="_blank" rel="noopener">WhatsApp</a>' +
       '<a class="btn is-ghost" id="tgBtn" target="_blank" rel="noopener">Telegram</a>' +
     '</div>';
+
+    if (serverResult && serverResult.studentToken) {
+      html += '<div class="btn-row"><button class="btn" id="cabinetBtn">Открыть личный кабинет</button>' +
+        '<button class="btn is-ghost" id="homeBtn">На главную</button></div>';
+    } else {
+      html += '<div class="btn-row"><button class="btn is-ghost" id="homeBtn">На главную</button></div>';
+    }
 
     render(html);
 
@@ -956,6 +1086,22 @@
     document.getElementById('tgBtn').href = 'https://t.me/share/url?url=' +
       encodeURIComponent(CFG.SITE_URL || location.href) + '&text=' + encodeURIComponent(text);
 
+    var retrySubmit = document.getElementById('retrySubmitBtn');
+    if (retrySubmit) {
+      retrySubmit.onclick = function () {
+        retrySubmit.disabled = true;
+        retrySubmit.textContent = 'Отправляем…';
+        submitAll().then(function () { showDone(); });
+      };
+    }
+    var cabinetBtn = document.getElementById('cabinetBtn');
+    if (cabinetBtn) cabinetBtn.onclick = function () { showStudentCabinet(serverResult.studentToken); };
+    document.getElementById('homeBtn').onclick = function () {
+      if (history.replaceState) history.replaceState(null, '', location.pathname);
+      state.phase = 'welcome';
+      show();
+    };
+
     // черновик стираем только когда сервер принял ответы
     if (serverResult && serverResult.id) {
       try { localStorage.removeItem(LS_KEY); } catch (e) { /* не критично */ }
@@ -974,7 +1120,10 @@
   restore();
   hit();
   var hashResult = location.hash.match(/^#r=([0-9a-f-]{36})$/i);
-  if (hashResult && state.phase !== 'exam') {
+  var hashStudent = location.hash.match(/^#student=([0-9a-f-]{36})$/i);
+  if (hashStudent && state.phase !== 'exam') {
+    showStudentCabinet(hashStudent[1]);
+  } else if (hashResult && state.phase !== 'exam') {
     showSavedResult(hashResult[1]);
   } else {
     show();
