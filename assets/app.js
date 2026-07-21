@@ -665,10 +665,12 @@
       lastId = localStorage.getItem('tajweed_last_result') || '';
       studentToken = localStorage.getItem(STUDENT_KEY) || '';
     } catch (e) { /* ок */ }
+    // левые две колонки под текстом не штрихуем — как на эталоне
     var cells = '<div class="hero-cells" aria-hidden="true">' +
-      ['lit', 'hatch', '', '', 'hatch', '', '', '', 'hatch', '', '', '',
-       '', 'hatch', '', '', '', 'lit'].map(function (c) {
-        return '<div class="c' + (c ? ' ' + c : '') + '"></div>';
+      ['', '', 'hatch', '', '', 'hatch',
+       '', '', '', 'hatch', '', '',
+       '', '', 'hatch', '', 'lit', 'hatch'].map(function (c, i) {
+        return '<div class="c' + (c ? ' ' + c : '') + '" data-i="' + (i + 1) + '"></div>';
       }).join('') + '</div>';
 
     render(
@@ -750,7 +752,7 @@
             '<span><b>Экзамен первого уровня</b><br><span class="meta">' +
             esc(new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(r.createdAt))) +
             ' · ' + (r.hasAudio ? 'чтение записано' : 'без аудиозаписи') + '</span></span>' +
-            '<span class="score" style="color: ' + scoreColor(r.percent, 34) + '">' + Math.round(r.percent) + '%</span></button>';
+            '<span class="score" style="color: ' + scoreColor(r.percent, 62) + '">' + Math.round(r.percent) + '%</span></button>';
         });
         html += '</div>';
       }
@@ -894,8 +896,11 @@
       if (idx >= WIZARD_STEPS.length) return drawExtra();
       var st = WIZARD_STEPS[idx];
       // на последнем шаге честно говорим, что фиксируется во время экзамена
+      var rules = (idx === 0 && opts.isExam)
+        ? '<p class="notice">Вопросы идут по одному, вернуться к предыдущему нельзя. На каждый — до 3 минут. Ответы сохраняются на этом устройстве, экзамен можно продолжить после перезагрузки.</p>'
+        : '';
       var honesty = (idx === WIZARD_STEPS.length - 1 && opts.isExam)
-        ? '<p class="notice">Во время экзамена сайт отмечает, сколько раз вы уходили со вкладки, и показывает это преподавателю. Это не блокирует сдачу — просто помогает ему понимать, как проходил экзамен.</p>'
+        ? '<p class="notice">Имя, фамилия, город и телефон уйдут преподавателю Деабу Анасу Т. вместе с ответами — чтобы он знал, чью работу проверяет, и мог связаться. Ещё сайт отметит, сколько раз вы уходили со вкладки, и покажет это ему. Больше никуда данные не передаются.</p>'
         : '';
       render(
         '<section class="wizard">' +
@@ -911,7 +916,7 @@
               ' value="' + esc(data[st.f]) + '" aria-describedby="wErr">' +
             '<span class="wizard-hint">' + esc(st.hint) + '</span>' +
             '<span class="err" id="wErr" role="alert">' + esc(st.err) + '</span>' +
-          '</div>' + honesty +
+          '</div>' + rules + honesty +
           '<div class="btn-row">' +
             '<button class="btn btn-block" id="wNext">' +
               (idx === total - 1 ? esc(opts.finishLabel) : 'Далее') + '</button>' +
@@ -1124,6 +1129,7 @@
     render(
       '<h1>Запись на уроки</h1>' +
       '<p class="lede">Оставьте контакты и отметьте удобное время — преподаватель свяжется с вами и подберёт группу.</p>' +
+      '<p class="notice">Имя, город, телефон и выбранное время получит преподаватель Деаб Анас Т. Больше никуда данные не уходят.</p>' +
       personForm('Отправить заявку', true) +
       '<p class="notice" id="leadErr" role="status" aria-live="polite" hidden></p>' +
       '<div class="btn-row"><button class="btn is-ghost" id="backBtn">← Назад</button></div>'
@@ -1310,23 +1316,21 @@
      а случайный тап иначе стоил бы вопроса. */
   function bindAnswer(isAnswered) {
     var btn = document.getElementById('answerBtn');
+    var base = btn.textContent;
     var armed = false;
-        var base = btn.textContent;
-    function relax() {
-      if (!armed) return;
-      armed = false;
-      btn.textContent = base;
-      btn.classList.remove('is-warning');
+
+    function ready() {
+      return typeof isAnswered !== 'function' || isAnswered();
     }
-    // как только ответ появился, предупреждение снимаем — иначе кнопка врёт
-    app.addEventListener('click', function () {
-      if (typeof isAnswered === 'function' && isAnswered()) relax();
-    }, true);
-    app.addEventListener('change', function () {
-      if (typeof isAnswered === 'function' && isAnswered()) relax();
-    }, true);
+
+    // состояние сверяем при каждом нажатии — устаревшее предупреждение снимаем
     btn.onclick = function () {
-      if (typeof isAnswered === 'function' && !isAnswered() && !armed) {
+      if (ready()) {
+        if (armed) { armed = false; btn.textContent = base; btn.classList.remove('is-warning'); }
+        stopTimer();
+        return commitAndNext();
+      }
+      if (!armed) {
         armed = true;
         btn.textContent = 'Ответ не выбран — пропустить вопрос?';
         btn.classList.add('is-warning');
@@ -1428,7 +1432,7 @@
   function renderSyllables(task, i) {
     var val = state.answers.syllables[i];
     render(
-      '<div class="q-head"><h1 class="q-title">Сколько слогов в этом слове?</h1></div>' +
+      '<div class="q-head"><h1 class="q-title">Слово ' + (i + 1) + ' из ' + task.words.length + ': сколько слогов?</h1></div>' +
       '<p class="ar-hero" lang="ar" dir="rtl">' + esc(task.words[i]) + '</p>' +
       '<div class="stepper">' +
         '<button type="button" id="minus" aria-label="Уменьшить число слогов">−</button>' +
@@ -1461,7 +1465,7 @@
       '</label>';
     }).join('');
     render(
-      '<div class="q-head"><h1 class="q-title">Отметьте сифаты буквы</h1>' +
+      '<div class="q-head"><h1 class="q-title">Буква ' + (i + 1) + ' из ' + task.letters.length + ': отметьте сифаты</h1>' +
       '<p class="q-note">' + esc(task.note) + '</p></div>' +
       '<p class="ar-hero" lang="ar" dir="rtl">' + esc(letter) + '</p>' +
       '<fieldset class="checks"><legend class="visually-hidden">Сифаты буквы</legend>' + rows + '</fieldset>' +
@@ -1489,7 +1493,7 @@
     var picked = []; // массив id в порядке нажатия
 
     render(
-      '<div class="q-head"><h1 class="q-title">Соберите слово</h1>' +
+      '<div class="q-head"><h1 class="q-title">Слово ' + (i + 1) + ' из ' + task.items.length + ': соберите</h1>' +
       (item.hint ? '<p class="q-note">' + esc(item.hint) + '</p>' : '') +
       '</div>' +
       '<p class="compose-given">Дано: <span class="ar" lang="ar" dir="rtl">' + esc(item.given) + '</span></p>' +
@@ -1556,7 +1560,7 @@
     var st = task.statements[i];
     var val = state.answers.yesno[i];
     render(
-      '<div class="q-head"><h1 class="q-title">Верно ли утверждение?</h1></div>' +
+      '<div class="q-head"><h1 class="q-title">Утверждение ' + (i + 1) + ' из ' + task.statements.length + ': верно?</h1></div>' +
       '<p class="lede statement">' + esc(st.text) + '</p>' +
       (st.ar ? '<p class="ar-hero is-compact" lang="ar" dir="rtl">' + esc(st.ar) + '</p>' : '') +
       '<fieldset class="yesno"><legend class="visually-hidden">Верно ли утверждение</legend>' +

@@ -711,11 +711,10 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 .hero-cells {
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  pointer-events: none;
 }
 
 .hero-cells .c {
@@ -734,29 +733,33 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   background-image: var(--hatch);
   opacity: 0;
   transition: opacity 0.55s;
+  pointer-events: none;
 }
 
-/* узловые точки на пересечениях — фирменная деталь чертежа */
-.hero-cells .c::before {
+
+
+
+
+.hero-cells .c.hatch::after, .hero-cells .c.lit::after, .hero-cells .c:hover::after { opacity: 1; }
+
+/* узловые точки на всех углах ячеек и по периметру — конструкция эталона */
+.hero-cells .c::before,
+.hero-cells::before,
+.hero-cells::after {
   content: "";
   position: absolute;
-  right: 0;
-  bottom: 0;
   z-index: 2;
   width: 8px;
   height: 8px;
   border: 1px solid var(--line);
   border-radius: 50%;
   background: var(--bg);
-  transform: translate(50%, 50%);
   pointer-events: none;
 }
 
-/* у крайних правых и нижних ячеек точка легла бы на рамку — убираем */
-.hero-cells .c:nth-child(6n)::before,
-.hero-cells .c:nth-last-child(-n + 6)::before { display: none; }
-
-.hero-cells .c.hatch::after, .hero-cells .c.lit::after, .hero-cells .c:hover::after { opacity: 1; }
+.hero-cells .c::before { left: 0; top: 0; transform: translate(-50%, -50%); }
+.hero-cells::before { left: 0; bottom: 0; transform: translate(-50%, 50%); }
+.hero-cells::after { right: 0; bottom: 0; transform: translate(50%, 50%); }
 
 /* на узком экране ячейки мельчают и штриховка забивает текст */
 @media (max-width: 759px) {
@@ -765,9 +768,10 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   .hero-cells .c:nth-child(6n) { border-right: 1px solid var(--line); }
   .hero-cells .c:nth-child(3n) { border-right: 0; }
   .hero-cells .c:nth-last-child(-n + 3) { border-bottom: 0; }
-  .hero-cells .c::before { display: none; }
-  .hero-cells .c:nth-child(6n)::before { display: none; }
-  .hero-cells .c:nth-child(-n + 15):not(:nth-child(3n))::before { display: block; }
+  /* раскладку штриховки задаём заново: текст идёт по левой колонке */
+  .hero-cells .c.hatch::after, .hero-cells .c.lit::after { opacity: 0; }
+  .hero-cells .c:nth-child(3n)::after { opacity: 1; }
+  .hero-cells .c:nth-child(14)::after { opacity: 1; }
 }
 
 .welcome-hero h1 { max-width: 11ch; font-size: clamp(32px, 7.4vw, 62px); overflow-wrap: anywhere; }
@@ -931,9 +935,9 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 .field input::placeholder { color: var(--text-faint); }
 .field input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-color: var(--line-strong); }
-.field .err { display: none; margin-top: 6px; color: var(--text); font-size: 13px; font-weight: 600; }
+.field .err { visibility: hidden; height: 0; overflow: hidden; margin-top: 0; color: var(--recording); font-size: 13px; font-weight: 600; }
 .field.is-invalid input { border-style: dashed; border-color: var(--line-strong); }
-.field.is-invalid .err { display: block; }
+.field.is-invalid .err { visibility: visible; height: auto; margin-top: 6px; }
 
 /* Водяной знак на экранах вопросов */
 
@@ -1525,7 +1529,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   color: var(--text-faint);
   font-family: var(--font-mono);
   font-size: 12px;
-  opacity: 0.55;
+  color: var(--text-soft);
 }
 
 .locked-note {
