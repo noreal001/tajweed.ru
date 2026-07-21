@@ -13,6 +13,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&amp;family=Golos+Text:wght@400;500;600&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
+  <script>
+    /* Тема ставится до отрисовки, иначе моргает белым при загрузке. */
+    (function () {
+      try {
+        var saved = localStorage.getItem('tajweed_theme');
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      } catch (e) { /* приватный режим — остаётся тема по умолчанию */ }
+    })();
+  </script>
 </head>
 <body>
 
@@ -36,6 +47,11 @@
   </header>
 
   <main class="sheet" id="app" tabindex="-1"></main>
+
+  <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">
+    <span class="theme-dial" aria-hidden="true"></span>
+    <span class="theme-label" id="themeLabel">Тёмная</span>
+  </button>
 
   <footer class="pagefoot">
     <span>таджвид.рф</span>

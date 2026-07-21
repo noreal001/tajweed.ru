@@ -28,6 +28,83 @@
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Светлая тема: тот же чертёж, но чёрным по бумаге */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f7f7f4;
+  --surface: #ffffff;
+  --surface-strong: #ecece7;
+  --surface-glass: rgba(255, 255, 255, 0.8);
+  --text: #0d0d0c;
+  --text-soft: #4c4c48;
+  --text-faint: #6b6b65;
+  --line: #d3d3cd;
+  --control-line: #8d8d86;
+  --line-strong: #0d0d0c;
+  --inverse-bg: #0d0d0c;
+  --inverse-text: #ffffff;
+  --focus: #0d0d0c;
+  --hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%230d0d0c' stroke-opacity='0.16' stroke-width='0.7'/></svg>");
+}
+
+:root[data-theme="light"] .level-bar { background: rgba(13, 13, 12, 0.12); }
+:root[data-theme="light"] .btn { color: var(--inverse-text); background: var(--inverse-bg); }
+:root[data-theme="light"] .btn:hover { color: var(--text); background: var(--surface-strong); }
+:root[data-theme="light"] .btn.is-ghost { color: var(--text); background: var(--bg); }
+:root[data-theme="light"] .score-hero.is-scored,
+:root[data-theme="light"] .level.is-scored { box-shadow: none; }
+
+/* На бумаге неон слепит — цвет результата приглушаем и убираем свечение */
+:root[data-theme="light"] .score-hero.is-scored .score-percent,
+:root[data-theme="light"] .level-percent {
+  color: color-mix(in srgb, var(--score-color) 62%, #0d0d0c);
+  text-shadow: none;
+}
+
+:root[data-theme="light"] .level-bar span { box-shadow: none; }
+
+/* Переключатель темы */
+
+.theme-toggle {
+  position: fixed;
+  right: 18px;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  z-index: 20;
+  min-height: 40px;
+  padding: 9px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--control-line);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: var(--bg);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transition: border-color 0.14s, background-color 0.14s;
+}
+
+.theme-toggle:hover { border-color: var(--line-strong); background: var(--surface); }
+.theme-toggle:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+/* половинка круга — светлая/тёмная сторона */
+.theme-dial {
+  width: 13px;
+  height: 13px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: linear-gradient(to right, currentColor 0 50%, transparent 50% 100%);
+}
+
+@media (max-width: 700px) {
+  .theme-toggle { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); padding: 8px 11px; }
+  .theme-label { display: none; }
+}
+
 /* Точечная сетка по левому краю — «поле чертежа» */
 body::before {
   content: "";

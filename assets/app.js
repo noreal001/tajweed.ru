@@ -204,13 +204,13 @@
     } catch (e) { /* повреждённое сохранение игнорируем */ }
   }
 
-  function api(path, body) {
+  function api(path, body, timeout) {
     if (!API) return Promise.reject(new Error('API не настроен'));
     return fetchWithTimeout(API + path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
-    }, 15000).then(function (r) {
+    }, timeout || 15000).then(function (r) {
       if (!r.ok) {
         var error = new Error('HTTP ' + r.status);
         error.status = r.status;
@@ -1319,12 +1319,37 @@
     setBar('Экзамен завершён');
     render(
       '<h1>Отправляем ответы…</h1>' +
-      '<p class="lede">Не закрывайте вкладку, это займёт несколько секунд.</p>'
+      '<p class="lede">Не закрывайте вкладку, это займёт несколько секунд.</p>' +
+      '<p class="notice" id="submitProgress" role="status" aria-live="polite">Соединяемся с сервером…</p>'
     );
-    submitAll().then(function () { showDone(); });
+    submitAll(function (n, total) {
+      var el = document.getElementById('submitProgress');
+      if (!el) return;
+      el.textContent = n === 1
+        ? 'Соединяемся с сервером…'
+        : 'Сервер просыпается, пробуем ещё раз (попытка ' + n + ' из ' + total + ')…';
+    }).then(function () { showDone(); });
   }
 
-  function submitAll() {
+  /* Сервер на Railway может «просыпаться» после простоя или перезапуска —
+     первая попытка тогда не укладывается в таймаут. Пробуем несколько раз. */
+  function apiWithRetry(path, body, attempts, onAttempt) {
+    var total = attempts || 4;
+    function run(n) {
+      if (onAttempt) onAttempt(n, total);
+      return api(path, body, 30000).catch(function (err) {
+        // 4xx — данные не примут и со второй попытки, повторять бессмысленно
+        if (err && err.status && err.status >= 400 && err.status < 500) throw err;
+        if (n >= total) throw err;
+        return new Promise(function (resolve) {
+          setTimeout(resolve, n * 2500);
+        }).then(function () { return run(n + 1); });
+      });
+    }
+    return run(1);
+  }
+
+  function submitAll(onAttempt) {
     var savedStudentToken = '';
     try { savedStudentToken = localStorage.getItem(STUDENT_KEY) || ''; } catch (e) { /* ок */ }
     var payload = {
@@ -1338,7 +1363,7 @@
     };
     serverResult = null;
     submitError = null;
-    return api('/api/submit', payload).then(function (res) {
+    return apiWithRetry('/api/submit', payload, 4, onAttempt).then(function (res) {
       serverResult = res;
       if (audioBlob && res && res.id) {
         var fd = new FormData();
@@ -1502,13 +1527,15 @@
       }
     } else {
       html += 'Ответы сохранены на этом устройстве.</p>';
-      html += '<p class="notice is-error">Не получилось связаться с сервером. Ответы не потеряны: повторите отправку или передайте отчёт преподавателю вручную.</p>';
+      html += '<p class="notice is-error">Сервер сейчас недоступен — мы пробовали несколько раз. Ответы не потеряны: они останутся здесь, даже если закрыть вкладку. Попробуйте отправку через минуту или передайте отчёт преподавателю вручную.</p>';
       html += '<div class="btn-row"><button class="btn" id="retrySubmitBtn">Повторить отправку</button></div>';
     }
 
     html += '<hr class="rule">';
     html += '<p class="kicker">Отчёт</p>';
-    html += '<p class="lede">Отчёт уже ушёл преподавателю. Кнопки ниже — если хотите сохранить копию себе или переслать её сами.</p>';
+    html += '<p class="lede">' + (serverResult && serverResult.id
+      ? 'Отчёт уже ушёл преподавателю. Кнопки ниже — если хотите сохранить копию себе или переслать её сами.'
+      : 'Пока отчёт до преподавателя не дошёл. Сохраните его или перешлите сами — так результат точно не потеряется.') + '</p>';
     html += reportButtonsHtml(audioBlob && (!serverResult || !serverResult.audioUploaded));
 
     if (serverResult && serverResult.studentToken) {
@@ -1525,8 +1552,9 @@
     if (retrySubmit) {
       retrySubmit.onclick = function () {
         retrySubmit.disabled = true;
-        retrySubmit.textContent = 'Отправляем…';
-        submitAll().then(function () { showDone(); });
+        submitAll(function (n, total) {
+          retrySubmit.textContent = n === 1 ? 'Отправляем…' : 'Попытка ' + n + ' из ' + total + '…';
+        }).then(function () { showDone(); });
       };
     }
     var cabinetBtn = document.getElementById('cabinetBtn');
@@ -1557,6 +1585,39 @@
   window.addEventListener('pageshow', function (event) {
     if (event.persisted) show();
   });
+
+  /* ── Переключатель темы ────────────────────────────────── */
+
+  (function initTheme() {
+    var toggle = document.getElementById('themeToggle');
+    var label = document.getElementById('themeLabel');
+    if (!toggle) return;
+
+    function current() {
+      var set = document.documentElement.getAttribute('data-theme');
+      if (set === 'light' || set === 'dark') return set;
+      return 'dark'; // по умолчанию чертёжная тёмная
+    }
+
+    function paint(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      var isLight = theme === 'light';
+      label.textContent = isLight ? 'Светлая' : 'Тёмная';
+      toggle.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+      toggle.setAttribute('aria-label', 'Тема оформления: ' + (isLight ? 'светлая' : 'тёмная') +
+        '. Переключить на ' + (isLight ? 'тёмную' : 'светлую'));
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', isLight ? '#F7F7F4' : '#0A0A0B');
+    }
+
+    paint(current());
+
+    toggle.onclick = function () {
+      var next = current() === 'light' ? 'dark' : 'light';
+      paint(next);
+      try { localStorage.setItem('tajweed_theme', next); } catch (e) { /* ок */ }
+    };
+  })();
 
   restore();
   hit();
