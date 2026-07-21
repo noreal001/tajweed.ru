@@ -112,6 +112,35 @@
     }
   };
 
+  /* Журнал поведения: скриншот в браузере не заблокировать, поэтому
+     фиксируем уходы со вкладки и показываем их преподавателю. */
+  var integrity = { away: 0, awayMs: 0, events: [] };
+  var awayAt = 0;
+
+  function watchIntegrity() {
+    function leave() {
+      if (state.phase !== 'exam' || awayAt) return;
+      awayAt = Date.now();
+    }
+    function back() {
+      if (!awayAt) return;
+      var ms = Date.now() - awayAt;
+      awayAt = 0;
+      if (ms < 400) return; // моргание фокуса при тапе — не считаем
+      integrity.away += 1;
+      integrity.awayMs += ms;
+      if (integrity.events.length < 60) {
+        integrity.events.push({ step: state.stepIdx, ms: ms, at: new Date().toISOString() });
+      }
+      save();
+    }
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) leave(); else back();
+    });
+    window.addEventListener('blur', leave);
+    window.addEventListener('focus', back);
+  }
+
   var audioBlob = null;
   var audioMime = '';
   var timerId = null;
@@ -981,6 +1010,24 @@
     return label;
   }
 
+  /* Водяной знак с именем ученика: скриншот заблокировать нельзя,
+     но подписанный кадр невыгодно пересылать. */
+  function stampWatermark() {
+    var s = state.student || {};
+    var tail = String(s.phone || '').replace(/\D/g, '').slice(-4);
+    var mark = [s.lastName, s.firstName].filter(Boolean).join(' ') + (tail ? ' ·' + tail : '');
+    if (!mark.trim()) return;
+    var wm = document.createElement('div');
+    wm.className = 'watermark';
+    wm.setAttribute('aria-hidden', 'true');
+    for (var i = 0; i < 12; i++) {
+      var span = document.createElement('span');
+      span.textContent = mark;
+      wm.appendChild(span);
+    }
+    app.appendChild(wm);
+  }
+
   function showQuestion(step) {
     var task = step.task;
     setBar(qLabel(step));
@@ -989,7 +1036,8 @@
     if (task.kind === 'sifat') renderSifat(task, step.sub);
     if (task.kind === 'compose') renderCompose(task, step.sub);
     if (task.kind === 'yesno') renderYesno(task, step.sub);
-    if (task.kind === 'reading') return renderReading(task);
+    if (task.kind === 'reading') { stampWatermark(); return renderReading(task); }
+    stampWatermark();
     startTimer(QUESTION_TIME, commitAndNext);
   }
 
@@ -1507,6 +1555,7 @@
       startedAt: state.startedAt,
       finishedAt: new Date().toISOString(),
       answers: state.answers,
+      integrity: integrity,
       site: location.hostname
     };
     serverResult = null;
@@ -1774,6 +1823,7 @@
     show();
   };
 
+  watchIntegrity();
   restore();
   hit();
   var hashResult = location.hash.match(/^#r=([0-9a-f-]{36})$/i);

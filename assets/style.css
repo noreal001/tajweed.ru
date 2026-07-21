@@ -733,6 +733,50 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 .field.is-invalid input { border-style: dashed; border-color: var(--line-strong); }
 .field.is-invalid .err { display: block; }
 
+/* Водяной знак на экранах вопросов */
+
+.watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-content: space-around;
+  gap: 40px 12px;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.watermark span {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  opacity: 0.055;
+  transform: rotate(-24deg);
+  white-space: nowrap;
+}
+
+html.is-exam .screen { position: relative; }
+
+/* содержимое вопросов не выделяется и не копируется */
+html.is-exam .q-head, html.is-exam .ar-hero, html.is-exam .ar-line,
+html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@media print {
+  html.is-exam body * { visibility: hidden; }
+  html.is-exam body::after {
+    content: "Печать экзамена отключена";
+    visibility: visible;
+    font-family: sans-serif;
+  }
+}
+
 /* Пошаговая анкета */
 
 .wizard { position: relative; }
