@@ -16,7 +16,7 @@
   --line: rgba(255, 255, 255, 0.12);
   --lit: rgba(255, 255, 255, 0.05);
   /* канты интерактивных элементов — не ниже 3:1 по WCAG 1.4.11 */
-  --control-line: rgba(255, 255, 255, 0.42);
+  --control-line: rgba(255, 255, 255, 0.46);
   --line-strong: rgba(255, 255, 255, 0.6);
   --inverse-bg: #f2f2f4;
   --inverse-text: #0a0a0b;
@@ -37,42 +37,68 @@
   --track-pill: 0.14em;
 }
 
-/* Светлая тема: тот же чертёж, но чёрным по бумаге */
+/* Белый бланк — тема по умолчанию: тот же чертёж, чёрным по белому.
+   Основа чисто белая, без серых полутонов; линии и шрифт — чёрные. */
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #f7f7f4;
-  --surface: #ffffff;
-  --surface-strong: #ecece7;
-  --surface-glass: rgba(255, 255, 255, 0.8);
-  --text: #0d0d0c;
-  --text-soft: #4c4c48;
-  --text-faint: #6b6b65;
-  --line: #d3d3cd;
-  --control-line: #8d8d86;
-  --line-strong: #0d0d0c;
-  --inverse-bg: #0d0d0c;
+  --bg: #ffffff;
+  --surface: rgba(10, 10, 11, 0.025);
+  --surface-strong: rgba(10, 10, 11, 0.06);
+  --surface-glass: rgba(255, 255, 255, 0.88);
+  --text: #0a0a0b;
+  --text-soft: rgba(10, 10, 11, 0.66);
+  --text-faint: rgba(10, 10, 11, 0.58);
+  --line: rgba(10, 10, 11, 0.16);
+  --control-line: rgba(10, 10, 11, 0.52);
+  --line-strong: rgba(10, 10, 11, 0.82);
+  --inverse-bg: #0a0a0b;
   --inverse-text: #ffffff;
-  --focus: #0d0d0c;
-  --muted: rgba(13, 13, 12, 0.4);
-  --lit: rgba(13, 13, 12, 0.055);
-  --hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%230d0d0c' stroke-opacity='0.16' stroke-width='0.7'/></svg>");
+  --focus: #0a0a0b;
+  --muted: rgba(10, 10, 11, 0.4);
+  --lit: rgba(10, 10, 11, 0.045);
+  --recording: #c9271b;
+  --hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%230a0a0b' stroke-opacity='0.18' stroke-width='0.7'/></svg>");
 }
 
-:root[data-theme="light"] .level-bar { background: rgba(13, 13, 12, 0.12); }
+:root[data-theme="light"] .level-bar { background: rgba(10, 10, 11, 0.12); }
 
-/* на бумаге плашка вдавливается тёмной: тот же приём, обратная полярность */
+/* Вдавленная плашка на белом — как карточки фабрик (Luzi, EPS) на вики:
+   светлая плашка и ДВЕ мягкие внутренние тени — тёмная сверху-слева,
+   белая снизу-справа. Плашка выглядит вдавленной в бумагу. */
 :root[data-theme="light"] .btn {
-  color: #f7f7f4;
-  background: linear-gradient(#26262a, #131315);
+  color: var(--text);
+  background: #f3f3f5;
   box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.5),
-    inset 0 -1px 2px rgba(255, 255, 255, 0.18);
+    inset 3px 3px 8px rgba(20, 19, 16, 0.13),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.95);
 }
 
 :root[data-theme="light"] .btn:hover {
   box-shadow:
-    inset 0 3px 7px rgba(0, 0, 0, 0.6),
-    inset 0 -1px 2px rgba(255, 255, 255, 0.16);
+    inset 4px 4px 10px rgba(20, 19, 16, 0.17),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.92);
+}
+
+/* открытый уровень — та же вдавленная плашка */
+:root[data-theme="light"] .level.is-open {
+  border-color: transparent;
+  background: #f3f3f5;
+  box-shadow:
+    inset 4px 4px 10px rgba(20, 19, 16, 0.09),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.95);
+}
+
+/* активный пункт меню вдавлен, само меню — белая пилюля с тенью-отрывом */
+:root[data-theme="light"] .tab.is-on {
+  background: #f3f3f5;
+  box-shadow:
+    inset 2px 2px 6px rgba(20, 19, 16, 0.09),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.95);
+}
+
+:root[data-theme="light"] .tabbar {
+  border-color: rgba(10, 10, 11, 0.14);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.1), 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 
 :root[data-theme="light"] .btn.is-ghost {
@@ -81,7 +107,7 @@
   box-shadow: inset 0 0 0 1px var(--control-line);
 }
 
-:root[data-theme="light"] .btn.is-ghost:hover { background: rgba(13, 13, 12, 0.05); }
+:root[data-theme="light"] .btn.is-ghost:hover { background: rgba(10, 10, 11, 0.05); }
 :root[data-theme="light"] .btn.is-quiet { color: var(--text-soft); background: transparent; box-shadow: none; }
 :root[data-theme="light"] .score-hero.is-scored,
 :root[data-theme="light"] .level.is-scored { box-shadow: none; }
@@ -89,7 +115,7 @@
 /* На бумаге неон слепит — цвет результата приглушаем и убираем свечение */
 :root[data-theme="light"] .score-hero.is-scored .score-percent,
 :root[data-theme="light"] .level-percent {
-  color: color-mix(in srgb, var(--score-color) 62%, #0d0d0c);
+  color: color-mix(in srgb, var(--score-color) 62%, #0a0a0b);
   text-shadow: none;
 }
 
@@ -250,7 +276,7 @@ html.is-exam body { padding-bottom: 0; }
 /* Профиль и настройки */
 
 .profile-card { margin-top: 20px; }
-.profile-name { margin-top: 8px; font-family: var(--font-display); font-size: clamp(26px, 5.4vw, 34px); font-weight: 600; }
+.profile-name { margin-top: 8px; font-family: var(--font-display); font-size: clamp(26px, 5.4vw, 34px); font-weight: 500; }
 
 .profile-meta {
   margin-top: 20px;
@@ -327,8 +353,8 @@ body::before {
 
 /* Приводные метки — переиспользуемый компонент: внутри любого .frame
    лежат absolute, на уровне страницы — fixed. Как на wiki.bahur.store. */
-.marks { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
-.marks.is-page { position: fixed; }
+.marks { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.marks.is-page { position: fixed; z-index: 31; }
 
 /* Рамка блока: та же конструкция, что .frame на вики */
 .frame { position: relative; padding: 26px; }
@@ -422,7 +448,7 @@ a { color: inherit; }
   top: 0;
   z-index: 10;
   color: var(--text);
-  background: var(--surface-glass);
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 
@@ -710,88 +736,57 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 /* Главная и кабинет */
 
-/* Баннер: рамка с сеткой ячеек — конструкция с wiki.bahur.store/prays */
+/* Баннер — конструкция мобильного баннера wiki.bahur.store/prays:
+   сетка ОДИНАКОВЫХ квадратов на любом экране (размер задан токеном,
+   а не долей ширины — квадраты совпадают на телефоне и десктопе),
+   штриховка одной полосой в верхнем ряду, текст на чистом поле. */
 
-.welcome-hero {
+:root { --hero-cell: 140px; }
+
+.welcome-hero,
+.cta-banner {
   position: relative;
-  min-height: 340px;
-  padding: 26px;
+  padding: 24px 20px 28px;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   justify-content: flex-end;
   border: 1px solid var(--line);
   isolation: isolate;
+  /* квадраты рисуются повторяющимся градиентом: шаг фиксированный,
+     значит на 390px помещается ~2.5 колонки — ровно как на эталоне */
+  background-image:
+    repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px var(--hero-cell)),
+    repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px var(--hero-cell));
 }
 
-/* сетка ячеек под контентом */
-.hero-cells {
+.welcome-hero { min-height: calc(var(--hero-cell) * 2 + 20px); }
+.cta-banner { min-height: calc(var(--hero-cell) * 1.6); margin-top: 44px; }
+
+/* штриховка верхнего ряда: от второй колонки до правого края,
+   первая ячейка и всё поле текста остаются чистыми */
+.hero-hatch {
   position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-}
-
-.hero-cells .c {
-  position: relative;
-  border-right: 1px solid var(--line);
+  top: 0;
+  left: var(--hero-cell);
+  right: 0;
+  height: var(--hero-cell);
   border-bottom: 1px solid var(--line);
-}
-
-.hero-cells .c:nth-child(6n) { border-right: 0; }
-.hero-cells .c:nth-last-child(-n + 6) { border-bottom: 0; }
-
-.hero-cells .c::after {
-  content: "";
-  position: absolute;
-  inset: 0;
   background-image: var(--hatch);
-  opacity: 0;
-  transition: opacity 0.55s;
+  opacity: 0.8;
   pointer-events: none;
 }
 
-
-
-
-
-.hero-cells .c.hatch::after, .hero-cells .c.lit::after, .hero-cells .c:hover::after { opacity: 1; }
-
-/* узловые точки на всех углах ячеек и по периметру — конструкция эталона */
-.hero-cells .c::before,
-.hero-cells::before,
-.hero-cells::after {
-  content: "";
-  position: absolute;
-  z-index: 2;
-  width: 8px;
-  height: 8px;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: var(--bg);
-  pointer-events: none;
-}
-
-.hero-cells .c::before { left: 0; top: 0; transform: translate(-50%, -50%); }
-.hero-cells::before { left: 0; bottom: 0; transform: translate(-50%, 50%); }
-.hero-cells::after { right: 0; bottom: 0; transform: translate(50%, 50%); }
-
-/* на узком экране ячейки мельчают и штриховка забивает текст */
-@media (max-width: 759px) {
-  .welcome-hero { padding: 20px 16px 24px; min-height: 300px; }
-  .hero-cells { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(6, 1fr); }
-  .hero-cells .c:nth-child(6n) { border-right: 1px solid var(--line); }
-  .hero-cells .c:nth-child(3n) { border-right: 0; }
-  .hero-cells .c:nth-last-child(-n + 3) { border-bottom: 0; }
-  /* раскладку штриховки задаём заново: текст идёт по левой колонке */
-  .hero-cells .c.hatch::after, .hero-cells .c.lit::after { opacity: 0; }
-  .hero-cells .c:nth-child(3n)::after { opacity: 1; }
-  .hero-cells .c:nth-child(14)::after { opacity: 1; }
-}
+/* Приводные уголки СНАРУЖИ рамки — как у баннера на прайсе:
+   тот же .marks, но его поле расширено за границы блока */
+.marks.is-out { inset: -24px; }
 
 .welcome-hero h1 { max-width: 11ch; font-size: clamp(32px, 7.4vw, 62px); overflow-wrap: anywhere; }
-.welcome-hero h1 em { font-style: italic; font-weight: 500; }
+.welcome-hero h1 em { font-style: italic; font-weight: 500; color: var(--text-soft); }
+:root[data-theme="light"] .welcome-hero h1 em { color: rgba(10, 10, 11, 0.5); }
+
+/* кикер под заголовком — ритм эталона */
+.kicker.is-under { margin: 12px 0 0; }
 .welcome-hero .lede { max-width: 46ch; position: relative; }
 
 /* Шапка экзамена: таймер и единственный выход */
@@ -805,8 +800,16 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 .path:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 .level { cursor: default; }
 
-/* контент баннера поверх сетки, чтобы линии не рассекали текст */
-.welcome-hero > *:not(.hero-cells):not(.marks) { position: relative; z-index: 1; }
+/* контент баннера поверх сетки, чтобы линии не рассекали текст:
+   текстовые элементы получают белую подложку — линии до них не доходят */
+.welcome-hero > *:not(.hero-hatch):not(.marks),
+.cta-banner > *:not(.hero-hatch):not(.marks) { position: relative; z-index: 1; }
+
+.welcome-hero h1, .welcome-hero .kicker, .welcome-hero .hero-meta,
+.cta-banner h2, .cta-banner .kicker {
+  background: var(--bg);
+  box-shadow: 0 0 0 8px var(--bg);
+}
 
 /* Мета-блок баннера с перекрестием — деталь эталона */
 .hero-actions { margin-top: 22px; }
@@ -872,11 +875,9 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   transition: border-color 0.16s, background-color 0.16s;
 }
 
-/* узловые точки — «плашка привинчена к листу» */
-.path::before, .path::after {
-  content: "";
+/* узловые точки — «плашка привинчена к листу», все четыре угла */
+.path .nodes i {
   position: absolute;
-  top: -4.5px;
   width: 8px;
   height: 8px;
   border: 1px solid var(--line);
@@ -885,8 +886,10 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   pointer-events: none;
 }
 
-.path::before { left: -4.5px; }
-.path::after { right: -4.5px; }
+.path .nodes i:nth-child(1) { top: -4.5px; left: -4.5px; }
+.path .nodes i:nth-child(2) { top: -4.5px; right: -4.5px; }
+.path .nodes i:nth-child(3) { bottom: -4.5px; left: -4.5px; }
+.path .nodes i:nth-child(4) { bottom: -4.5px; right: -4.5px; }
 
 .path:hover, .path:active { border-color: var(--line-strong); background: var(--surface-strong); }
 
@@ -903,7 +906,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   display: block;
   font-family: var(--font-display);
   font-size: clamp(24px, 5vw, 30px);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.1;
   text-wrap: balance;
 }
@@ -951,9 +954,9 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 .field input::placeholder { color: var(--text-faint); }
 .field input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-color: var(--line-strong); }
-.field .err { visibility: hidden; height: 0; overflow: hidden; margin-top: 0; color: var(--recording); font-size: 13px; font-weight: 600; }
+.field .err { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; color: var(--recording); font-size: 13px; font-weight: 600; }
 .field.is-invalid input { border-style: dashed; border-color: var(--line-strong); }
-.field.is-invalid .err { visibility: visible; height: auto; margin-top: 6px; }
+.field.is-invalid .err { position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: normal; margin-top: 6px; }
 
 /* Водяной знак на экранах вопросов */
 
@@ -1237,7 +1240,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 /* Вопросы */
 
 .q-head { margin-bottom: 24px; }
-.q-title { font-family: var(--font-display); font-size: clamp(21px, 4.6vw, 27px); font-weight: 600; line-height: 1.25; text-wrap: balance; }
+.q-title { font-family: var(--font-display); font-size: clamp(21px, 4.6vw, 27px); font-weight: 500; line-height: 1.25; text-wrap: balance; }
 .q-note { margin-top: 8px; color: var(--text-soft); font-size: 14px; text-wrap: pretty; }
 
 .stepper {
@@ -1564,7 +1567,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 .level-n {
   font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .level-lock, .level-verdict {
@@ -1682,8 +1685,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 .noscript { padding: 24px; font-size: 16px; text-align: center; }
 
 @media (max-width: 480px) {
-  .welcome-hero { min-height: 0; padding: 20px 16px 26px; }
-    .match { grid-template-columns: 1fr 1.35fr; gap: 8px 10px; }
+  .match { grid-template-columns: 1fr 1.35fr; gap: 8px 10px; }
   .match .opt .ar { font-size: 31px; }
   .task-meta { grid-template-columns: repeat(3, auto); gap: 8px 20px; }
   .btn-row .btn { flex: 1 1 100%; }

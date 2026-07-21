@@ -2,26 +2,30 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <title>Экзамен по таджвиду · Первый уровень</title>
   <meta name="description" content="Экзамен по таджвиду, первый уровень. Проверьте свой уровень знаний или запишитесь на уроки чтения Корана. Преподаватель Деаб Анас Т.">
   <meta property="og:title" content="Экзамен по таджвиду · Первый уровень">
   <meta property="og:description" content="Проверьте свой уровень знаний таджвида или запишитесь на уроки.">
-  <meta name="theme-color" content="#0A0A0B">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230A0A0B'/%3E%3Cpath d='M6 6h52v52H6z' fill='none' stroke='%23F2F2F4' stroke-opacity='.35' stroke-width='1'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle' fill='%23F2F2F4' font-family='Georgia,serif'%3E%D8%AA%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#FFFFFF">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23FFFFFF'/%3E%3Cpath d='M6 6h52v52H6z' fill='none' stroke='%230A0A0B' stroke-opacity='.45' stroke-width='1'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle' fill='%230A0A0B' font-family='Georgia,serif'%3E%D8%AA%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
   <script>
-    /* Тема ставится до отрисовки, иначе моргает белым при загрузке. */
+    /* Тема ставится до отрисовки, иначе моргает при загрузке.
+       По умолчанию — белый бланк; тёмная включается только явно. */
     (function () {
+      var theme = 'light';
       try {
-        var saved = localStorage.getItem('tajweed_theme');
-        if (saved === 'light' || saved === 'dark') {
-          document.documentElement.setAttribute('data-theme', saved);
-        }
-      } catch (e) { /* приватный режим — остаётся тема по умолчанию */ }
+        if (localStorage.getItem('tajweed_theme') === 'dark') theme = 'dark';
+      } catch (e) { /* приватный режим — остаётся белая */ }
+      document.documentElement.setAttribute('data-theme', theme);
+      if (theme === 'dark') {
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', '#0A0A0B');
+      }
     })();
   </script>
 </head>

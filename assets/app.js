@@ -37,9 +37,10 @@
     { n: 6, open: false }
   ];
 
-  /* Приводные метки внутри блока — компонент .marks с вики */
-  function marks() {
-    return '<div class="marks" aria-hidden="true">' +
+  /* Приводные метки — компонент .marks с вики.
+     marks('is-out') выносит уголки наружу рамки, как у баннера прайса. */
+  function marks(extra) {
+    return '<div class="marks' + (extra ? ' ' + extra : '') + '" aria-hidden="true">' +
       '<span class="tick tl-v"></span><span class="tick tl-h"></span>' +
       '<span class="tick tr-v"></span><span class="tick tr-h"></span>' +
       '<span class="tick bl-v"></span><span class="tick bl-h"></span>' +
@@ -428,7 +429,7 @@
       document.documentElement.setAttribute('data-theme', next);
       try { localStorage.setItem('tajweed_theme', next); } catch (e) { /* ок */ }
       var meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute('content', next === 'light' ? '#F7F7F4' : '#0A0A0B');
+      if (meta) meta.setAttribute('content', next === 'light' ? '#FFFFFF' : '#0A0A0B');
       syncThemeToggle();
       showProfile();
     };
@@ -660,69 +661,51 @@
   function showWelcome() {
     setBar(null);
     var lastId = '';
-    var studentToken = '';
+    var studentTok = '';
     try {
       lastId = localStorage.getItem('tajweed_last_result') || '';
-      studentToken = localStorage.getItem(STUDENT_KEY) || '';
+      studentTok = localStorage.getItem(STUDENT_KEY) || '';
     } catch (e) { /* ок */ }
-    // левые две колонки под текстом не штрихуем — как на эталоне
-    var cells = '<div class="hero-cells" aria-hidden="true">' +
-      ['', '', 'hatch', '', '', 'hatch',
-       '', '', '', 'hatch', '', '',
-       '', '', 'hatch', '', 'lit', 'hatch'].map(function (c, i) {
-        return '<div class="c' + (c ? ' ' + c : '') + '" data-i="' + (i + 1) + '"></div>';
-      }).join('') + '</div>';
 
+    /* Главная — как баннер прайса: сетка одинаковых квадратов,
+       штриховка сверху, заголовок, кикер, одна вдавленная кнопка.
+       Ничего лишнего: уроки и кабинет живут в меню. */
     render(
-      '<section class="welcome-hero frame" aria-labelledby="welcomeTitle">' +
-        cells + marks() +
-        '<p class="kicker">Учебный проект · Первый уровень<span class="cur">_</span></p>' +
+      '<section class="welcome-hero" aria-labelledby="welcomeTitle">' +
+        '<span class="hero-hatch" aria-hidden="true"></span>' +
+        marks('is-out') +
         '<h1 id="welcomeTitle">Экзамен по <em>таджвиду</em></h1>' +
-        '<p class="lede">Наука правильного чтения Корана. Проверьте свой уровень или запишитесь на занятия к преподавателю Деабу Анасу Т.</p>' +
+        '<p class="kicker is-under">Наука чтения Корана · Первый уровень<span class="cur">_</span></p>' +
         '<div class="hero-actions"><button class="btn" id="heroExam">Сдать экзамен →</button></div>' +
         '<div class="hero-meta">' +
           '<span class="crosshair" aria-hidden="true"></span>' +
-          '<span>ТАДЖВИД.РФ // 2026<br>ПЕРВЫЙ УРОВЕНЬ</span>' +
+          '<span>ТАДЖВИД.РФ // 2026<br>ПРЕПОДАВАТЕЛЬ ДЕАБ АНАС Т.</span>' +
         '</div>' +
       '</section>' +
-      '<div class="paths">' +
-        '<button class="path" id="goExam">' + marks() +
-          '<span class="path-index">01 · Экзамен</span>' +
-          '<span class="path-title">Проверить свой уровень</span>' +
-          '<span class="path-desc">51 письменный вопрос и чтение вслух. До 3 минут на вопрос, обычно уходит около часа.</span>' +
-          '<span class="path-go">Начать</span>' +
-        '</button>' +
-        '<button class="path" id="goLead">' + marks() +
-          '<span class="path-index">02 · Занятия</span>' +
-          '<span class="path-title">Записаться на уроки</span>' +
-          '<span class="path-desc">Для новичков. Выберите удобные дни и время, преподаватель свяжется с вами.</span>' +
-          '<span class="path-go">Оставить заявку</span>' +
-        '</button>' +
-        (studentToken ? '<button class="path is-wide" id="goCabinet">' +
-          '<span class="path-index">03 · Кабинет</span>' +
-          '<span class="path-title">Личный кабинет</span>' +
-          '<span class="path-desc">Ваш уровень, разбор по заданиям и отчёт.</span>' +
-          '<span class="path-go">Открыть</span>' +
-        '</button>' : (lastId ? '<button class="path is-wide" id="goResult">' +
-          '<span class="path-index">03 · Результат</span>' +
-          '<span class="path-title">Мой результат</span>' +
-          '<span class="path-desc">Итог последнего сданного экзамена.</span>' +
-          '<span class="path-go">Посмотреть</span>' +
-        '</button>' : '')) +
-      '</div>' +
       '<section class="levels-teaser" aria-labelledby="levelsTitle">' +
         '<p class="kicker" id="levelsTitle">Уровни программы<span class="cur">_</span></p>' +
         levelLadder(null) +
+        (studentTok || lastId
+          ? '<div class="btn-row"><button class="btn is-pill" id="goSaved">' +
+            (studentTok ? 'Мой кабинет →' : 'Мой результат →') + '</button></div>'
+          : '') +
+      '</section>' +
+      '<section class="cta-banner" aria-labelledby="ctaTitle">' +
+        '<span class="hero-hatch" aria-hidden="true"></span>' +
+        marks('is-out') +
+        '<h2 id="ctaTitle">Проверьте себя</h2>' +
+        '<p class="kicker is-under">51 вопрос и чтение вслух · до 3 минут на вопрос<span class="cur">_</span></p>' +
+        '<div class="hero-actions"><button class="btn" id="ctaExam">Сдать экзамен →</button></div>' +
       '</section>'
     );
     var startExam = function () { state.phase = 'reg'; show(); };
-    document.getElementById('goExam').onclick = startExam;
     document.getElementById('heroExam').onclick = startExam;
-    document.getElementById('goLead').onclick = function () { state.phase = 'lead'; show(); };
-    var goCabinet = document.getElementById('goCabinet');
-    if (goCabinet) goCabinet.onclick = function () { showStudentCabinet(studentToken); };
-    var goResult = document.getElementById('goResult');
-    if (goResult) goResult.onclick = function () { showSavedResult(lastId); };
+    document.getElementById('ctaExam').onclick = startExam;
+    var goSaved = document.getElementById('goSaved');
+    if (goSaved) goSaved.onclick = function () {
+      if (studentTok) return showStudentCabinet(studentTok);
+      showSavedResult(lastId);
+    };
   }
 
   function showStudentCabinet(token) {
@@ -929,7 +912,14 @@
 
       var input = document.getElementById('wInput');
       var field = input.closest('.field');
-      try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
+      window.scrollTo(0, 0);
+      /* На телефоне не выбрасываем клавиатуру при входе в анкету:
+         сначала человек видит вопрос целиком, фокус — по касанию поля.
+         На следующих шагах клавиатура уже открыта — фокус сохраняем. */
+      var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      if (!(coarse && idx === 0)) {
+        try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
+      }
 
       function ok() {
         var v = input.value.trim();
@@ -2065,7 +2055,7 @@
 
   function currentTheme() {
     var set = document.documentElement.getAttribute('data-theme');
-    return set === 'light' ? 'light' : 'dark'; // по умолчанию чертёжная тёмная
+    return set === 'dark' ? 'dark' : 'light'; // по умолчанию белый бланк
   }
 
   function syncThemeToggle() {
@@ -2089,7 +2079,7 @@
       document.documentElement.setAttribute('data-theme', next);
       try { localStorage.setItem('tajweed_theme', next); } catch (e) { /* ок */ }
       var meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute('content', next === 'light' ? '#F7F7F4' : '#0A0A0B');
+      if (meta) meta.setAttribute('content', next === 'light' ? '#FFFFFF' : '#0A0A0B');
       syncThemeToggle();
     };
   })();
