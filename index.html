@@ -54,14 +54,23 @@
   <header class="topbar" id="topbar" hidden>
     <div class="topbar-inner">
       <span class="topbar-label" id="topbarLabel"></span>
-      <span class="topbar-timer" id="topbarTimer" role="timer" aria-label="Осталось времени" hidden></span>
+      <span class="topbar-right">
+        <span class="topbar-timer" id="topbarTimer" role="timer" aria-label="Осталось времени" hidden></span>
+        <button class="btn is-quiet topbar-exit" id="examExit" type="button" hidden>Выйти</button>
+      </span>
     </div>
     <progress class="timebar" id="timebar" aria-label="Оставшееся время" max="180" value="180" hidden>180 секунд</progress>
   </header>
 
   <p class="visually-hidden" id="timeAlert" role="status" aria-live="assertive"></p>
 
-  <main class="sheet" id="app" tabindex="-1"></main>
+  <div class="sheet-wrap">
+    <div class="sheet-nodes" aria-hidden="true">
+      <span class="n-tl"></span><span class="n-tr"></span>
+      <span class="n-bl"></span><span class="n-br"></span>
+    </div>
+    <main class="sheet" id="app" tabindex="-1"></main>
+  </div>
 
   <nav class="tabbar" id="tabbar" aria-label="Разделы сайта"></nav>
 

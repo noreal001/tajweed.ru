@@ -30,6 +30,11 @@
   --font-ar: 'Amiri', 'Noto Naskh Arabic', serif;
   --font-mono: ui-monospace, Menlo, 'SF Mono', monospace;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  /* моношрифтовый слой эталона знает ровно две ступени */
+  --mono-lg: 11px;
+  --mono-sm: 10px;
+  --track-label: 0.18em;
+  --track-pill: 0.14em;
 }
 
 /* Светлая тема: тот же чертёж, но чёрным по бумаге */
@@ -48,6 +53,8 @@
   --inverse-bg: #0d0d0c;
   --inverse-text: #ffffff;
   --focus: #0d0d0c;
+  --muted: rgba(13, 13, 12, 0.4);
+  --lit: rgba(13, 13, 12, 0.055);
   --hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%230d0d0c' stroke-opacity='0.16' stroke-width='0.7'/></svg>");
 }
 
@@ -121,14 +128,14 @@
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--track-pill);
   text-transform: uppercase;
   white-space: nowrap;
   touch-action: manipulation;
   transition: color 0.14s, background-color 0.14s;
 }
 
-.tab.is-on { color: var(--inverse-text); background: var(--inverse-bg); }
+.tab.is-on { color: var(--text); background: var(--lit); }
 .tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 /* меню есть — освобождаем место, чтобы подвал не уезжал под него */
@@ -170,7 +177,7 @@ html.is-exam body { padding-bottom: 0; }
     cursor: pointer;
     font-family: var(--font-mono);
     font-size: 11px;
-    letter-spacing: 0.18em;
+    letter-spacing: var(--track-label);
     text-transform: uppercase;
   }
 
@@ -203,8 +210,8 @@ html.is-exam body { padding-bottom: 0; }
   background: var(--bg);
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
+  font-size: var(--mono-lg);
+  letter-spacing: var(--track-pill);
   text-transform: uppercase;
   touch-action: manipulation;
   transition: border-color 0.14s, background-color 0.14s, color 0.14s;
@@ -239,7 +246,7 @@ html.is-exam body { padding-bottom: 0; }
   justify-content: start;
 }
 
-.profile-meta dt { color: var(--text-faint); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; }
+.profile-meta dt { color: var(--text-faint); font-family: var(--font-mono); font-size: var(--mono-lg); letter-spacing: var(--track-pill); text-transform: uppercase; }
 .profile-meta dd { margin-top: 4px; font-size: 16px; }
 
 .settings {
@@ -276,8 +283,8 @@ html.is-exam body { padding-bottom: 0; }
   gap: 8px;
   color: var(--text-soft);
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
+  font-size: var(--mono-lg);
+  letter-spacing: var(--track-pill);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -340,10 +347,7 @@ body::before {
 .marks .hatch.tr { top: 2px; right: 2px; }
 .marks .hatch.bl { bottom: 2px; left: 2px; }
 
-@media (max-width: 700px) {
-  .marks .tick { opacity: 0.8; }
-  body::before { width: 120px; opacity: 0.6; }
-}
+
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -406,8 +410,6 @@ a { color: inherit; }
   color: var(--text);
   background: var(--surface-glass);
   border-bottom: 1px solid var(--line);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
 }
 
 .topbar-inner {
@@ -425,7 +427,7 @@ a { color: inherit; }
   overflow: hidden;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--track-pill);
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
@@ -445,6 +447,8 @@ a { color: inherit; }
 .timebar::-moz-progress-bar { background: var(--text); }
 
 /* Основной лист */
+
+.sheet-wrap { flex: 1; display: flex; position: relative; }
 
 .sheet {
   flex: 1;
@@ -470,24 +474,31 @@ a { color: inherit; }
     padding: 64px 56px 80px;
     border-right: 1px solid var(--line);
     border-left: 1px solid var(--line);
-    background: var(--surface);
   }
 
   /* узловые точки на углах листа — как на чертёжной сетке */
-  .sheet::before, .sheet::after {
-    content: "";
+  /* узловые точки по углам листа — отдельным слоем, кант у всех четырёх */
+  .sheet-nodes {
     position: absolute;
-    left: -4.5px;
+    inset: 0;
+    max-width: 780px;
+    margin: 0 auto;
+    pointer-events: none;
+  }
+
+  .sheet-nodes span {
+    position: absolute;
     width: 8px;
     height: 8px;
     border: 1px solid var(--line);
     border-radius: 50%;
     background: var(--bg);
-    box-shadow: calc(100% + 1px) 0 0 -0.5px var(--bg), calc(100% + 1px) 0 0 0.5px transparent;
   }
 
-  .sheet::before { top: -4.5px; }
-  .sheet::after { bottom: -4.5px; }
+  .sheet-nodes .n-tl { top: -4.5px; left: -4.5px; }
+  .sheet-nodes .n-tr { top: -4.5px; right: -4.5px; }
+  .sheet-nodes .n-bl { bottom: -4.5px; left: -4.5px; }
+  .sheet-nodes .n-br { bottom: -4.5px; right: -4.5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -534,7 +545,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 400;
-  letter-spacing: 0.18em;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
 }
 
@@ -672,7 +683,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 .welcome-hero {
   position: relative;
   min-height: 340px;
-  padding: 30px 26px 34px;
+  padding: 26px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -716,8 +727,8 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   right: 0;
   bottom: 0;
   z-index: 2;
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border: 1px solid var(--line);
   border-radius: 50%;
   background: var(--bg);
@@ -741,26 +752,22 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   .hero-cells .c::before { display: none; }
   .hero-cells .c:nth-child(6n)::before { display: none; }
   .hero-cells .c:nth-child(-n + 15):not(:nth-child(3n))::before { display: block; }
-  .hero-cells .c::after { opacity: 0; }
-  .hero-cells .c.lit::after { opacity: 0.7; }
-  .hero-cells .c.hatch::after { opacity: 0; }
 }
 
 .welcome-hero h1 { max-width: 11ch; font-size: clamp(32px, 7.4vw, 62px); overflow-wrap: anywhere; }
 .welcome-hero h1 em { font-style: italic; font-weight: 500; }
 .welcome-hero .lede { max-width: 46ch; }
 
-.hero-glyph {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  color: var(--text);
-  font-size: clamp(110px, 21vw, 152px);
-  line-height: 1;
-  opacity: 0.1;
-  pointer-events: none;
-  user-select: none;
-}
+/* Шапка экзамена: таймер и единственный выход */
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.topbar-exit { min-height: 36px; padding: 8px 10px; font-size: 12px; }
+
+/* Кликабельное отличается от статичного: карточка-кнопка получает
+   кант по наведению и фокусу, статичный блок уровня — нет. */
+.path { box-shadow: inset 0 0 0 1px transparent; }
+.path:hover, .path:focus-visible { box-shadow: inset 0 0 0 1px var(--control-line); }
+.path:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.level { cursor: default; }
 
 /* Мета-блок баннера с перекрестием — деталь эталона */
 .hero-actions { margin-top: 22px; }
@@ -774,7 +781,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   font-family: var(--font-mono);
   font-size: 10px;
   line-height: 1.5;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--track-pill);
 }
 
 .crosshair {
@@ -812,7 +819,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   position: relative;
   width: 100%;
   min-height: 190px;
-  padding: 22px;
+  padding: 26px;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--line);
@@ -848,7 +855,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   color: var(--text-soft);
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.18em;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
 }
 
@@ -873,7 +880,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   color: var(--text);
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.16em;
+  letter-spacing: var(--track-pill);
   text-transform: uppercase;
 }
 
@@ -889,7 +896,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 /* Формы */
 
 .form { margin-top: 28px; display: grid; gap: 20px; }
-.field label { display: block; margin-bottom: 7px; color: var(--text-soft); font-size: 13px; font-weight: 600; letter-spacing: 0.04em; }
+.field label { display: block; margin-bottom: 7px; color: var(--text-soft); font-size: 13px; font-weight: 600; letter-spacing: var(--track-pill); }
 
 .field input {
   width: 100%;
@@ -928,7 +935,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   color: var(--text);
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--track-pill);
   text-align: center;
   opacity: 0.055;
   transform: rotate(-24deg);
@@ -999,8 +1006,8 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   margin-top: 10px;
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
+  font-size: var(--mono-lg);
+  letter-spacing: var(--track-pill);
   text-transform: uppercase;
 }
 
@@ -1086,8 +1093,6 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   padding: 22px;
   border: 1px solid var(--line);
   background: var(--surface-glass);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
 }
 
 .time-heading {
@@ -1388,7 +1393,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 }
 
 .task-meta div { display: grid; gap: 2px; }
-.task-meta dt { color: var(--text-faint); font-size: 12px; letter-spacing: 0.07em; text-transform: uppercase; }
+.task-meta dt { color: var(--text-faint); font-size: 12px; letter-spacing: var(--track-pill); text-transform: uppercase; }
 .task-meta dd { font-size: 18px; font-weight: 500; }
 
 .score-hero {
@@ -1451,7 +1456,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 .score-percent i { font-style: normal; font-size: 0.42em; letter-spacing: 0.02em; }
 .score-hero.is-scored .score-caption { color: var(--text-soft); }
 .score-hero.is-scored .level-bar { max-width: 320px; margin: 22px auto 0; }
-.score-points { margin-top: 14px; color: var(--text-faint); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; text-transform: uppercase; }
+.score-points { margin-top: 14px; color: var(--text-faint); font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--track-pill); font-variant-numeric: tabular-nums; text-transform: uppercase; }
 
 /* Лестница уровней */
 
@@ -1510,8 +1515,8 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   margin-left: 4px;
   color: var(--text-soft);
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
+  font-size: var(--mono-lg);
+  letter-spacing: var(--track-pill);
   text-transform: uppercase;
 }
 
@@ -1526,7 +1531,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 .level-lock, .level-verdict {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.09em;
+  letter-spacing: var(--track-pill);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -1569,7 +1574,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 }
 
 .level-percent i { font-style: normal; font-size: 0.42em; }
-.level-points { color: var(--text-faint); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; text-transform: uppercase; }
+.level-points { color: var(--text-faint); font-family: var(--font-mono); font-size: 11px; letter-spacing: var(--track-pill); font-variant-numeric: tabular-nums; text-transform: uppercase; }
 
 .level-bar {
   height: 4px;
@@ -1601,7 +1606,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--track-pill);
   text-transform: uppercase;
   touch-action: manipulation;
 }
@@ -1638,9 +1643,8 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 .noscript { padding: 24px; font-size: 16px; text-align: center; }
 
 @media (max-width: 480px) {
-  .welcome-hero { min-height: 0; padding: 24px 0 32px; }
-  .hero-glyph { position: static; align-self: flex-end; height: 92px; margin-bottom: 4px; font-size: 108px; }
-  .match { grid-template-columns: 1fr 1.35fr; gap: 8px 10px; }
+  .welcome-hero { min-height: 0; padding: 20px 16px 26px; }
+    .match { grid-template-columns: 1fr 1.35fr; gap: 8px 10px; }
   .match .opt .ar { font-size: 31px; }
   .task-meta { grid-template-columns: repeat(3, auto); gap: 8px 20px; }
   .btn-row .btn { flex: 1 1 100%; }

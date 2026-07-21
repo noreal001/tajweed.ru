@@ -610,6 +610,17 @@
 
   function paintNav() {
     var isExam = state.phase === 'exam';
+    var exit = document.getElementById('examExit');
+    if (exit) {
+      exit.hidden = !isExam;
+      exit.onclick = function () {
+        if (!window.confirm('Выйти из экзамена? Ответы на этом устройстве сохранятся, но время по текущему вопросу пойдёт заново.')) return;
+        stopTimer();
+        state.phase = 'welcome';
+        save();
+        show();
+      };
+    }
     document.documentElement.classList.toggle('is-exam', isExam);
     document.documentElement.classList.toggle('has-tabbar', !isExam);
 
@@ -664,7 +675,6 @@
       '<section class="welcome-hero frame" aria-labelledby="welcomeTitle">' +
         cells + marks() +
         '<p class="kicker">Учебный проект · Первый уровень<span class="cur">_</span></p>' +
-        '<div class="hero-glyph ar" lang="ar" dir="rtl" aria-hidden="true">ت</div>' +
         '<h1 id="welcomeTitle">Экзамен по <em>таджвиду</em></h1>' +
         '<p class="lede">Наука правильного чтения Корана. Проверьте свой уровень или запишитесь на занятия к преподавателю Деабу Анасу Т.</p>' +
         '<div class="hero-actions"><button class="btn" id="heroExam">Сдать экзамен →</button></div>' +
@@ -883,10 +893,14 @@
     function draw() {
       if (idx >= WIZARD_STEPS.length) return drawExtra();
       var st = WIZARD_STEPS[idx];
+      // на последнем шаге честно говорим, что фиксируется во время экзамена
+      var honesty = (idx === WIZARD_STEPS.length - 1 && opts.isExam)
+        ? '<p class="notice">Во время экзамена сайт отмечает, сколько раз вы уходили со вкладки, и показывает это преподавателю. Это не блокирует сдачу — просто помогает ему понимать, как проходил экзамен.</p>'
+        : '';
       render(
         '<section class="wizard">' +
           scale() +
-          '<p class="kicker">Шаг ' + (idx + 1) + ' из ' + total + '</p>' +
+          '<p class="kicker">Шаг ' + (idx + 1) + ' из ' + total + '<span class="cur">_</span></p>' +
           '<h1 class="wizard-q">' + esc(st.label) + '</h1>' +
           '<div class="field wizard-field">' +
             '<label class="visually-hidden" for="wInput">' + esc(st.hint) + '</label>' +
@@ -897,7 +911,7 @@
               ' value="' + esc(data[st.f]) + '" aria-describedby="wErr">' +
             '<span class="wizard-hint">' + esc(st.hint) + '</span>' +
             '<span class="err" id="wErr" role="alert">' + esc(st.err) + '</span>' +
-          '</div>' +
+          '</div>' + honesty +
           '<div class="btn-row">' +
             '<button class="btn btn-block" id="wNext">' +
               (idx === total - 1 ? esc(opts.finishLabel) : 'Далее') + '</button>' +
@@ -1172,6 +1186,7 @@
     setBar('Анкета перед экзаменом');
     personWizard({
       finishLabel: 'Начать экзамен',
+      isExam: true,
       onDone: function (data) {
         render('<h1>Открываем кабинет…</h1><p class="lede">Секунду, готовим экзамен.</p>');
 
