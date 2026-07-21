@@ -14,10 +14,16 @@
 import { writeFileSync, readFileSync } from 'node:fs';
 
 const [, , url, out, wRaw, hRaw, mobileRaw, prepFile, waitRaw] = process.argv;
+
+if (!url || !out) {
+  console.error('нужны как минимум url и путь к файлу:\n' +
+    '  node tools/shot.mjs <url> <out.png> [width] [height] [mobile|desktop] [prep.js] [waitMs]');
+  process.exit(2);
+}
 const width = Number(wRaw) || 390;
 const height = Number(hRaw) || 844;
 const mobile = mobileRaw !== 'desktop';
-const settle = Number(waitRaw) || 2500;
+const settle = waitRaw == null ? 2500 : Number(waitRaw); // 0 — допустимая пауза
 const PORT = process.env.CDP_PORT || 9222;
 
 let prepBefore = '';
@@ -38,10 +44,20 @@ ws.addEventListener('message', (e) => {
   if (msg.id && pending.has(msg.id)) { pending.get(msg.id)(msg); pending.delete(msg.id); }
 });
 
-const send = (method, params = {}) => new Promise((resolve) => {
+/* Каждый запрос с таймаутом: обрыв CDP иначе вешает скрипт молча и навсегда */
+const send = (method, params = {}) => new Promise((resolve, reject) => {
   const myId = ++id;
-  pending.set(myId, resolve);
+  const timer = setTimeout(() => {
+    pending.delete(myId);
+    reject(new Error('CDP не ответил на ' + method + ' за 30 с'));
+  }, 30000);
+  pending.set(myId, (msg) => { clearTimeout(timer); resolve(msg); });
   ws.send(JSON.stringify({ id: myId, method, params }));
+});
+
+ws.addEventListener('error', () => {
+  console.error('CDP: соединение с Chrome оборвалось. Запущен ли он с --remote-debugging-port=9222?');
+  process.exit(1);
 });
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));

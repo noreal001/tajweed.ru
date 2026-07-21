@@ -37,6 +37,20 @@
     { n: 6, open: false }
   ];
 
+  /* Поколение экрана: запрос, начатый на одном экране, не должен
+     дорисовываться поверх другого. Уход по вкладкам увеличивает счётчик,
+     и «опоздавший» ответ просто отбрасывается. */
+  var navSeq = 0;
+
+  function screenToken() {
+    navSeq += 1;
+    return navSeq;
+  }
+
+  function isStale(token) {
+    return token !== navSeq;
+  }
+
   /* Ошибка поля: класс, aria-invalid и ТЕКСТ в live-регионе включаются
      вместе. Текст вставляется только в момент ошибки — иначе role="alert"
      ничего не объявляет (содержимое не менялось), а aria-describedby
@@ -99,8 +113,7 @@
   }
 
   /* best: { percent, points, max, id } либо null, если экзамен ещё не сдан. */
-  function levelLadder(best, options) {
-    var opts = options || {};
+  function levelLadder(best) {
     var locked = LEVELS.filter(function (lv) { return !lv.open; });
     var html = '<ol class="levels">';
     LEVELS.forEach(function (lv) {
@@ -129,7 +142,7 @@
 
     // Закрытые уровни — узкая штрихованная полоса без обещаний по темам
     if (locked.length) {
-      html += '<div class="levels-locked" aria-label="Следующие уровни пока закрыты">' +
+      html += '<div class="levels-locked" role="group" aria-label="Следующие уровни пока закрыты">' +
         locked.map(function (lv) {
           return '<span class="locked-chip"><b>' + lv.n + '</b></span>';
         }).join('') +
@@ -148,14 +161,7 @@
     student: null,
     startedAt: null,
     submissionId: null,
-    answers: {
-      match: {},
-      syllables: EXAM.tasks[1].words.map(function () { return null; }),
-      sifat: {},
-      compose: EXAM.tasks[3].items.map(function () { return ''; }),
-      yesno: EXAM.tasks[4].statements.map(function () { return null; }),
-      readingRecorded: false
-    }
+    answers: freshAnswers()
   };
 
   /* Журнал поведения: скриншот в браузере не заблокировать, поэтому
@@ -521,12 +527,7 @@
     var row = document.getElementById('profileTheme');
     if (!row) return;
     row.onclick = function () {
-      var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', next);
-      try { localStorage.setItem('tajweed_theme', next); } catch (e) { /* ок */ }
-      var meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute('content', next === 'light' ? '#FFFFFF' : '#0A0A0B');
-      syncThemeToggle();
+      applyTheme(currentTheme() === 'light' ? 'dark' : 'light');
       showProfile();
     };
   }
@@ -540,7 +541,9 @@
     if (!token) return showLogin();
 
     loadingScreen('Профиль', 'Загружаем ваши данные…');
+    var seq = screenToken();
     apiGet('/api/student/' + encodeURIComponent(token)).then(function (d) {
+      if (isStale(seq)) return;
       if (!d.ok) throw new Error('нет данных');
       var s = d.student;
       var results = d.results || [];
@@ -558,9 +561,9 @@
           '</dl>' +
         '</section>';
 
-      html += '<p class="kicker">Уровень<span class="cur">_</span></p>' + levelLadder(best, { resultId: best ? best.id : '' });
+      html += '<h2 class="kicker">Уровень<span class="cur">_</span></h2>' + levelLadder(best);
 
-      html += '<p class="kicker">Настройки<span class="cur">_</span></p><div class="settings">' + themeRow() +
+      html += '<h2 class="kicker">Настройки<span class="cur">_</span></h2><div class="settings">' + themeRow() +
         (s.hasPassword
           ? '<button class="setting-row" id="changePass" type="button">' +
               '<span><b>Пароль</b><small>Вход с другого телефона</small></span>' +
@@ -593,6 +596,7 @@
         show();
       };
     }).catch(function () {
+      if (isStale(seq)) return;
       errorScreen('Профиль недоступен',
         'Не удалось загрузить данные. Проверьте интернет и попробуйте ещё раз.', showProfile);
     });
@@ -622,7 +626,7 @@
       '<div class="btn-row" id="yandexRow" hidden>' +
         '<button class="btn is-ghost btn-block" id="yandexBtn" type="button">Войти через Яндекс</button></div>' +
       '<div class="btn-row"><button class="btn is-ghost btn-block" id="toExam">Сдать экзамен и завести профиль</button></div>' +
-      '<p class="kicker">Настройки<span class="cur">_</span></p><div class="settings">' + themeRow() + '</div>'
+      '<h2 class="kicker">Настройки<span class="cur">_</span></h2><div class="settings">' + themeRow() + '</div>'
     );
     wireThemeRow();
     document.getElementById('toExam').onclick = function () { state.phase = 'reg'; show(); };
@@ -662,7 +666,7 @@
       btn.disabled = true;
       btn.textContent = 'Проверяем…';
       err.hidden = true;
-      api('/api/auth/login', { phone: phone, password: password }).then(function (res) {
+      apiWithRetry('/api/auth/login', { phone: phone, password: password }, 3).then(function (res) {
         try { localStorage.setItem(STUDENT_KEY, res.studentToken); } catch (e2) { /* ок */ }
         showProfile();
       }).catch(function (e2) {
@@ -726,8 +730,12 @@
         btn.textContent = 'Сохранить пароль';
         err.hidden = false;
         err.classList.add('is-error');
-        err.textContent = e2 && (e2.status === 401 || e2.status === 400)
-          ? 'Текущий пароль неверен.'
+        err.textContent = e2 && e2.status === 429
+          ? 'Слишком много попыток. Попробуйте через 15 минут.'
+          : e2 && e2.status === 401 ? 'Текущий пароль неверен.'
+          : e2 && e2.status === 400 && !hasPassword
+            ? 'На этом кабинете уже стоит пароль — откройте профиль заново, чтобы ввести текущий.'
+          : e2 && e2.status === 400 ? 'Введите текущий пароль.'
           : 'Не получилось сохранить пароль. Попробуйте ещё раз.';
       });
     };
@@ -775,6 +783,7 @@
 
   function show() {
     hideTimer();
+    screenToken();
     paintNav();
     if (state.phase === 'welcome') return showWelcome();
     if (state.phase === 'lead') return showLead();
@@ -870,6 +879,7 @@
   function showStudentCabinet(token) {
     setBar('Личный кабинет');
     loadingScreen('Личный кабинет', 'Загружаем историю экзаменов…');
+    var seq = screenToken();
     apiGet('/api/student/' + encodeURIComponent(token)).then(function (d) {
       if (!d.ok) throw new Error('нет данных');
       try { localStorage.setItem(STUDENT_KEY, token); } catch (e) { /* ок */ }
@@ -885,10 +895,10 @@
       var html = '<h1>Личный кабинет</h1>' +
         '<p class="lede">' + esc(s.lastName) + ' ' + esc(s.firstName) + ' · ' + esc(s.city) + '</p>';
 
-      html += levelLadder(best, { resultId: best ? best.id : '' });
+      html += levelLadder(best);
 
       if (results.length > 1) {
-        html += '<hr class="rule"><p class="kicker">Все попытки</p><div class="result-list">';
+        html += '<hr class="rule"><h2 class="kicker">Все попытки</h2><div class="result-list">';
         results.forEach(function (r) {
           html += '<button class="result-item" data-result-id="' + esc(r.id) + '">' +
             '<span><b>Экзамен первого уровня</b><br><span class="meta">' +
@@ -917,6 +927,7 @@
         show();
       };
     }).catch(function () {
+      if (isStale(seq)) return;
       errorScreen('Кабинет недоступен',
         'Не удалось загрузить историю. Проверьте интернет и попробуйте ещё раз.',
         function () { showStudentCabinet(token); });
@@ -926,9 +937,10 @@
   function showSavedResult(id, cabinetToken) {
     setBar('Мой результат');
     loadingScreen('Результат экзамена', 'Загружаем результат…');
-    fetchWithTimeout(API + '/api/result/' + encodeURIComponent(id), {}, 15000)
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    var seq = screenToken();
+    apiGet('/api/result/' + encodeURIComponent(id))
       .then(function (d) {
+        if (isStale(seq)) return;
         if (!d.ok) throw new Error('нет данных');
         var res = d.result;
         var pct = Math.round(res.percent);
@@ -951,7 +963,7 @@
           html += '<div class="breakdown-row is-muted"><span>Устное чтение и диктант</span><span class="pts">оценит преподаватель</span></div>';
           html += '</div>';
         }
-        html += '<hr class="rule"><p class="kicker">Отчёт для преподавателя</p>' +
+        html += '<hr class="rule"><h2 class="kicker">Отчёт для преподавателя</h2>' +
           '<p class="lede">Отчёт уже у преподавателя. Эти кнопки нужны, если хотите сохранить копию себе или переслать её сами.</p>' +
           reportButtonsHtml();
         html += (cabinetToken ? '' : '<p class="notice">Сохраните адрес этой страницы — по нему результат откроется снова.</p>') +
@@ -966,6 +978,7 @@
         };
       })
       .catch(function () {
+        if (isStale(seq)) return;
         errorScreen('Результат не найден',
           'Ссылка устарела или сервер недоступен. Попробуйте позже.',
           function () { showSavedResult(id, cabinetToken); });
@@ -988,10 +1001,12 @@
       '<div class="time-window">' +
         '<div class="time-heading"><span>Диапазон времени</span>' +
           '<strong id="scheduleSummary">10:00—20:00</strong></div>' +
-        '<label class="time-slider" for="timeFrom"><span>Не раньше</span><output id="timeFromOutput" for="timeFrom">10:00</output>' +
-          '<input id="timeFrom" name="timeFromMinutes" type="range" min="360" max="1380" step="30" value="600" autocomplete="off"></label>' +
-        '<label class="time-slider" for="timeTo"><span>Не позже</span><output id="timeToOutput" for="timeTo">20:00</output>' +
-          '<input id="timeTo" name="timeToMinutes" type="range" min="360" max="1380" step="30" value="1200" autocomplete="off"></label>' +
+        '<div class="time-slider"><label for="timeFrom">Не раньше</label>' +
+          '<output id="timeFromOutput" for="timeFrom">10:00</output>' +
+          '<input id="timeFrom" name="timeFromMinutes" type="range" min="360" max="1380" step="30" value="600" autocomplete="off"></div>' +
+        '<div class="time-slider"><label for="timeTo">Не позже</label>' +
+          '<output id="timeToOutput" for="timeTo">20:00</output>' +
+          '<input id="timeTo" name="timeToMinutes" type="range" min="360" max="1380" step="30" value="1200" autocomplete="off"></div>' +
         '<div class="time-scale" aria-hidden="true"><span>06:00</span><span>день</span><span>23:00</span></div>' +
         '<input id="timeZone" name="timeZone" type="hidden" value="Europe/Moscow">' +
         '<button class="sound-toggle" id="scheduleSound" type="button" aria-pressed="false">' +
@@ -1153,7 +1168,6 @@
       });
       var daysBad = selectedDays.length === 0;
       markInvalid(schedule, daysBad);
-      schedule.setAttribute('aria-invalid', daysBad ? 'true' : 'false');
       if (daysBad) {
         ok = false;
         if (!firstInvalid) firstInvalid = form.querySelector('[name="scheduleDays"]');
@@ -1165,7 +1179,6 @@
         markInvalid(schedule, true);
         var slot = schedule.querySelector('.err');
         if (slot) slot.textContent = 'Время «не раньше» должно быть меньше, чем «не позже»';
-        schedule.setAttribute('aria-invalid', 'true');
         if (!firstInvalid) firstInvalid = form.timeFromMinutes;
       }
       data.requestId = form.requestId.value || form.getAttribute('data-request-id') || uuid();
@@ -1509,7 +1522,7 @@
         '<div class="col" id="colForms">' + formsHtml + '</div>' +
         '<div class="col" id="colNames">' + namesHtml + '</div>' +
       '</div>' +
-      '<p class="match-hint">Составлено пар: <span id="pairCount" aria-live="polite">0</span> из ' + task.names.length + '</p>' +
+      '<p class="match-hint" aria-live="polite">Составлено пар: <span id="pairCount">0</span> из ' + task.names.length + '</p>' +
       answerFooter()
     );
 
@@ -1892,6 +1905,9 @@
         audioBlob = null;
         answerBtn.disabled = true;
       }).catch(function () {
+        // симметрично успешной ветке: иначе флаг остаётся поднятым
+        // и уходы со вкладки перестают фиксироваться до конца попытки
+        systemDialog = false;
         permissionPending = false;
         stopStream();
         if (!active) return;
@@ -2227,6 +2243,14 @@
     return set === 'dark' ? 'dark' : 'light'; // по умолчанию белый бланк
   }
 
+  function applyTheme(next) {
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('tajweed_theme', next); } catch (e) { /* приватный режим */ }
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', next === 'light' ? '#FFFFFF' : '#0A0A0B');
+    syncThemeToggle();
+  }
+
   function syncThemeToggle() {
     var toggle = document.getElementById('themeToggle');
     var label = document.getElementById('themeLabel');
@@ -2243,14 +2267,7 @@
     if (!toggle) return;
     document.documentElement.setAttribute('data-theme', currentTheme());
     syncThemeToggle();
-    toggle.onclick = function () {
-      var next = currentTheme() === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', next);
-      try { localStorage.setItem('tajweed_theme', next); } catch (e) { /* ок */ }
-      var meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute('content', next === 'light' ? '#FFFFFF' : '#0A0A0B');
-      syncThemeToggle();
-    };
+    toggle.onclick = function () { applyTheme(currentTheme() === 'light' ? 'dark' : 'light'); };
   })();
 
   var navHome = document.getElementById('navHome');

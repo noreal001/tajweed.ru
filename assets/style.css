@@ -32,15 +32,24 @@
   --sheet-w: 780px;
   /* вынос приводных уголков за рамку — не больше отступа листа */
   --mark-out: 10px;
+  /* поверхности вдавленных плашек и их тени (см. docs/design/wiki-spec.md) */
+  --plate: #141416;
+  --plate-chip: #1b1b1e;
+  --plate-in: rgba(0, 0, 0, 0.75);
+  --plate-out: rgba(255, 255, 255, 0.045);
   --hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%23ffffff' stroke-opacity='0.13' stroke-width='0.7'/></svg>");
   --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
   --font-ar: 'Amiri', 'Noto Naskh Arabic', serif;
   --font-mono: ui-monospace, Menlo, 'SF Mono', monospace;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  /* моношрифтовый слой эталона знает ровно две ступени */
-  --mono-lg: 11px;
+  /* моношрифтовый слой: три ступени, других размеров в моно нет */
+  --mono-lg: 12px;
+  --mono-md: 11px;
   --mono-sm: 10px;
+  /* Брейкпоинты проекта: 400 (узкий телефон), 480 (телефон), 640 (крупный
+     телефон), 760 (десктопная раскладка), 1180 (лист уже экрана). Других
+     порогов не заводить — иначе компоненты рвутся вразнобой. */
   --track-label: 0.18em;
   --track-pill: 0.14em;
 }
@@ -66,6 +75,10 @@
   --muted: rgba(10, 10, 11, 0.4);
   --lit: rgba(10, 10, 11, 0.045);
   --recording: #c9271b;
+  --plate: #f3f3f5;
+  --plate-chip: #ececef;
+  --plate-in: rgba(20, 19, 16, 0.1);
+  --plate-out: rgba(255, 255, 255, 0.95);
   --hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%230a0a0b' stroke-opacity='0.18' stroke-width='0.7'/></svg>");
 }
 
@@ -78,40 +91,21 @@
    сильнее. Конструкция снята с карточек фабрик на wiki.bahur.store. */
 
 .level.is-open,
-.level.is-scored,
-.score-hero.is-scored,
 .levels-locked {
   border-color: transparent;
-  background: #141416;
+  background: var(--plate);
   box-shadow:
-    inset 4px 4px 12px rgba(0, 0, 0, 0.75),
-    inset -3px -3px 10px rgba(255, 255, 255, 0.045);
-}
-
-:root[data-theme="light"] .level.is-open,
-:root[data-theme="light"] .levels-locked {
-  border-color: transparent;
-  background: #f3f3f5;
-  box-shadow:
-    inset 4px 4px 10px rgba(20, 19, 16, 0.1),
-    inset -4px -4px 10px rgba(255, 255, 255, 0.95);
+    inset 4px 4px 11px var(--plate-in),
+    inset -3px -3px 10px var(--plate-out);
 }
 
 /* чипы закрытых уровней — маленькие плашки того же семейства */
 .locked-chip {
   border-color: transparent;
-  background: #1b1b1e;
+  background: var(--plate-chip);
   box-shadow:
-    inset 2px 2px 5px rgba(0, 0, 0, 0.7),
-    inset -1px -1px 3px rgba(255, 255, 255, 0.05);
-}
-
-:root[data-theme="light"] .locked-chip {
-  border-color: transparent;
-  background: #ececef;
-  box-shadow:
-    inset 2px 2px 5px rgba(20, 19, 16, 0.12),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.95);
+    inset 2px 2px 5px var(--plate-in),
+    inset -2px -2px 5px var(--plate-out);
 }
 
 /* Вдавленная плашка на белом — как карточки фабрик (Luzi, EPS) на вики:
@@ -119,13 +113,14 @@
    белая снизу-справа. Плашка выглядит вдавленной в бумагу. */
 :root[data-theme="light"] .btn {
   color: var(--text);
-  background: #f3f3f5;
+  background: var(--plate);
   box-shadow:
     inset 3px 3px 8px rgba(20, 19, 16, 0.13),
-    inset -3px -3px 8px rgba(255, 255, 255, 0.95);
+    inset -3px -3px 8px var(--plate-out);
 }
 
-:root[data-theme="light"] .btn:hover {
+/* заблокированная кнопка не «вдавливается» под курсором */
+:root[data-theme="light"] .btn:hover:not(:disabled) {
   box-shadow:
     inset 4px 4px 10px rgba(20, 19, 16, 0.17),
     inset -4px -4px 10px rgba(255, 255, 255, 0.92);
@@ -133,7 +128,7 @@
 
 /* активный пункт меню вдавлен, само меню — белая пилюля с тенью-отрывом */
 :root[data-theme="light"] .tab.is-on {
-  background: #f3f3f5;
+  background: var(--plate);
   box-shadow:
     inset 2px 2px 6px rgba(20, 19, 16, 0.09),
     inset -2px -2px 6px rgba(255, 255, 255, 0.95);
@@ -152,28 +147,25 @@
 
 :root[data-theme="light"] .btn.is-ghost:hover { background: rgba(10, 10, 11, 0.05); }
 :root[data-theme="light"] .btn.is-quiet { color: var(--text-soft); background: transparent; box-shadow: none; }
-/* Пройденный уровень остаётся ВДАВЛЕННОЙ плашкой: гасим только неоновое
-   свечение текста (ниже), но не саму вдавленность. */
-:root[data-theme="light"] .score-hero.is-scored,
-:root[data-theme="light"] .level.is-scored {
-  border-color: transparent;
-  box-shadow:
-    inset 4px 4px 10px rgba(20, 19, 16, 0.1),
-    inset -4px -4px 10px rgba(255, 255, 255, 0.95);
-}
-
-/* На бумаге неон слепит — цвет результата приглушаем и убираем свечение */
+/* На бумаге неон слепит и не читается: смешиваем цвет уровня с чёрным.
+   Доля подобрана по худшей точке шкалы (жёлто-зелёная зона ~40%):
+   42% держат ≥4.5:1 на белом по всей шкале, 62% давали всего 2.9:1. */
 :root[data-theme="light"] .score-hero.is-scored .score-percent,
-:root[data-theme="light"] .level-percent {
-  color: color-mix(in srgb, var(--score-color) 62%, #0a0a0b);
+:root[data-theme="light"] .level-percent,
+:root[data-theme="light"] .level.is-scored .level-verdict,
+:root[data-theme="light"] .result-item .score {
+  color: color-mix(in srgb, var(--score-color) 42%, #0a0a0b);
   text-shadow: none;
 }
 
-:root[data-theme="light"] .level-bar span { box-shadow: none; }
 
 /* Навигация: нижняя на телефоне, верхняя на десктопе */
 
 .sitenav { display: none; }
+
+/* Пустой контейнер меню не должен рисовать свою рамку: на экранах
+   результата и кабинета navItems() пуст, и оставалось висеть кольцо. */
+.tabbar:empty, .sitenav-tabs:empty { display: none; }
 
 /* Плавающая пилюля-сегментник, как .pillrow на вики */
 .tabbar {
@@ -235,12 +227,7 @@ html.is-exam body { padding-bottom: 0; }
   .tabbar { display: none; }
   html.has-tabbar body { padding-bottom: 0; }
 
-  .sitenav {
-    position: static;
-    display: block;
-    border-bottom: 0;
-    background: transparent;
-  }
+  .sitenav { display: block; }
 
   html.is-exam .sitenav { display: none; }
 
@@ -265,7 +252,7 @@ html.is-exam body { padding-bottom: 0; }
     color: var(--text-faint);
     cursor: pointer;
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: var(--mono-md);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
   }
@@ -281,14 +268,14 @@ html.is-exam body { padding-bottom: 0; }
     border-radius: 999px;
   }
 
-  .sitenav-tabs .tab { min-height: 34px; padding: 8px 16px; }
+  .sitenav-tabs .tab { min-height: 44px; padding: 10px 16px; }
 }
 
 /* Переключатель темы: в шапке на десктопе, в профиле на телефоне */
 
 .theme-toggle {
-  min-height: 34px;
-  padding: 9px 14px;
+  min-height: 44px;
+  padding: 12px 14px;
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -298,7 +285,7 @@ html.is-exam body { padding-bottom: 0; }
   background: var(--bg);
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--mono-lg);
   letter-spacing: var(--track-pill);
   text-transform: uppercase;
   touch-action: manipulation;
@@ -317,10 +304,6 @@ html.is-exam body { padding-bottom: 0; }
   background: linear-gradient(to right, currentColor 0 50%, transparent 50% 100%);
 }
 
-@media (min-width: 760px) {
-  .theme-toggle { display: inline-flex; }
-}
-
 /* Профиль и настройки */
 
 .profile-card { margin-top: 20px; }
@@ -334,7 +317,7 @@ html.is-exam body { padding-bottom: 0; }
   justify-content: start;
 }
 
-.profile-meta dt { color: var(--text-faint); font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--track-pill); text-transform: uppercase; }
+.profile-meta dt { color: var(--text-faint); font-family: var(--font-mono); font-size: var(--mono-lg); letter-spacing: var(--track-pill); text-transform: uppercase; }
 .profile-meta dd { margin-top: 4px; font-size: 16px; }
 
 .settings {
@@ -371,7 +354,7 @@ html.is-exam body { padding-bottom: 0; }
   gap: 8px;
   color: var(--text-soft);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--mono-lg);
   letter-spacing: var(--track-pill);
   text-transform: uppercase;
   white-space: nowrap;
@@ -404,7 +387,7 @@ body::before {
 .marks { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 /* Метки листа НЕ fixed: иначе уголки висят на экране при прокрутке
    и читаются как «застрявшие квадраты». Крепим к документу. */
-.marks.is-page { position: absolute; top: 0; left: 0; right: 0; height: 100vh; z-index: 0; }
+.marks.is-page { top: 0; left: 0; right: 0; height: 100vh; z-index: 0; }
 
 /* Рамка блока: та же конструкция, что .frame на вики */
 .frame { position: relative; padding: 26px; }
@@ -414,7 +397,7 @@ body::before {
 }
 
 /* баннеру и карточкам граница нужна — рисуем явно */
-.welcome-hero, .profile-card, .score-hero.is-scored { border: 1px solid var(--line); }
+.welcome-hero, .profile-card { border: 1px solid var(--line); }
 .marks .tick { position: absolute; background: var(--muted); }
 .marks .tick.tl-v { top: 2px; left: 26px; width: 1px; height: 18px; }
 .marks .tick.tl-h { top: 26px; left: 2px; width: 18px; height: 1px; }
@@ -614,8 +597,8 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .screen { animation: none; }
-  /* единственный !important в проекте: заглушить анимации нужно поверх
-     любых компонентных правил, иначе часть из них переживёт сброс */
+  /* !important здесь оправдан: заглушить анимации нужно поверх любых
+     компонентных правил, иначе часть из них переживёт сброс */
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
@@ -655,7 +638,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   margin-bottom: 10px;
   color: var(--text-soft);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--mono-md);
   font-weight: 400;
   letter-spacing: var(--track-label);
   text-transform: uppercase;
@@ -716,8 +699,8 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   justify-content: center;
   gap: 6px;
   border: 0;
-  border-radius: 0;
-  color: #0a0a0b;
+  border-radius: var(--radius);
+  color: var(--inverse-text);
   background: linear-gradient(#e7e7ea, #fbfbfc);
   box-shadow:
     inset 0 2px 4px rgba(0, 0, 0, 0.34),
@@ -860,7 +843,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   pointer-events: none;
 }
 
-@media (max-width: 559px) {
+@media (max-width: 640px) {
   /* на узком экране правая зона съедает пол-экрана — оставляем одну колонку */
   .hero-hatch { width: var(--hero-cell); }
 }
@@ -875,6 +858,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   max-width: 12ch;
   font-size: clamp(38px, 8vw, 76px);
   overflow-wrap: break-word;
+  -webkit-hyphens: auto;
   hyphens: auto;
 }
 
@@ -916,7 +900,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   gap: 12px;
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--mono-md);
   line-height: 1.5;
   letter-spacing: var(--track-pill);
 }
@@ -987,7 +971,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 .watermark span {
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--mono-md);
   letter-spacing: var(--track-pill);
   text-align: center;
   opacity: 0.055;
@@ -1067,7 +1051,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   margin-top: 10px;
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--mono-lg);
   letter-spacing: var(--track-pill);
   text-transform: uppercase;
 }
@@ -1145,7 +1129,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 .day-full { margin-top: 2px; color: var(--text-soft); font-size: 12px; }
 .day-option input:checked + .day-face .day-full { color: var(--inverse-text); }
 
-.schedule-picker > .err { display: none; margin-top: 8px; color: var(--text); font-size: 13px; font-weight: 600; }
+.schedule-picker > .err { display: none; margin-top: 8px; color: var(--recording); font-size: 13px; font-weight: 600; }
 .schedule-picker.is-invalid > .err { display: block; }
 .schedule-picker.is-invalid .day-strip { border-left: 2px solid var(--line-strong); }
 
@@ -1248,7 +1232,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 .sound-toggle[aria-pressed="true"] .sound-switch span { transform: translateX(20px); }
 .sound-toggle:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 
-@media (min-width: 680px) {
+@media (min-width: 760px) {
   .day-strip { grid-auto-flow: initial; grid-template-columns: repeat(7, minmax(0, 1fr)); overflow: visible; }
 }
 
@@ -1305,39 +1289,30 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 
 .opt {
   padding: 14px 16px;
-  border: 1px solid var(--control-line);
+  /* плитка ответа — вдавленная плашка: иначе самый нажимаемый элемент
+     экзамена читается как неинтерактивный. Кант не рисуем — роль канта
+     здесь выполняет сама вдавленность. */
+  border: 1px solid transparent;
   border-radius: var(--radius);
   color: var(--text);
-  background: var(--surface);
+  background: var(--plate);
+  box-shadow:
+    inset 3px 3px 8px var(--plate-in),
+    inset -2px -2px 7px var(--plate-out);
   cursor: pointer;
   font-family: var(--font-ui);
   font-size: 15px;
   font-weight: 500;
   text-align: center;
   touch-action: manipulation;
-  transition: color 0.14s, background-color 0.14s, border-color 0.14s, transform 0.1s;
+  transition: color 0.14s, background-color 0.14s, box-shadow 0.14s, transform 0.1s;
 }
 
-/* плитка ответа — тот же вдавленный приём, что у кнопок: иначе самый
-   нажимаемый элемент экзамена читается как неинтерактивный */
-.opt {
-  border-color: transparent;
-  background: #141416;
+.opt:hover {
   box-shadow:
-    inset 3px 3px 8px rgba(0, 0, 0, 0.7),
-    inset -2px -2px 7px rgba(255, 255, 255, 0.04);
+    inset 4px 4px 10px var(--plate-in),
+    inset -2px -2px 8px var(--plate-out);
 }
-
-:root[data-theme="light"] .opt {
-  border-color: transparent;
-  background: #f3f3f5;
-  box-shadow:
-    inset 3px 3px 8px rgba(20, 19, 16, 0.11),
-    inset -3px -3px 8px rgba(255, 255, 255, 0.95);
-}
-
-.opt:hover { box-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.78), inset -2px -2px 8px rgba(255, 255, 255, 0.05); }
-:root[data-theme="light"] .opt:hover { box-shadow: inset 4px 4px 10px rgba(20, 19, 16, 0.15), inset -3px -3px 8px rgba(255, 255, 255, 0.92); }
 .opt:active { transform: translateY(1px); }
 /* выбранная плитка — сплошная инверсия без вдавленности: так выбор
    отличается от «нажимаемого, но не выбранного» состояния */
@@ -1506,13 +1481,19 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 
 /* Оценённый результат: тёмная плашка, чтобы читался цвет уровня */
 
+/* Вдавленная плашка + мягкое свечение цвета уровня поверх неё.
+   Оба слоя задаём здесь: правило идёт после общего блока плашек,
+   и разнесённые объявления просто перебивали бы друг друга. */
 .score-hero.is-scored {
   position: relative;
   padding: 44px 24px 34px;
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   background:
     radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--score-color) 12%, transparent), transparent 70%),
-    var(--surface);
+    var(--plate);
+  box-shadow:
+    inset 4px 4px 11px var(--plate-in),
+    inset -3px -3px 10px var(--plate-out);
 }
 
 /* штриховка по краям плашки результата */
@@ -1539,7 +1520,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 .score-percent i { font-style: normal; font-size: 0.42em; letter-spacing: 0.02em; }
 .score-hero.is-scored .score-caption { color: var(--text-soft); }
 .score-hero.is-scored .level-bar { max-width: 320px; margin: 22px auto 0; }
-.score-points { margin-top: 14px; color: var(--text-faint); font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--track-pill); font-variant-numeric: tabular-nums; text-transform: uppercase; }
+.score-points { margin-top: 14px; color: var(--text-faint); font-family: var(--font-mono); font-size: var(--mono-lg); letter-spacing: var(--track-pill); font-variant-numeric: tabular-nums; text-transform: uppercase; }
 
 /* Лестница уровней */
 
@@ -1579,7 +1560,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--mono-lg);
   color: var(--text-soft);
 }
 
@@ -1589,7 +1570,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   margin-left: 4px;
   color: var(--text-soft);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--mono-lg);
   letter-spacing: var(--track-pill);
   text-transform: uppercase;
 }
@@ -1625,15 +1606,20 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 .level-lock { color: var(--text-faint); }
 .level-lock.is-ready { color: var(--text); }
 .level-topic { margin-top: 6px; color: var(--text-soft); font-size: 15px; }
-.level-hint { margin-top: 10px; color: var(--text-faint); font-size: 13px; }
+/* на плашке фон светлее страницы, поэтому берём более тёмный токен:
+   --text-faint даёт на ней только 4.4:1 */
+.level-hint { margin-top: 10px; color: var(--text-soft); font-size: 13px; }
 
 /* Пройденный уровень горит цветом результата */
 
 .level.is-scored {
-  border-color: color-mix(in srgb, var(--score-color) 40%, var(--line));
+  border-color: transparent;
   background:
     radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--score-color) 9%, transparent), transparent 65%),
-    var(--surface);
+    var(--plate);
+  box-shadow:
+    inset 4px 4px 11px var(--plate-in),
+    inset -3px -3px 10px var(--plate-out);
 }
 
 .level.is-scored .level-verdict { color: var(--score-color, var(--text)); }
@@ -1652,7 +1638,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 }
 
 .level-percent i { font-style: normal; font-size: 0.42em; }
-.level-points { color: var(--text-faint); font-family: var(--font-mono); font-size: 11px; letter-spacing: var(--track-pill); font-variant-numeric: tabular-nums; text-transform: uppercase; }
+.level-points { color: var(--text-faint); font-family: var(--font-mono); font-size: var(--mono-md); letter-spacing: var(--track-pill); font-variant-numeric: tabular-nums; text-transform: uppercase; }
 
 .level-bar {
   height: 4px;
@@ -1680,10 +1666,10 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 }
 
 /* Старые браузеры без color-mix: свечение отключается, цвет остаётся */
+/* Старые браузеры без color-mix: гаснет только свечение, вдавленность
+   плашки остаётся — она построена на обычных inset-тенях. */
 @supports not (color: color-mix(in srgb, red 50%, transparent)) {
-  .level.is-scored { box-shadow: none; }
   .level-percent, .score-hero.is-scored .score-percent { text-shadow: none; }
-  .level-bar span { box-shadow: none; }
 }
 
 /* Подвал */
@@ -1706,7 +1692,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 @media (max-width: 480px) {
   .match { grid-template-columns: 1fr 1.35fr; gap: 8px 10px; }
   .match .opt .ar { font-size: 31px; }
-  .task-meta { grid-template-columns: repeat(3, auto); gap: 8px 20px; }
+  .task-meta { gap: 8px 20px; }
   .btn-row .btn { flex: 1 1 100%; }
   .pagefoot { flex-direction: column; gap: 2px; }
   .result-item { grid-template-columns: 1fr; }

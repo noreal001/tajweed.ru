@@ -51,7 +51,7 @@
     <div class="sitenav-inner">
       <button class="sitenav-mark" id="navHome" type="button">таджвид.рф</button>
       <div class="sitenav-right">
-        <div class="sitenav-tabs" id="sitenavTabs"></div>
+        <nav class="sitenav-tabs" id="sitenavTabs" aria-label="Разделы сайта"></nav>
         <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">
           <span class="theme-dial" aria-hidden="true"></span>
           <span class="theme-label" id="themeLabel">Тёмная</span>
@@ -60,7 +60,7 @@
     </div>
   </header>
 
-  <header class="topbar" id="topbar" aria-label="Текущий экран" hidden>
+  <section class="topbar" id="topbar" aria-label="Текущий экран" hidden>
     <div class="topbar-inner">
       <span class="topbar-label" id="topbarLabel"></span>
       <span class="topbar-right">
@@ -69,9 +69,9 @@
       </span>
     </div>
     <progress class="timebar" id="timebar" aria-label="Оставшееся время" max="180" value="180" hidden>180 секунд</progress>
-  </header>
+  </section>
 
-  <p class="visually-hidden" id="timeAlert" role="status" aria-live="assertive"></p>
+  <p class="visually-hidden" id="timeAlert" role="alert"></p>
 
   <div class="sheet-wrap">
     <div class="sheet-nodes" aria-hidden="true">
