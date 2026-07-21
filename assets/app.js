@@ -26,15 +26,15 @@
   ];
   var scheduleAudioContext = null;
 
-  /* Лестница уровней. Открыт только первый; темы остальных — черновик,
-     уточнить у преподавателя перед публикацией следующих экзаменов. */
+  /* Лестница уровней. Открыт только первый. Темы закрытых уровней НЕ
+     показываем: программу составляет преподаватель, обещать нечего. */
   var LEVELS = [
     { n: 1, title: 'Первый уровень', topic: 'Буквы и их названия, огласовки, сифаты, чтение вслух', open: true },
-    { n: 2, title: 'Второй уровень', topic: 'Сукун, шадда, танвин', open: false },
-    { n: 3, title: 'Третий уровень', topic: 'Правила нун сакина и танвина', open: false },
-    { n: 4, title: 'Четвёртый уровень', topic: 'Мадды — протяжения', open: false },
-    { n: 5, title: 'Пятый уровень', topic: 'Мим сакина, правила лям и ра', open: false },
-    { n: 6, title: 'Шестой уровень', topic: 'Вакф и ибтида — остановки в чтении', open: false }
+    { n: 2, open: false },
+    { n: 3, open: false },
+    { n: 4, open: false },
+    { n: 5, open: false },
+    { n: 6, open: false }
   ];
 
   /* Цвет уровня по проценту: от тревожного красного к неоновой зелени. */
@@ -55,17 +55,10 @@
   /* best: { percent, points, max, id } либо null, если экзамен ещё не сдан. */
   function levelLadder(best, options) {
     var opts = options || {};
+    var locked = LEVELS.filter(function (lv) { return !lv.open; });
     var html = '<ol class="levels">';
     LEVELS.forEach(function (lv) {
-      if (!lv.open) {
-        html += '<li class="level is-locked" aria-disabled="true">' +
-          '<div class="level-head"><span class="level-n">Уровень ' + lv.n + '</span>' +
-          '<span class="level-lock">закрыт</span></div>' +
-          '<p class="level-topic">' + esc(lv.topic) + '</p>' +
-          '<p class="level-hint">Откроется, когда преподаватель подготовит экзамен</p>' +
-        '</li>';
-        return;
-      }
+      if (!lv.open) return; // закрытые собираем отдельной полосой ниже
       if (!best) {
         html += '<li class="level is-open is-empty">' +
           '<div class="level-head"><span class="level-n">Уровень ' + lv.n + '</span>' +
@@ -87,6 +80,16 @@
       '</li>';
     });
     html += '</ol>';
+
+    // Закрытые уровни — узкая штрихованная полоса без обещаний по темам
+    if (locked.length) {
+      html += '<div class="levels-locked" aria-label="Следующие уровни пока закрыты">' +
+        locked.map(function (lv) {
+          return '<span class="locked-chip"><b>' + lv.n + '</b></span>';
+        }).join('') +
+        '<span class="locked-note">Следующие уровни откроет преподаватель</span>' +
+      '</div>';
+    }
     return html;
   }
 
@@ -333,8 +336,51 @@
     topbarLabel.textContent = label;
   }
 
+  /* ── Навигация ─────────────────────────────────────────── */
+
+  function navItems() {
+    var token = '';
+    try { token = localStorage.getItem(STUDENT_KEY) || ''; } catch (e) { /* ок */ }
+    return [
+      { id: 'exam', label: 'Экзамен', act: function () { state.phase = 'reg'; show(); },
+        on: function () { return state.phase === 'reg' || state.phase === 'exam'; } },
+      { id: 'lead', label: 'Уроки', act: function () { state.phase = 'lead'; show(); },
+        on: function () { return state.phase === 'lead' || state.phase === 'leadDone'; } },
+      token
+        ? { id: 'cabinet', label: 'Кабинет', act: function () { showStudentCabinet(token); },
+            on: function () { return false; } }
+        : { id: 'home', label: 'Главная', act: function () { state.phase = 'welcome'; show(); },
+            on: function () { return state.phase === 'welcome'; } }
+    ];
+  }
+
+  function paintNav() {
+    var isExam = state.phase === 'exam';
+    document.documentElement.classList.toggle('is-exam', isExam);
+    document.documentElement.classList.toggle('has-tabbar', !isExam);
+
+    var items = navItems();
+    [document.getElementById('tabbar'), document.getElementById('sitenavTabs')].forEach(function (host) {
+      if (!host) return;
+      host.replaceChildren();
+      items.forEach(function (item) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tab' + (item.on() ? ' is-on' : '');
+        b.textContent = item.label;
+        if (item.on()) b.setAttribute('aria-current', 'page');
+        b.onclick = function () {
+          if (state.phase === 'exam') return;
+          item.act();
+        };
+        host.appendChild(b);
+      });
+    });
+  }
+
   function show() {
     hideTimer();
+    paintNav();
     if (state.phase === 'welcome') return showWelcome();
     if (state.phase === 'lead') return showLead();
     if (state.phase === 'leadDone') return showLeadDone();
@@ -353,8 +399,15 @@
       lastId = localStorage.getItem('tajweed_last_result') || '';
       studentToken = localStorage.getItem(STUDENT_KEY) || '';
     } catch (e) { /* ок */ }
+    var cells = '<div class="hero-cells" aria-hidden="true">' +
+      ['lit', 'hatch', '', '', 'hatch', '', '', '', 'hatch', '', '', '',
+       '', 'hatch', '', '', '', 'lit'].map(function (c) {
+        return '<div class="c' + (c ? ' ' + c : '') + '"></div>';
+      }).join('') + '</div>';
+
     render(
       '<section class="welcome-hero" aria-labelledby="welcomeTitle">' +
+        cells +
         '<p class="kicker">Учебный проект · Первый уровень</p>' +
         '<div class="hero-glyph ar" lang="ar" dir="rtl" aria-hidden="true">ت</div>' +
         '<h1 id="welcomeTitle">Экзамен по <em>таджвиду</em></h1>' +
@@ -362,25 +415,31 @@
       '</section>' +
       '<div class="paths">' +
         '<button class="path" id="goExam">' +
+          '<span class="path-index">01 · Экзамен</span>' +
           '<span class="path-title">Проверить свой уровень</span>' +
-          '<span class="path-desc">Экзамен первого уровня: 51 письменный вопрос и чтение вслух. Около 40 минут.</span>' +
+          '<span class="path-desc">51 письменный вопрос и чтение вслух. Около 40 минут.</span>' +
+          '<span class="path-go">Начать</span>' +
         '</button>' +
         '<button class="path" id="goLead">' +
+          '<span class="path-index">02 · Занятия</span>' +
           '<span class="path-title">Записаться на уроки</span>' +
-          '<span class="path-desc">Для новичков. Оставьте контакты, и преподаватель свяжется с вами.</span>' +
+          '<span class="path-desc">Для новичков. Выберите удобные дни и время, преподаватель свяжется с вами.</span>' +
+          '<span class="path-go">Оставить заявку</span>' +
         '</button>' +
-        (studentToken ? '<button class="path" id="goCabinet">' +
+        (studentToken ? '<button class="path is-wide" id="goCabinet">' +
+          '<span class="path-index">03 · Кабинет</span>' +
           '<span class="path-title">Личный кабинет</span>' +
           '<span class="path-desc">Ваш уровень, разбор по заданиям и отчёт.</span>' +
-        '</button>' : (lastId ? '<button class="path" id="goResult">' +
+          '<span class="path-go">Открыть</span>' +
+        '</button>' : (lastId ? '<button class="path is-wide" id="goResult">' +
+          '<span class="path-index">03 · Результат</span>' +
           '<span class="path-title">Мой результат</span>' +
-          '<span class="path-desc">Посмотреть итог последнего сданного экзамена.</span>' +
+          '<span class="path-desc">Итог последнего сданного экзамена.</span>' +
+          '<span class="path-go">Посмотреть</span>' +
         '</button>' : '')) +
       '</div>' +
       '<section class="levels-teaser" aria-labelledby="levelsTitle">' +
-        '<hr class="rule">' +
         '<p class="kicker" id="levelsTitle">Уровни программы</p>' +
-        '<p class="lede">Сейчас открыт первый уровень. Остальные преподаватель готовит — они появятся здесь же.</p>' +
         levelLadder(null) +
       '</section>'
     );
@@ -532,6 +591,103 @@
         '</button>' +
       '</div>' +
     '</fieldset>';
+  }
+
+  /* ── Пошаговая анкета ──────────────────────────────────── */
+
+  var WIZARD_STEPS = [
+    { f: 'firstName', label: 'Как вас зовут?', hint: 'Имя', ac: 'given-name', err: 'Укажите имя' },
+    { f: 'lastName', label: 'Ваша фамилия', hint: 'Фамилия', ac: 'family-name', err: 'Укажите фамилию' },
+    { f: 'city', label: 'Из какого вы города?', hint: 'Город', ac: 'address-level2', err: 'Укажите город' },
+    { f: 'phone', label: 'Номер телефона', hint: 'По нему преподаватель пришлёт разбор', ac: 'tel',
+      type: 'tel', mode: 'tel', ph: '+7 900 000-00-00', err: 'Введите номер целиком, с кодом' }
+  ];
+
+  function personWizard(opts) {
+    var data = { firstName: '', lastName: '', city: '', phone: '' };
+    var idx = 0;
+    var extraStep = opts.extraStep ? 1 : 0;
+    var total = WIZARD_STEPS.length + extraStep;
+
+    function scale() {
+      var cells = '';
+      for (var i = 0; i < total; i++) {
+        cells += '<span class="wstep' + (i < idx ? ' is-done' : i === idx ? ' is-now' : '') + '"></span>';
+      }
+      return '<div class="wizard-steps" aria-hidden="true">' + cells + '</div>';
+    }
+
+    function draw() {
+      if (idx >= WIZARD_STEPS.length) return drawExtra();
+      var st = WIZARD_STEPS[idx];
+      render(
+        '<section class="wizard">' +
+          scale() +
+          '<p class="kicker">Шаг ' + (idx + 1) + ' из ' + total + '</p>' +
+          '<h1 class="wizard-q">' + esc(st.label) + '</h1>' +
+          '<div class="field wizard-field">' +
+            '<label class="visually-hidden" for="wInput">' + esc(st.hint) + '</label>' +
+            '<input id="wInput" name="' + st.f + '" type="' + (st.type || 'text') + '"' +
+              (st.mode ? ' inputmode="' + st.mode + '"' : '') +
+              ' autocomplete="' + st.ac + '" maxlength="60" enterkeyhint="next"' +
+              (st.ph ? ' placeholder="' + esc(st.ph) + '"' : '') +
+              ' value="' + esc(data[st.f]) + '" aria-describedby="wErr">' +
+            '<span class="wizard-hint">' + esc(st.hint) + '</span>' +
+            '<span class="err" id="wErr" role="alert">' + esc(st.err) + '</span>' +
+          '</div>' +
+          '<div class="btn-row">' +
+            '<button class="btn btn-block" id="wNext">' +
+              (idx === total - 1 ? esc(opts.finishLabel) : 'Далее') + '</button>' +
+          '</div>' +
+          '<div class="btn-row wizard-back">' +
+            '<button class="btn is-quiet" id="wBack">' + (idx === 0 ? '← Назад на главную' : '← Предыдущий шаг') + '</button>' +
+          '</div>' +
+        '</section>'
+      );
+
+      var input = document.getElementById('wInput');
+      var field = input.closest('.field');
+      try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
+
+      function ok() {
+        var v = input.value.trim();
+        if (!v) return false;
+        if (st.f === 'phone' && v.replace(/\D/g, '').length < 10) return false;
+        return true;
+      }
+
+      function forward() {
+        if (!ok()) {
+          field.classList.add('is-invalid');
+          input.setAttribute('aria-invalid', 'true');
+          input.focus();
+          return;
+        }
+        data[st.f] = input.value.trim();
+        idx += 1;
+        draw();
+      }
+
+      input.oninput = function () {
+        field.classList.remove('is-invalid');
+        input.setAttribute('aria-invalid', 'false');
+      };
+      input.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); forward(); } };
+      document.getElementById('wNext').onclick = forward;
+      document.getElementById('wBack').onclick = function () {
+        if (idx === 0) { state.phase = 'welcome'; return show(); }
+        data[st.f] = input.value.trim();
+        idx -= 1;
+        draw();
+      };
+    }
+
+    function drawExtra() {
+      if (!opts.extraStep) return opts.onDone(data);
+      opts.extraStep(data, scale(), function () { idx -= 1; draw(); });
+    }
+
+    draw();
   }
 
   function personForm(submitLabel, includeSchedule) {
@@ -751,19 +907,10 @@
 
   function showReg() {
     setBar('Анкета перед экзаменом');
-    render(
-      '<h1>Анкета перед экзаменом</h1>' +
-      '<p class="lede">Экзамен состоит из шести заданий. Вопросы идут по одному, на каждый даётся 3 минуты, вернуться назад нельзя. Не закрывайте вкладку: ответы сохраняются на этом устройстве.</p>' +
-      personForm('Начать экзамен', false)
-    );
-    var form = document.getElementById('personForm');
-    form.onsubmit = function (e) {
-      e.preventDefault();
-      var data = readPersonForm(form);
-      if (!data) return;
-      var btn = form.querySelector('button[type="submit"]');
-      btn.disabled = true;
-      btn.textContent = 'Открываем кабинет…';
+    personWizard({
+      finishLabel: 'Начать экзамен',
+      onDone: function (data) {
+        render('<h1>Открываем кабинет…</h1><p class="lede">Секунду, готовим экзамен.</p>');
 
       function startExam() {
         state.student = data;
@@ -790,7 +937,8 @@
       }).catch(function () {
         // без сети кабинет создастся позже, при отправке результата
       }).then(startExam);
-    };
+      }
+    });
   }
 
   /* ── Экраны: экзамен ───────────────────────────────────── */
@@ -1618,6 +1766,13 @@
       try { localStorage.setItem('tajweed_theme', next); } catch (e) { /* ок */ }
     };
   })();
+
+  var navHome = document.getElementById('navHome');
+  if (navHome) navHome.onclick = function () {
+    if (state.phase === 'exam') return;
+    state.phase = 'welcome';
+    show();
+  };
 
   restore();
   hit();
