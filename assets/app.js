@@ -486,7 +486,14 @@
     return [
       { id: 'home', label: 'Главная', act: function () { state.phase = 'welcome'; show(); },
         on: function () { return state.phase === 'welcome'; } },
-      { id: 'exam', label: 'Экзамен', act: function () { state.phase = 'reg'; show(); },
+      /* Если экзамен начат и не сдан, вкладка возвращает к нему, а не гонит
+         анкету заново: иначе ответы незаметно обнулятся на шаге onDone. */
+      { id: 'exam', label: 'Экзамен',
+        act: function () {
+          state.phase = state.resumable && state.student ? 'exam' : 'reg';
+          save();
+          show();
+        },
         on: function () { return state.phase === 'reg' || state.phase === 'exam'; } },
       { id: 'lead', label: 'Уроки', act: function () { state.phase = 'lead'; show(); },
         on: function () { return state.phase === 'lead' || state.phase === 'leadDone'; } },
