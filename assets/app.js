@@ -37,6 +37,40 @@
     { n: 6, open: false }
   ];
 
+  /* Ошибка поля: класс, aria-invalid и ТЕКСТ в live-регионе включаются
+     вместе. Текст вставляется только в момент ошибки — иначе role="alert"
+     ничего не объявляет (содержимое не менялось), а aria-describedby
+     заставляет читалку зачитывать ошибку у корректного поля. */
+  function markInvalid(field, bad) {
+    if (!field) return;
+    field.classList.toggle('is-invalid', !!bad);
+    var box = field.querySelector('.err');
+    if (box) box.textContent = bad ? (box.getAttribute('data-msg') || '') : '';
+    var input = field.querySelector('input, select, textarea');
+    if (input) input.setAttribute('aria-invalid', bad ? 'true' : 'false');
+  }
+
+  /* Единый экран ожидания: заголовок экрана остаётся на месте, меняется
+     только пояснение — иначе при загрузке h1 прыгает с одного текста на
+     другой. Единый экран ошибки: одна вёрстка на все сбои загрузки. */
+  function loadingScreen(title, note) {
+    render('<h1>' + esc(title) + '</h1><p class="lede">' + esc(note) + '</p>');
+  }
+
+  function errorScreen(title, note, onRetry) {
+    render('<h1>' + esc(title) + '</h1>' +
+      '<p class="lede">' + esc(note) + '</p>' +
+      '<div class="btn-row">' +
+        (onRetry ? '<button class="btn" id="retryBtn">Повторить</button>' : '') +
+        '<button class="btn is-ghost" id="homeBtn">На главную</button></div>');
+    if (onRetry) document.getElementById('retryBtn').onclick = onRetry;
+    document.getElementById('homeBtn').onclick = function () {
+      if (history.replaceState) history.replaceState(null, '', location.pathname);
+      state.phase = 'welcome';
+      show();
+    };
+  }
+
   /* Приводные метки — компонент .marks с вики.
      marks('is-out') выносит уголки наружу рамки, как у баннера прайса. */
   function marks(extra) {
@@ -88,7 +122,7 @@
         '<div class="level-score"><span class="level-percent">' + pct + '<i>%</i></span>' +
           '<span class="level-points">' + esc(best.points) + ' из ' + esc(best.max) + ' баллов письменной части</span></div>' +
         '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
-        (opts.resultId ? '<button class="level-open" data-open-result="' + esc(opts.resultId) + '">Разбор и отчёт →</button>' : '') +
+
       '</li>';
     });
     html += '</ol>';
@@ -128,10 +162,14 @@
      фиксируем уходы со вкладки и показываем их преподавателю. */
   var integrity = { away: 0, awayMs: 0, events: [] };
   var awayAt = 0;
+  /* Системный диалог (запрос микрофона, confirm) тоже снимает фокус с окна.
+     Это штатное действие самого экзамена, а не уход на подсказки — иначе
+     преподаватель увидит «улику» там, где ученик просто разрешил микрофон. */
+  var systemDialog = false;
 
   function watchIntegrity() {
     function leave() {
-      if (state.phase !== 'exam' || awayAt) return;
+      if (state.phase !== 'exam' || awayAt || systemDialog) return;
       awayAt = Date.now();
     }
     function back() {
@@ -167,7 +205,7 @@
   function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   function fmtTime(sec) {
@@ -213,17 +251,37 @@
     return a;
   }
 
+  /* Черновик экзамена. resumable=true означает «экзамен начат и не сдан»:
+     по нему на главной появляется кнопка «Продолжить экзамен». Отдельный
+     флаг нужен потому, что при выходе на главную state.phase становится
+     'welcome', а сам черновик обязан пережить выход — это ровно то, что
+     обещает текст подтверждения выхода. */
   function save() {
     try {
       localStorage.setItem(LS_KEY, JSON.stringify({
         phase: state.phase,
+        resumable: state.phase === 'exam' || state.resumable === true,
         stepIdx: state.stepIdx,
         student: state.student,
         startedAt: state.startedAt,
         submissionId: state.submissionId,
-        answers: state.answers
+        answers: state.answers,
+        integrity: integrity
       }));
     } catch (e) { /* приватный режим — работаем без сохранения */ }
+  }
+
+  /* Черновик лежит в localStorage, который правится руками и переживает
+     правки data.js. Поэтому каждое поле проверяем по форме, а не по факту
+     наличия: иначе строка вместо массива уронит сбор ответов. */
+  function sameShape(saved, sample) {
+    if (Array.isArray(sample)) {
+      return Array.isArray(saved) && saved.length === sample.length;
+    }
+    if (sample && typeof sample === 'object') {
+      return !!saved && typeof saved === 'object' && !Array.isArray(saved);
+    }
+    return typeof saved === typeof sample;
   }
 
   function restore() {
@@ -231,20 +289,31 @@
       var raw = localStorage.getItem(LS_KEY);
       if (!raw) return;
       var saved = JSON.parse(raw);
-      if (saved && (saved.phase === 'exam' || saved.phase === 'done') && saved.student) {
-        state.phase = saved.phase;
-        state.stepIdx = Math.min(saved.stepIdx || 0, steps.length - 1);
-        state.student = saved.student;
-        state.startedAt = saved.startedAt;
-        state.submissionId = saved.submissionId || uuid();
-        if (saved.answers) {
-          for (var k in state.answers) {
-            if (saved.answers[k] !== undefined) state.answers[k] = saved.answers[k];
-          }
+      if (!saved || !saved.student) return;
+      var live = saved.phase === 'exam' || saved.phase === 'done';
+      if (!live && !saved.resumable) return;
+
+      state.resumable = saved.resumable === true || saved.phase === 'exam';
+      state.phase = live ? saved.phase : 'welcome';
+      state.stepIdx = Math.min(Math.max(0, saved.stepIdx | 0), steps.length - 1);
+      state.student = saved.student;
+      state.startedAt = saved.startedAt;
+      state.submissionId = saved.submissionId || uuid();
+
+      var fresh = freshAnswers();
+      if (saved.answers) {
+        for (var k in fresh) {
+          if (!Object.prototype.hasOwnProperty.call(fresh, k)) continue;
+          if (sameShape(saved.answers[k], fresh[k])) state.answers[k] = saved.answers[k];
         }
-        // аудио живёт только в памяти — после перезагрузки записи нет
-        state.answers.readingRecorded = false;
       }
+      if (saved.integrity && typeof saved.integrity === 'object') {
+        integrity.away = saved.integrity.away | 0;
+        integrity.awayMs = saved.integrity.awayMs | 0;
+        integrity.events = Array.isArray(saved.integrity.events) ? saved.integrity.events : [];
+      }
+      // аудио живёт только в памяти — после перезагрузки записи нет
+      state.answers.readingRecorded = false;
     } catch (e) { /* повреждённое сохранение игнорируем */ }
   }
 
@@ -264,11 +333,26 @@
     });
   }
 
-  function apiGet(path) {
+  /* Контейнер на Railway засыпает, и первый запрос после простоя может
+     не успеть. Отправка ответов давно ходит с повторами; чтение профиля
+     и кабинета — тоже GET, повтор для него безопасен. */
+  function apiGet(path, attempt) {
     if (!API) return Promise.reject(new Error('API не настроен'));
-    return fetchWithTimeout(API + path, {}, 15000).then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+    var n = attempt || 1;
+    return fetchWithTimeout(API + path, {}, 20000).then(function (r) {
+      if (!r.ok) {
+        var err = new Error('HTTP ' + r.status);
+        err.status = r.status;
+        throw err;
+      }
       return r.json();
+    }).catch(function (err) {
+      // 4xx повторять бессмысленно: ответ не изменится
+      if (err && err.status && err.status >= 400 && err.status < 500) throw err;
+      if (n >= 3) throw err;
+      return new Promise(function (resolve) {
+        setTimeout(resolve, n * 2000);
+      }).then(function () { return apiGet(path, n + 1); });
     });
   }
 
@@ -383,7 +467,12 @@
     }
   }
 
+  var BASE_TITLE = 'Экзамен по таджвиду · Первый уровень';
+
+  /* Заголовок вкладки следует за экраном: иначе во всех вкладках и во всей
+     истории браузера висит одно и то же название. */
   function setBar(label) {
+    document.title = label ? label + ' · таджвид.рф' : BASE_TITLE;
     if (!label) { topbar.hidden = true; return; }
     topbar.hidden = false;
     topbarLabel.textContent = label;
@@ -443,7 +532,7 @@
     setBar('Профиль');
     if (!token) return showLogin();
 
-    render('<h1>Профиль</h1><p class="lede">Загружаем ваши данные…</p>');
+    loadingScreen('Профиль', 'Загружаем ваши данные…');
     apiGet('/api/student/' + encodeURIComponent(token)).then(function (d) {
       if (!d.ok) throw new Error('нет данных');
       var s = d.student;
@@ -489,7 +578,7 @@
       });
       document.getElementById('againBtn').onclick = function () { state.phase = 'reg'; show(); };
       var pass = document.getElementById('setPass') || document.getElementById('changePass');
-      if (pass) pass.onclick = function () { showSetPassword(token); };
+      if (pass) pass.onclick = function () { showSetPassword(token, s.hasPassword); };
       document.getElementById('logout').onclick = function () {
         if (!window.confirm('Выйти из профиля на этом устройстве?')) return;
         try { localStorage.removeItem(STUDENT_KEY); localStorage.removeItem('tajweed_last_result'); } catch (e) { /* ок */ }
@@ -497,12 +586,8 @@
         show();
       };
     }).catch(function () {
-      render('<h1>Профиль недоступен</h1>' +
-        '<p class="lede">Не удалось загрузить данные. Проверьте интернет и попробуйте ещё раз.</p>' +
-        '<div class="btn-row"><button class="btn" id="retry">Повторить</button>' +
-        '<button class="btn is-ghost" id="homeBtn">На главную</button></div>');
-      document.getElementById('retry').onclick = showProfile;
-      document.getElementById('homeBtn').onclick = function () { state.phase = 'welcome'; show(); };
+      errorScreen('Профиль недоступен',
+        'Не удалось загрузить данные. Проверьте интернет и попробуйте ещё раз.', showProfile);
     });
   }
 
@@ -520,10 +605,10 @@
       '<form class="form" id="loginForm" novalidate>' +
         '<div class="field" data-f="phone"><label for="lPhone">Телефон</label>' +
           '<input id="lPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00" maxlength="20">' +
-          '<span class="err">Введите номер целиком</span></div>' +
+          '<span class="err" data-msg="Введите номер целиком" role="alert"></span></div>' +
         '<div class="field" data-f="password"><label for="lPass">Пароль</label>' +
           '<input id="lPass" name="password" type="password" autocomplete="current-password" maxlength="200">' +
-          '<span class="err">Введите пароль</span></div>' +
+          '<span class="err" data-msg="Введите пароль" role="alert"></span></div>' +
         '<p class="notice" id="loginErr" role="status" aria-live="polite" hidden></p>' +
         '<div class="btn-row"><button class="btn btn-block" type="submit">Войти</button></div>' +
       '</form>' +
@@ -560,7 +645,7 @@
       var bad = false;
       [['phone', phone.replace(/\D/g, '').length >= 10], ['password', !!password]].forEach(function (p) {
         var field = form.querySelector('[data-f="' + p[0] + '"]');
-        field.classList.toggle('is-invalid', !p[1]);
+        markInvalid(field, !p[1]);
         if (!p[1]) bad = true;
       });
       if (bad) return;
@@ -580,22 +665,29 @@
         err.classList.add('is-error');
         err.textContent = e2 && e2.status === 429
           ? 'Слишком много попыток. Попробуйте через 15 минут.'
-          : e2 && e2.status === 401 ? 'Неверный пароль.'
-          : e2 && e2.status === 404 ? 'Кабинет с таким номером не найден или пароль ещё не задан. Кабинет появляется после первого экзамена — нажмите «Сдать экзамен и завести профиль» ниже.'
+          : e2 && (e2.status === 401 || e2.status === 404)
+            ? 'Неверный номер или пароль. Кабинет появляется после первого экзамена — если вы ещё не сдавали, нажмите «Сдать экзамен и завести профиль» ниже.'
           : 'Не получилось войти. Проверьте интернет и попробуйте ещё раз.';
       });
     };
   }
 
-  function showSetPassword(token) {
+  /* hasPassword=true → пароль уже стоит, и сервер потребует текущий:
+     знать ссылку на кабинет недостаточно, чтобы сменить вход. */
+  function showSetPassword(token, hasPassword) {
     setBar('Пароль профиля');
     render(
       '<h1>Пароль профиля</h1>' +
       '<p class="lede">С паролем вы откроете свой профиль с любого устройства — по номеру телефона.</p>' +
       '<form class="form" id="passForm" novalidate>' +
+        (hasPassword
+          ? '<div class="field" data-f="current"><label for="pCur">Текущий пароль</label>' +
+              '<input id="pCur" name="currentPassword" type="password" autocomplete="current-password" maxlength="200">' +
+              '<span class="err" data-msg="Введите текущий пароль" role="alert"></span></div>'
+          : '') +
         '<div class="field" data-f="password"><label for="pNew">Новый пароль</label>' +
           '<input id="pNew" name="password" type="password" autocomplete="new-password" maxlength="200">' +
-          '<span class="err">Не короче шести знаков</span></div>' +
+          '<span class="err" data-msg="Не короче шести знаков" role="alert"></span></div>' +
         '<p class="notice" id="passErr" role="status" aria-live="polite" hidden></p>' +
         '<div class="btn-row"><button class="btn btn-block" type="submit">Сохранить пароль</button></div>' +
       '</form>' +
@@ -607,23 +699,29 @@
       e.preventDefault();
       var pass = form.password.value;
       var field = form.querySelector('[data-f="password"]');
-      if (pass.length < 6) {
-        field.classList.add('is-invalid');
+      markInvalid(field, pass.length < 6);
+      if (pass.length < 6) return;
+      var current = hasPassword ? form.currentPassword.value : '';
+      if (hasPassword && !current) {
+        markInvalid(form.querySelector('[data-f="current"]'), true);
         return;
       }
-      field.classList.remove('is-invalid');
       var btn = form.querySelector('button[type="submit"]');
       var err = document.getElementById('passErr');
       btn.disabled = true;
       btn.textContent = 'Сохраняем…';
-      api('/api/auth/password', { studentToken: token, password: pass }).then(function () {
+      api('/api/auth/password', {
+        studentToken: token, password: pass, currentPassword: current
+      }).then(function () {
         showProfile();
-      }).catch(function () {
+      }).catch(function (e2) {
         btn.disabled = false;
         btn.textContent = 'Сохранить пароль';
         err.hidden = false;
         err.classList.add('is-error');
-        err.textContent = 'Не получилось сохранить пароль. Попробуйте ещё раз.';
+        err.textContent = e2 && (e2.status === 401 || e2.status === 400)
+          ? 'Текущий пароль неверен.'
+          : 'Не получилось сохранить пароль. Попробуйте ещё раз.';
       });
     };
   }
@@ -634,8 +732,13 @@
     if (exit) {
       exit.hidden = !isExam;
       exit.onclick = function () {
-        if (!window.confirm('Выйти из экзамена? Ответы на этом устройстве сохранятся, но время по текущему вопросу пойдёт заново.')) return;
+        systemDialog = true; // confirm снимает фокус с окна — это не уход со вкладки
+        var leave = window.confirm('Выйти из экзамена? Ответы сохранятся на этом устройстве, ' +
+          'с главной можно будет продолжить с текущего вопроса. Время по нему пойдёт заново.');
+        systemDialog = false;
+        if (!leave) return;
         stopTimer();
+        state.resumable = true; // черновик остаётся, экзамен можно продолжить
         state.phase = 'welcome';
         save();
         show();
@@ -686,6 +789,11 @@
       studentTok = localStorage.getItem(STUDENT_KEY) || '';
     } catch (e) { /* ок */ }
 
+    /* Экзамен начат и не сдан: с главной надо предложить продолжить
+       ровно с того вопроса, а не гнать анкету по второму кругу. */
+    var draft = state.resumable === true && !!state.student;
+    var doneCount = draft ? Math.min(state.stepIdx + 1, steps.length) : 0;
+
     /* Главная — как баннер прайса: сетка одинаковых квадратов,
        штриховка сверху, заголовок, кикер, одна вдавленная кнопка.
        Ничего лишнего: уроки и кабинет живут в меню. */
@@ -694,8 +802,12 @@
         '<span class="hero-hatch" aria-hidden="true"></span>' +
         marks('is-out') +
         '<h1 id="welcomeTitle">Экзамен по <em>таджвиду</em></h1>' +
-        '<p class="kicker is-under">Наука чтения Корана · Первый уровень<span class="cur">_</span></p>' +
-        '<div class="hero-actions"><button class="btn" id="heroExam">Сдать экзамен →</button></div>' +
+        '<p class="kicker is-under">' +
+          (draft ? 'Экзамен начат · шаг ' + doneCount + ' из ' + steps.length
+                 : 'Наука чтения Корана · Первый уровень') +
+          '<span class="cur">_</span></p>' +
+        '<div class="hero-actions"><button class="btn" id="heroExam">' +
+          (draft ? 'Продолжить экзамен →' : 'Сдать экзамен →') + '</button></div>' +
         '<div class="hero-meta">' +
           '<span class="crosshair" aria-hidden="true"></span>' +
           '<span>ТАДЖВИД.РФ // 2026<br>ПРЕПОДАВАТЕЛЬ ДЕАБ АНАС Т. ' +
@@ -713,14 +825,34 @@
       '<section class="cta-banner" aria-labelledby="ctaTitle">' +
         '<span class="hero-hatch" aria-hidden="true"></span>' +
         marks('is-out') +
-        '<h2 id="ctaTitle">Проверьте себя</h2>' +
-        '<p class="kicker is-under">51 вопрос и чтение вслух · до 3 минут на вопрос<span class="cur">_</span></p>' +
-        '<div class="hero-actions"><button class="btn" id="ctaExam">Сдать экзамен →</button></div>' +
+        '<h2 id="ctaTitle">' + (draft ? 'Вернуться к экзамену' : 'Проверьте себя') + '</h2>' +
+        '<p class="kicker is-under">' +
+          (draft ? 'Ответы сохранены на этом устройстве'
+                 : '51 вопрос и чтение вслух · до 3 минут на вопрос') +
+          '<span class="cur">_</span></p>' +
+        '<div class="hero-actions"><button class="btn" id="ctaExam">' +
+          (draft ? 'Продолжить →' : 'Сдать экзамен →') + '</button>' +
+          (draft ? '<button class="btn is-pill" id="startOver">Начать заново</button>' : '') +
+        '</div>' +
       '</section>'
     );
     var startExam = function () { state.phase = 'reg'; show(); };
-    document.getElementById('heroExam').onclick = startExam;
-    document.getElementById('ctaExam').onclick = startExam;
+    /* Незаконченный экзамен продолжаем с того же вопроса — именно это
+       обещает текст при выходе, поэтому анкету заново не показываем. */
+    var resume = function () {
+      state.phase = 'exam';
+      save();
+      show();
+    };
+    var heroBtn = document.getElementById('heroExam');
+    var ctaBtn = document.getElementById('ctaExam');
+    heroBtn.onclick = draft ? resume : startExam;
+    ctaBtn.onclick = draft ? resume : startExam;
+    var fresh = document.getElementById('startOver');
+    if (fresh) fresh.onclick = function () {
+      if (!window.confirm('Начать экзамен заново? Ответы текущей попытки будут удалены.')) return;
+      startExam();
+    };
     var goSaved = document.getElementById('goSaved');
     if (goSaved) goSaved.onclick = function () {
       if (studentTok) return showStudentCabinet(studentTok);
@@ -730,7 +862,7 @@
 
   function showStudentCabinet(token) {
     setBar('Личный кабинет');
-    render('<h1>Личный кабинет</h1><p class="lede">Загружаем историю экзаменов…</p>');
+    loadingScreen('Личный кабинет', 'Загружаем историю экзаменов…');
     apiGet('/api/student/' + encodeURIComponent(token)).then(function (d) {
       if (!d.ok) throw new Error('нет данных');
       try { localStorage.setItem(STUDENT_KEY, token); } catch (e) { /* ок */ }
@@ -778,18 +910,15 @@
         show();
       };
     }).catch(function () {
-      render('<h1>Кабинет недоступен</h1>' +
-        '<p class="lede">Не удалось загрузить историю. Проверьте интернет и попробуйте ещё раз.</p>' +
-        '<div class="btn-row"><button class="btn" id="retryCabinet">Повторить</button>' +
-        '<button class="btn is-ghost" id="homeBtn">На главную</button></div>');
-      document.getElementById('retryCabinet').onclick = function () { showStudentCabinet(token); };
-      document.getElementById('homeBtn').onclick = function () { state.phase = 'welcome'; show(); };
+      errorScreen('Кабинет недоступен',
+        'Не удалось загрузить историю. Проверьте интернет и попробуйте ещё раз.',
+        function () { showStudentCabinet(token); });
     });
   }
 
   function showSavedResult(id, cabinetToken) {
     setBar('Мой результат');
-    render('<h1>Загружаем результат…</h1>');
+    loadingScreen('Результат экзамена', 'Загружаем результат…');
     fetchWithTimeout(API + '/api/result/' + encodeURIComponent(id), {}, 15000)
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (d) {
@@ -830,14 +959,9 @@
         };
       })
       .catch(function () {
-        render('<h1>Результат не найден</h1>' +
-          '<p class="lede">Ссылка устарела или сервер недоступен. Попробуйте позже.</p>' +
-          '<div class="btn-row"><button class="btn is-ghost" id="homeBtn">← На главную</button></div>');
-        document.getElementById('homeBtn').onclick = function () {
-          if (history.replaceState) history.replaceState(null, '', location.pathname);
-          state.phase = 'welcome';
-          show();
-        };
+        errorScreen('Результат не найден',
+          'Ссылка устарела или сервер недоступен. Попробуйте позже.',
+          function () { showSavedResult(id, cabinetToken); });
       });
   }
 
@@ -853,7 +977,7 @@
       '<legend>Когда удобно заниматься?</legend>' +
       '<p class="field-hint" id="daysHint">Выберите один или несколько дней.</p>' +
       '<div class="day-strip">' + days + '</div>' +
-      '<span class="err" id="errScheduleDays" role="alert">Выберите хотя бы один день</span>' +
+      '<span class="err" id="errScheduleDays" data-msg="Выберите хотя бы один день" role="alert"></span>' +
       '<div class="time-window">' +
         '<div class="time-heading"><span>Диапазон времени</span>' +
           '<strong id="scheduleSummary">10:00—20:00</strong></div>' +
@@ -918,7 +1042,7 @@
               (st.ph ? ' placeholder="' + esc(st.ph) + '"' : '') +
               ' value="' + esc(data[st.f]) + '" aria-describedby="wErr">' +
             '<span class="wizard-hint">' + esc(st.hint) + '</span>' +
-            '<span class="err" id="wErr" role="alert">' + esc(st.err) + '</span>' +
+            '<span class="err" id="wErr" data-msg="' + esc(st.err) + '" role="alert"></span>' +
           '</div>' + rules + honesty +
           '<div class="btn-row">' +
             '<button class="btn btn-block" id="wNext">' +
@@ -950,8 +1074,7 @@
 
       function forward() {
         if (!ok()) {
-          field.classList.add('is-invalid');
-          input.setAttribute('aria-invalid', 'true');
+          markInvalid(field, true);
           input.focus();
           return;
         }
@@ -961,8 +1084,7 @@
       }
 
       input.oninput = function () {
-        field.classList.remove('is-invalid');
-        input.setAttribute('aria-invalid', 'false');
+        markInvalid(field, false);
       };
       input.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); forward(); } };
       document.getElementById('wNext').onclick = forward;
@@ -986,16 +1108,16 @@
     return '<form class="form" id="personForm" method="post" action="' + (includeSchedule ? esc(API + '/apply') : '') + '" novalidate>' +
       '<div class="field" data-f="firstName"><label for="fFirst">Имя</label>' +
         '<input id="fFirst" name="firstName" autocomplete="given-name" maxlength="60" aria-describedby="errFirst" required>' +
-        '<span class="err" id="errFirst">Укажите имя</span></div>' +
+        '<span class="err" id="errFirst" data-msg="Укажите имя" role="alert"></span></div>' +
       '<div class="field" data-f="lastName"><label for="fLast">Фамилия</label>' +
         '<input id="fLast" name="lastName" autocomplete="family-name" maxlength="60" aria-describedby="errLast" required>' +
-        '<span class="err" id="errLast">Укажите фамилию</span></div>' +
+        '<span class="err" id="errLast" data-msg="Укажите фамилию" role="alert"></span></div>' +
       '<div class="field" data-f="city"><label for="fCity">Город</label>' +
         '<input id="fCity" name="city" autocomplete="address-level2" maxlength="60" aria-describedby="errCity" required>' +
-        '<span class="err" id="errCity">Укажите город</span></div>' +
+        '<span class="err" id="errCity" data-msg="Укажите город" role="alert"></span></div>' +
       '<div class="field" data-f="phone"><label for="fPhone">Телефон</label>' +
         '<input id="fPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00…" maxlength="20" aria-describedby="errPhone" required>' +
-        '<span class="err" id="errPhone">Укажите телефон полностью</span></div>' +
+        '<span class="err" id="errPhone" data-msg="Укажите телефон полностью" role="alert"></span></div>' +
       (includeSchedule ? '<input name="requestId" type="hidden" value="">' + scheduleFields() : '') +
       '<div class="btn-row"><button type="submit" class="btn btn-block">' + submitLabel + '</button></div>' +
     '</form>';
@@ -1013,7 +1135,7 @@
     ['firstName', 'lastName', 'city', 'phone'].forEach(function (f) {
       var field = form.querySelector('[data-f="' + f + '"]');
       var bad = !data[f] || (f === 'phone' && data[f].replace(/\D/g, '').length < 10);
-      field.classList.toggle('is-invalid', bad);
+      markInvalid(field, bad);
       field.querySelector('input').setAttribute('aria-invalid', bad ? 'true' : 'false');
       if (bad) { ok = false; if (!firstInvalid) firstInvalid = field.querySelector('input'); }
     });
@@ -1023,7 +1145,7 @@
         return input.value;
       });
       var daysBad = selectedDays.length === 0;
-      schedule.classList.toggle('is-invalid', daysBad);
+      markInvalid(schedule, daysBad);
       schedule.setAttribute('aria-invalid', daysBad ? 'true' : 'false');
       if (daysBad) {
         ok = false;
@@ -1033,7 +1155,9 @@
       var endMinute = Number(form.timeToMinutes.value);
       if (startMinute >= endMinute) {
         ok = false;
-        schedule.classList.add('is-invalid');
+        markInvalid(schedule, true);
+        var slot = schedule.querySelector('.err');
+        if (slot) slot.textContent = 'Время «не раньше» должно быть меньше, чем «не позже»';
         schedule.setAttribute('aria-invalid', 'true');
         if (!firstInvalid) firstInvalid = form.timeFromMinutes;
       }
@@ -1101,7 +1225,7 @@
       from.setAttribute('aria-valuetext', 'Не раньше ' + fmtMinutes(from.value));
       to.setAttribute('aria-valuetext', 'Не позже ' + fmtMinutes(to.value));
       summary.textContent = (labels.length ? labels.join(', ') + ' · ' : '') + range;
-      if (labels.length) picker.classList.remove('is-invalid');
+      if (labels.length) markInvalid(picker, false);
     }
 
     function onRangeInput(changed) {
@@ -1212,8 +1336,14 @@
         state.submissionId = uuid();
         state.answers = freshAnswers();
         state.phase = 'exam';
+        state.resumable = true;
         state.stepIdx = 0;
         examFinished = false;
+        /* новая попытка начинается с чистого листа: журнал уходов и запись
+           голоса от прошлой попытки не должны уехать преподавателю */
+        integrity = { away: 0, awayMs: 0, events: [] };
+        audioBlob = null;
+        audioMime = '';
         save();
         show();
       }
@@ -1712,7 +1842,10 @@
       permissionPending = true;
       recBtn.disabled = true;
       setStatus('Запрашиваем доступ к микрофону…');
+      // запрос доступа снимает фокус с окна — не считаем это уходом со вкладки
+      systemDialog = true;
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function (mediaStream) {
+        systemDialog = false;
         permissionPending = false;
         stream = mediaStream;
         if (!active || skipped) {
@@ -1846,7 +1979,7 @@
       site: location.hostname
     };
     serverResult = null;
-    submitError = null;
+    submitError = null; // причину отказа показываем ученику
     return apiWithRetry('/api/submit', payload, 4, onAttempt).then(function (res) {
       serverResult = res;
       if (audioBlob && res && res.id) {
@@ -2012,7 +2145,16 @@
       }
     } else {
       html += 'Ответы сохранены на этом устройстве.</p>';
-      html += '<p class="notice is-error">Сервер сейчас недоступен — мы пробовали несколько раз. Ответы не потеряны: они останутся здесь, даже если закрыть вкладку. Попробуйте отправку через минуту или передайте отчёт преподавателю вручную.</p>';
+      var code = submitError && submitError.status;
+      html += '<p class="notice is-error">' + (
+        code === 429
+          ? 'Сегодня с вашего номера уже отправлено пять работ. Ответы сохранены — отправьте их завтра или передайте отчёт преподавателю вручную.'
+        : code === 409
+          ? 'Эта работа уже отправлена раньше. Откройте свой результат в профиле — повторная отправка не нужна.'
+        : code >= 400 && code < 500
+          ? 'Сервер не принял работу: возможно, анкета заполнена не полностью. Ответы сохранены — передайте отчёт преподавателю вручную.'
+        : 'Сервер сейчас недоступен — мы пробовали несколько раз. Ответы не потеряны: они останутся здесь, даже если закрыть вкладку. Попробуйте отправку через минуту или передайте отчёт преподавателю вручную.'
+      ) + '</p>';
       html += '<div class="btn-row"><button class="btn" id="retrySubmitBtn">Повторить отправку</button></div>';
     }
 

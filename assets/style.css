@@ -78,6 +78,8 @@
    сильнее. Конструкция снята с карточек фабрик на wiki.bahur.store. */
 
 .level.is-open,
+.level.is-scored,
+.score-hero.is-scored,
 .levels-locked {
   border-color: transparent;
   background: #141416;
@@ -150,8 +152,15 @@
 
 :root[data-theme="light"] .btn.is-ghost:hover { background: rgba(10, 10, 11, 0.05); }
 :root[data-theme="light"] .btn.is-quiet { color: var(--text-soft); background: transparent; box-shadow: none; }
+/* Пройденный уровень остаётся ВДАВЛЕННОЙ плашкой: гасим только неоновое
+   свечение текста (ниже), но не саму вдавленность. */
 :root[data-theme="light"] .score-hero.is-scored,
-:root[data-theme="light"] .level.is-scored { box-shadow: none; }
+:root[data-theme="light"] .level.is-scored {
+  border-color: transparent;
+  box-shadow:
+    inset 4px 4px 10px rgba(20, 19, 16, 0.1),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.95);
+}
 
 /* На бумаге неон слепит — цвет результата приглушаем и убираем свечение */
 :root[data-theme="light"] .score-hero.is-scored .score-percent,
@@ -263,9 +272,8 @@ html.is-exam body { padding-bottom: 0; }
 
   .sitenav-mark:hover { color: var(--text); }
   .sitenav-mark:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-  .sitenav-tabs { display: flex; align-self: stretch; }
-
   .sitenav-tabs {
+    display: flex;
     align-self: center;
     padding: 4px;
     gap: 2px;
@@ -279,7 +287,6 @@ html.is-exam body { padding-bottom: 0; }
 /* Переключатель темы: в шапке на десктопе, в профиле на телефоне */
 
 .theme-toggle {
-  display: none;
   min-height: 34px;
   padding: 9px 14px;
   display: inline-flex;
@@ -499,7 +506,7 @@ a { color: inherit; }
 }
 
 .topbar-inner {
-  max-width: 720px;
+  max-width: var(--sheet-w);
   margin: 0 auto;
   padding: calc(12px + env(safe-area-inset-top)) 20px 12px;
   display: flex;
@@ -527,7 +534,12 @@ a { color: inherit; }
 }
 
 .topbar-timer.is-low { font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
-.timebar { width: 100%; height: 3px; display: block; border: 0; background: var(--surface-strong); appearance: none; }
+/* Атрибут hidden обязан побеждать: авторский display:block иначе
+   перебивает браузерный [hidden]{display:none}, и полоса таймера
+   висит чёрной чертой под шапкой на всех экранах подряд. */
+[hidden] { display: none !important; }
+
+.timebar { width: 100%; height: 3px; display: block; border: 0; background: var(--surface-strong); -webkit-appearance: none; appearance: none; }
 .timebar::-webkit-progress-bar { background: var(--surface-strong); }
 .timebar::-webkit-progress-value { background: var(--text); }
 .timebar::-moz-progress-bar { background: var(--text); }
@@ -602,6 +614,8 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .screen { animation: none; }
+  /* единственный !important в проекте: заглушить анимации нужно поверх
+     любых компонентных правил, иначе часть из них переживёт сброс */
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
@@ -716,6 +730,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   text-transform: none;
   text-decoration: none;
   touch-action: manipulation;
+  -webkit-user-select: none;
   user-select: none;
   transition: box-shadow 0.15s, transform 0.1s;
 }
@@ -818,9 +833,14 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   isolation: isolate;
   /* overflow не режем: приводные уголки .marks.is-out живут ЗА рамкой,
      а штриховка и так позиционирована строго внутри */
+  /* Сетку рисуем ОТ ПРАВОГО края: штриховка тоже прижата вправо, и так её
+     левая граница всегда ложится ровно на линию сетки. Если вести сетку
+     слева, справа остаётся обрезок, а штриховка начинается посреди ячейки —
+     получается тот самый «висящий шов» посреди баннера. */
   background-image:
-    repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px var(--hero-cell)),
+    repeating-linear-gradient(to left, var(--line) 0 1px, transparent 1px var(--hero-cell)),
     repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px var(--hero-cell));
+  background-position: right top, left top;
 }
 
 .welcome-hero { min-height: calc(var(--hero-cell) * 3); }
@@ -868,7 +888,8 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 /* Шапка экзамена: таймер и единственный выход */
 .topbar-right { display: flex; align-items: center; gap: 14px; }
-.topbar-exit { min-height: 36px; padding: 8px 10px; font-size: 12px; }
+/* цель нажатия не меньше 44px: кнопка есть на всех экранах экзамена */
+.topbar-exit { min-height: 44px; padding: 8px 12px; font-size: 12px; }
 
 .level { cursor: default; }
 
@@ -920,7 +941,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 .result-list { margin-top: 28px; border-top: 1px solid var(--line); }
 .result-item { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--line); }
-.result-item p { min-width: 0; overflow-wrap: break-word; hyphens: auto; }
+.result-item p { min-width: 0; overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; }
 .result-item .meta { color: var(--text-soft); font-size: 13px; }
 .result-item .score { font-family: var(--font-mono); font-size: 20px; font-variant-numeric: tabular-nums; }
 
@@ -959,6 +980,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   gap: 40px 12px;
   overflow: hidden;
   pointer-events: none;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -1032,8 +1054,10 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   font-size: clamp(26px, 6vw, 34px);
 }
 
+/* фокус должен быть заметен сам по себе, а не «чуть более жирной» линией */
 .wizard-field input:focus-visible {
-  outline: 0;
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
   border-bottom-color: var(--text);
   border-bottom-width: 2px;
 }
@@ -1228,10 +1252,6 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   .day-strip { grid-auto-flow: initial; grid-template-columns: repeat(7, minmax(0, 1fr)); overflow: visible; }
 }
 
-@media (prefers-reduced-transparency: reduce) {
-  .topbar, .time-window { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--surface); }
-}
-
 /* Вопросы */
 
 .q-head { margin-bottom: 24px; }
@@ -1298,9 +1318,35 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   transition: color 0.14s, background-color 0.14s, border-color 0.14s, transform 0.1s;
 }
 
-.opt:hover { border-color: var(--line-strong); }
+/* плитка ответа — тот же вдавленный приём, что у кнопок: иначе самый
+   нажимаемый элемент экзамена читается как неинтерактивный */
+.opt {
+  border-color: transparent;
+  background: #141416;
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 0, 0, 0.7),
+    inset -2px -2px 7px rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="light"] .opt {
+  border-color: transparent;
+  background: #f3f3f5;
+  box-shadow:
+    inset 3px 3px 8px rgba(20, 19, 16, 0.11),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.95);
+}
+
+.opt:hover { box-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.78), inset -2px -2px 8px rgba(255, 255, 255, 0.05); }
+:root[data-theme="light"] .opt:hover { box-shadow: inset 4px 4px 10px rgba(20, 19, 16, 0.15), inset -3px -3px 8px rgba(255, 255, 255, 0.92); }
 .opt:active { transform: translateY(1px); }
-.opt.is-on { color: var(--inverse-text); background: var(--inverse-bg); border-color: var(--line-strong); }
+/* выбранная плитка — сплошная инверсия без вдавленности: так выбор
+   отличается от «нажимаемого, но не выбранного» состояния */
+.opt.is-on {
+  color: var(--inverse-text);
+  background: var(--inverse-bg);
+  border-color: var(--line-strong);
+  box-shadow: none;
+}
 
 .checks { margin-top: 24px; overflow: visible; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 
@@ -1386,7 +1432,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 .compose-out.is-empty { color: var(--text-faint); font-family: var(--font-ui); font-size: 15px; }
 .compose-tiles { margin-top: 18px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; direction: rtl; }
 .compose-tiles .opt { min-width: 68px; min-height: 68px; padding: 6px 14px 10px; font-family: var(--font-ar); font-size: 36px; line-height: 1.7; }
-.compose-tiles .opt.is-used { color: var(--text-faint); background: var(--bg); border-color: var(--line); cursor: default; }
+.compose-tiles .opt.is-used { color: var(--text-faint); background: var(--bg); border-color: var(--line); box-shadow: none; cursor: default; }
 .compose-ctrl { margin-top: 16px; display: flex; justify-content: center; gap: 10px; }
 .compose-ctrl .btn { min-height: 44px; padding: 10px 18px; font-size: 12px; }
 
@@ -1532,8 +1578,6 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--line);
-  color: var(--text-faint);
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--text-soft);
@@ -1550,7 +1594,17 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   text-transform: uppercase;
 }
 
-.level-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+/* Вердикт бывает длинным («нужно повторить материал»), поэтому строка
+   переносится, а дети умеют сжиматься — иначе карточка распирает экран. */
+.level-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.level-head > * { min-width: 0; }
 
 .level-n {
   font-family: var(--font-display);
@@ -1563,21 +1617,15 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   font-weight: 600;
   letter-spacing: var(--track-pill);
   text-transform: uppercase;
-  white-space: nowrap;
 }
+
+/* «доступен»/«закрыт» короткие — их не рвём; вердикт переносим */
+.level-lock { white-space: nowrap; }
 
 .level-lock { color: var(--text-faint); }
 .level-lock.is-ready { color: var(--text); }
 .level-topic { margin-top: 6px; color: var(--text-soft); font-size: 15px; }
 .level-hint { margin-top: 10px; color: var(--text-faint); font-size: 13px; }
-
-.level.is-locked {
-  border-style: dashed;
-  background: transparent;
-}
-
-.level.is-locked .level-n { color: var(--text-faint); }
-.level.is-locked .level-topic { color: var(--text-faint); }
 
 /* Пройденный уровень горит цветом результата */
 
@@ -1588,13 +1636,13 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
     var(--surface);
 }
 
-.level.is-scored .level-verdict { color: var(--score-color); }
+.level.is-scored .level-verdict { color: var(--score-color, var(--text)); }
 .level.is-scored .level-topic { color: var(--text-soft); }
 
 .level-score { margin-top: 18px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; }
 
 .level-percent {
-  color: var(--score-color);
+  color: var(--score-color, var(--text));
   font-family: var(--font-display);
   font-size: clamp(46px, 12vw, 64px);
   font-weight: 600;
@@ -1626,23 +1674,6 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   to { transform: scaleX(1); transform-origin: left; }
 }
 
-.level-open {
-  min-height: 44px;
-  margin-top: 12px;
-  padding: 12px 0;
-  color: var(--score-color);
-  background: none;
-  border: 0;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: var(--track-pill);
-  text-transform: uppercase;
-  touch-action: manipulation;
-}
-
-.level-open:hover { text-decoration: underline; text-underline-offset: 4px; }
-.level-open:focus-visible { outline: 2px solid var(--score-color); outline-offset: 3px; }
 
 @media (prefers-reduced-motion: reduce) {
   .level-bar span { animation: none; }
