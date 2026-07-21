@@ -387,8 +387,213 @@
       { id: 'exam', label: 'Экзамен', act: function () { state.phase = 'reg'; show(); },
         on: function () { return state.phase === 'reg' || state.phase === 'exam'; } },
       { id: 'lead', label: 'Уроки', act: function () { state.phase = 'lead'; show(); },
-        on: function () { return state.phase === 'lead' || state.phase === 'leadDone'; } }
+        on: function () { return state.phase === 'lead' || state.phase === 'leadDone'; } },
+      { id: 'profile', label: 'Профиль',
+        act: function () { state.phase = 'profile'; show(); },
+        on: function () { return state.phase === 'profile'; } }
     ];
+  }
+
+  /* ── Профиль ───────────────────────────────────────────── */
+
+  function studentToken() {
+    try { return localStorage.getItem(STUDENT_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function themeRow() {
+    var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    return '<button class="setting-row" id="profileTheme" type="button" aria-pressed="' + (isLight ? 'true' : 'false') + '">' +
+      '<span><b>Оформление</b><small>Тёмное или светлое</small></span>' +
+      '<span class="setting-value"><span class="theme-dial" aria-hidden="true"></span>' +
+        (isLight ? 'Светлое' : 'Тёмное') + '</span></button>';
+  }
+
+  function wireThemeRow() {
+    var row = document.getElementById('profileTheme');
+    if (!row) return;
+    row.onclick = function () {
+      var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('tajweed_theme', next); } catch (e) { /* ок */ }
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', next === 'light' ? '#F7F7F4' : '#0A0A0B');
+      syncThemeToggle();
+      showProfile();
+    };
+  }
+
+  function showProfile() {
+    if (state.phase === 'exam') return;
+    state.phase = 'profile';
+    paintNav();
+    var token = studentToken();
+    setBar('Профиль');
+    if (!token) return showLogin();
+
+    render('<h1>Профиль</h1><p class="lede">Загружаем ваши данные…</p>');
+    apiGet('/api/student/' + encodeURIComponent(token)).then(function (d) {
+      if (!d.ok) throw new Error('нет данных');
+      var s = d.student;
+      var results = d.results || [];
+      var best = null;
+      results.forEach(function (r) { if (!best || r.percent > best.percent) best = r; });
+
+      var html = '<h1>Профиль</h1>' +
+        '<section class="frame profile-card">' + marks() +
+          '<p class="kicker">Ученик</p>' +
+          '<p class="profile-name">' + esc(s.lastName) + ' ' + esc(s.firstName) + '</p>' +
+          '<dl class="profile-meta">' +
+            '<div><dt>Город</dt><dd>' + esc(s.city) + '</dd></div>' +
+            '<div><dt>Телефон</dt><dd>' + esc(formatPhone(s.phone)) + '</dd></div>' +
+            '<div><dt>Экзаменов сдано</dt><dd>' + results.length + '</dd></div>' +
+          '</dl>' +
+        '</section>';
+
+      html += '<p class="kicker">Уровень</p>' + levelLadder(best, { resultId: best ? best.id : '' });
+
+      html += '<p class="kicker">Настройки</p><div class="settings">' + themeRow() +
+        (s.hasPassword
+          ? '<button class="setting-row" id="changePass" type="button">' +
+              '<span><b>Пароль</b><small>Вход с другого телефона</small></span>' +
+              '<span class="setting-value">Изменить</span></button>'
+          : '<button class="setting-row" id="setPass" type="button">' +
+              '<span><b>Пароль не задан</b><small>Задайте, чтобы войти с другого устройства</small></span>' +
+              '<span class="setting-value">Задать</span></button>') +
+        '<button class="setting-row" id="logout" type="button">' +
+          '<span><b>Выйти</b><small>Данные останутся у преподавателя</small></span>' +
+          '<span class="setting-value">Выйти</span></button>' +
+      '</div>';
+
+      html += '<div class="btn-row">' +
+        (best ? '<button class="btn" data-open-result="' + esc(best.id) + '">Разбор и отчёт</button>' : '') +
+        '<button class="btn' + (best ? ' is-ghost' : '') + '" id="againBtn">' +
+          (best ? 'Пройти ещё раз' : 'Сдать экзамен') + '</button></div>';
+
+      render(html);
+      wireThemeRow();
+      [].slice.call(app.querySelectorAll('[data-open-result]')).forEach(function (b) {
+        b.onclick = function () { showSavedResult(b.getAttribute('data-open-result'), token); };
+      });
+      document.getElementById('againBtn').onclick = function () { state.phase = 'reg'; show(); };
+      var pass = document.getElementById('setPass') || document.getElementById('changePass');
+      if (pass) pass.onclick = function () { showSetPassword(token); };
+      document.getElementById('logout').onclick = function () {
+        if (!window.confirm('Выйти из профиля на этом устройстве?')) return;
+        try { localStorage.removeItem(STUDENT_KEY); localStorage.removeItem('tajweed_last_result'); } catch (e) { /* ок */ }
+        state.phase = 'welcome';
+        show();
+      };
+    }).catch(function () {
+      render('<h1>Профиль недоступен</h1>' +
+        '<p class="lede">Не удалось загрузить данные. Проверьте интернет и попробуйте ещё раз.</p>' +
+        '<div class="btn-row"><button class="btn" id="retry">Повторить</button>' +
+        '<button class="btn is-ghost" id="homeBtn">На главную</button></div>');
+      document.getElementById('retry').onclick = showProfile;
+      document.getElementById('homeBtn').onclick = function () { state.phase = 'welcome'; show(); };
+    });
+  }
+
+  function formatPhone(digits) {
+    var d = String(digits || '').replace(/\D/g, '');
+    if (d.length === 11) return '+' + d[0] + ' ' + d.slice(1, 4) + ' ' + d.slice(4, 7) + '-' + d.slice(7, 9) + '-' + d.slice(9);
+    return d ? '+' + d : '—';
+  }
+
+  function showLogin() {
+    setBar('Вход в профиль');
+    render(
+      '<h1>Вход в профиль</h1>' +
+      '<p class="lede">Профиль появляется после первого экзамена. Если вы уже сдавали с другого телефона — войдите по номеру и паролю.</p>' +
+      '<form class="form" id="loginForm" novalidate>' +
+        '<div class="field" data-f="phone"><label for="lPhone">Телефон</label>' +
+          '<input id="lPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00" maxlength="20">' +
+          '<span class="err">Введите номер целиком</span></div>' +
+        '<div class="field" data-f="password"><label for="lPass">Пароль</label>' +
+          '<input id="lPass" name="password" type="password" autocomplete="current-password" maxlength="200">' +
+          '<span class="err">Введите пароль</span></div>' +
+        '<p class="notice" id="loginErr" hidden></p>' +
+        '<div class="btn-row"><button class="btn btn-block" type="submit">Войти</button></div>' +
+      '</form>' +
+      '<div class="btn-row"><button class="btn is-ghost btn-block" id="toExam">Сдать экзамен и завести профиль</button></div>' +
+      '<p class="kicker">Настройки</p><div class="settings">' + themeRow() + '</div>'
+    );
+    wireThemeRow();
+    document.getElementById('toExam').onclick = function () { state.phase = 'reg'; show(); };
+
+    var form = document.getElementById('loginForm');
+    form.onsubmit = function (e) {
+      e.preventDefault();
+      var phone = form.phone.value.trim();
+      var password = form.password.value;
+      var bad = false;
+      [['phone', phone.replace(/\D/g, '').length >= 10], ['password', !!password]].forEach(function (p) {
+        var field = form.querySelector('[data-f="' + p[0] + '"]');
+        field.classList.toggle('is-invalid', !p[1]);
+        if (!p[1]) bad = true;
+      });
+      if (bad) return;
+
+      var btn = form.querySelector('button[type="submit"]');
+      var err = document.getElementById('loginErr');
+      btn.disabled = true;
+      btn.textContent = 'Проверяем…';
+      err.hidden = true;
+      api('/api/auth/login', { phone: phone, password: password }).then(function (res) {
+        try { localStorage.setItem(STUDENT_KEY, res.studentToken); } catch (e2) { /* ок */ }
+        showProfile();
+      }).catch(function (e2) {
+        btn.disabled = false;
+        btn.textContent = 'Войти';
+        err.hidden = false;
+        err.classList.add('is-error');
+        err.textContent = e2 && e2.status === 429
+          ? 'Слишком много попыток. Попробуйте через 15 минут.'
+          : e2 && e2.status === 401 ? 'Неверный пароль.'
+          : e2 && e2.status === 404 ? 'Кабинет с таким номером не найден или пароль ещё не задан.'
+          : 'Не получилось войти. Проверьте интернет и попробуйте ещё раз.';
+      });
+    };
+  }
+
+  function showSetPassword(token) {
+    setBar('Пароль профиля');
+    render(
+      '<h1>Пароль профиля</h1>' +
+      '<p class="lede">С паролем вы откроете свой профиль с любого устройства — по номеру телефона.</p>' +
+      '<form class="form" id="passForm" novalidate>' +
+        '<div class="field" data-f="password"><label for="pNew">Новый пароль</label>' +
+          '<input id="pNew" name="password" type="password" autocomplete="new-password" maxlength="200">' +
+          '<span class="err">Не короче шести знаков</span></div>' +
+        '<p class="notice" id="passErr" hidden></p>' +
+        '<div class="btn-row"><button class="btn btn-block" type="submit">Сохранить пароль</button></div>' +
+      '</form>' +
+      '<div class="btn-row"><button class="btn is-quiet" id="backBtn">← В профиль</button></div>'
+    );
+    document.getElementById('backBtn').onclick = showProfile;
+    var form = document.getElementById('passForm');
+    form.onsubmit = function (e) {
+      e.preventDefault();
+      var pass = form.password.value;
+      var field = form.querySelector('[data-f="password"]');
+      if (pass.length < 6) {
+        field.classList.add('is-invalid');
+        return;
+      }
+      field.classList.remove('is-invalid');
+      var btn = form.querySelector('button[type="submit"]');
+      var err = document.getElementById('passErr');
+      btn.disabled = true;
+      btn.textContent = 'Сохраняем…';
+      api('/api/auth/password', { studentToken: token, password: pass }).then(function () {
+        showProfile();
+      }).catch(function () {
+        btn.disabled = false;
+        btn.textContent = 'Сохранить пароль';
+        err.hidden = false;
+        err.classList.add('is-error');
+        err.textContent = 'Не получилось сохранить пароль. Попробуйте ещё раз.';
+      });
+    };
   }
 
   function paintNav() {
@@ -422,6 +627,7 @@
     if (state.phase === 'lead') return showLead();
     if (state.phase === 'leadDone') return showLeadDone();
     if (state.phase === 'reg') return showReg();
+    if (state.phase === 'profile') return showProfile();
     if (state.phase === 'exam') return showStep();
     if (state.phase === 'done') return showDone();
   }
@@ -1795,34 +2001,34 @@
 
   /* ── Переключатель темы ────────────────────────────────── */
 
-  (function initTheme() {
+  function currentTheme() {
+    var set = document.documentElement.getAttribute('data-theme');
+    return set === 'light' ? 'light' : 'dark'; // по умолчанию чертёжная тёмная
+  }
+
+  function syncThemeToggle() {
     var toggle = document.getElementById('themeToggle');
     var label = document.getElementById('themeLabel');
+    if (!toggle || !label) return;
+    var isLight = currentTheme() === 'light';
+    label.textContent = isLight ? 'Светлая' : 'Тёмная';
+    toggle.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+    toggle.setAttribute('aria-label', 'Тема оформления: ' + (isLight ? 'светлая' : 'тёмная') +
+      '. Переключить на ' + (isLight ? 'тёмную' : 'светлую'));
+  }
+
+  (function initTheme() {
+    var toggle = document.getElementById('themeToggle');
     if (!toggle) return;
-
-    function current() {
-      var set = document.documentElement.getAttribute('data-theme');
-      if (set === 'light' || set === 'dark') return set;
-      return 'dark'; // по умолчанию чертёжная тёмная
-    }
-
-    function paint(theme) {
-      document.documentElement.setAttribute('data-theme', theme);
-      var isLight = theme === 'light';
-      label.textContent = isLight ? 'Светлая' : 'Тёмная';
-      toggle.setAttribute('aria-pressed', isLight ? 'true' : 'false');
-      toggle.setAttribute('aria-label', 'Тема оформления: ' + (isLight ? 'светлая' : 'тёмная') +
-        '. Переключить на ' + (isLight ? 'тёмную' : 'светлую'));
-      var meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute('content', isLight ? '#F7F7F4' : '#0A0A0B');
-    }
-
-    paint(current());
-
+    document.documentElement.setAttribute('data-theme', currentTheme());
+    syncThemeToggle();
     toggle.onclick = function () {
-      var next = current() === 'light' ? 'dark' : 'light';
-      paint(next);
+      var next = currentTheme() === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
       try { localStorage.setItem('tajweed_theme', next); } catch (e) { /* ок */ }
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', next === 'light' ? '#F7F7F4' : '#0A0A0B');
+      syncThemeToggle();
     };
   })();
 

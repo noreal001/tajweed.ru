@@ -164,14 +164,11 @@ html.is-exam body { padding-bottom: 0; }
   .sitenav-tabs .tab { min-height: 34px; padding: 8px 16px; }
 }
 
-/* Переключатель темы */
+/* Переключатель темы: в шапке на десктопе, в профиле на телефоне */
 
 .theme-toggle {
-  position: fixed;
-  right: 18px;
-  bottom: calc(18px + env(safe-area-inset-bottom));
-  z-index: 20;
-  min-height: 40px;
+  display: none;
+  min-height: 34px;
   padding: 9px 14px;
   display: inline-flex;
   align-items: center;
@@ -201,14 +198,68 @@ html.is-exam body { padding-bottom: 0; }
   background: linear-gradient(to right, currentColor 0 50%, transparent 50% 100%);
 }
 
-/* на телефоне переключатель уезжает в подвал, чтобы не спорить с меню */
-@media (max-width: 759px) {
-  .theme-toggle {
-    position: static;
-    margin: 20px auto 0;
-    display: flex;
-    width: fit-content;
-  }
+@media (min-width: 760px) {
+  .theme-toggle { display: inline-flex; }
+}
+
+/* Профиль и настройки */
+
+.profile-card { margin-top: 20px; }
+.profile-name { margin-top: 8px; font-family: var(--font-display); font-size: clamp(26px, 5.4vw, 34px); font-weight: 600; }
+
+.profile-meta {
+  margin-top: 20px;
+  display: grid;
+  gap: 14px 28px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, auto));
+  justify-content: start;
+}
+
+.profile-meta dt { color: var(--text-faint); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; }
+.profile-meta dd { margin-top: 4px; font-size: 16px; }
+
+.settings {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+}
+
+.setting-row {
+  width: 100%;
+  min-height: 62px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  touch-action: manipulation;
+  transition: background-color 0.14s;
+}
+
+.setting-row + .setting-row { border-top: 1px solid var(--line); }
+.setting-row:hover { background: var(--surface); }
+.setting-row:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+.setting-row b { display: block; font-size: 15px; font-weight: 500; }
+.setting-row small { display: block; margin-top: 3px; color: var(--text-soft); font-size: 13px; }
+
+.setting-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-soft);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (min-width: 760px) {
+  .sitenav-right { display: flex; align-items: center; gap: 14px; align-self: stretch; }
 }
 
 /* Точечная сетка по левому краю — «поле чертежа» */
