@@ -716,7 +716,7 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 }
 
 .btn.is-quiet:hover { color: var(--text); background: transparent; box-shadow: none; text-decoration: underline; text-underline-offset: 4px; }
-.btn:focus-visible, .path:focus-visible, .opt:focus-visible, .check:focus-visible, .stepper button:focus-visible {
+.btn:focus-visible, .opt:focus-visible, .check:focus-visible, .stepper button:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 3px;
 }
@@ -793,11 +793,6 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 .topbar-right { display: flex; align-items: center; gap: 14px; }
 .topbar-exit { min-height: 36px; padding: 8px 10px; font-size: 12px; }
 
-/* Кликабельное отличается от статичного: карточка-кнопка получает
-   кант по наведению и фокусу, статичный блок уровня — нет. */
-.path { box-shadow: inset 0 0 0 1px transparent; }
-.path:hover, .path:focus-visible { box-shadow: inset 0 0 0 1px var(--control-line); }
-.path:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 .level { cursor: default; }
 
 /* контент баннера поверх сетки, чтобы линии не рассекали текст:
@@ -843,91 +838,6 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 .crosshair::before { left: 50%; top: -5px; bottom: -5px; width: 1px; transform: translateX(-50%); }
 .crosshair::after { top: 50%; left: -5px; right: -5px; height: 1px; transform: translateY(-50%); }
-
-/* Вертикальные карточки-плашки: рамка, узловые точки по углам, штриховка */
-
-.paths {
-  margin-top: 28px;
-  display: grid;
-  gap: 14px;
-}
-
-@media (min-width: 760px) {
-  .paths { grid-template-columns: 1fr 1fr; }
-  .paths .path.is-wide { grid-column: 1 / -1; }
-}
-
-.path {
-  position: relative;
-  width: 100%;
-  min-height: 190px;
-  padding: 26px;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  color: var(--text);
-  background: var(--surface);
-  cursor: pointer;
-  font-family: var(--font-ui);
-  text-align: left;
-  touch-action: manipulation;
-  transition: border-color 0.16s, background-color 0.16s;
-}
-
-/* узловые точки — «плашка привинчена к листу», все четыре угла */
-.path .nodes i {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: var(--bg);
-  pointer-events: none;
-}
-
-.path .nodes i:nth-child(1) { top: -4.5px; left: -4.5px; }
-.path .nodes i:nth-child(2) { top: -4.5px; right: -4.5px; }
-.path .nodes i:nth-child(3) { bottom: -4.5px; left: -4.5px; }
-.path .nodes i:nth-child(4) { bottom: -4.5px; right: -4.5px; }
-
-.path:hover, .path:active { border-color: var(--line-strong); background: var(--surface-strong); }
-
-.path-index {
-  color: var(--text-soft);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
-}
-
-.path-title {
-  margin-top: 14px;
-  display: block;
-  font-family: var(--font-display);
-  font-size: clamp(24px, 5vw, 30px);
-  font-weight: 500;
-  line-height: 1.1;
-  text-wrap: balance;
-}
-
-.path-desc { margin-top: 8px; color: var(--text-soft); font-size: 14px; overflow-wrap: break-word; hyphens: auto; }
-
-.path-go {
-  margin-top: auto;
-  padding-top: 18px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: var(--track-pill);
-  text-transform: uppercase;
-}
-
-.path-go::after { content: '→'; font-family: var(--font-ui); font-size: 15px; transition: transform 0.16s var(--ease); }
-.path:hover .path-go::after { transform: translateX(5px); }
 
 .result-list { margin-top: 28px; border-top: 1px solid var(--line); }
 .result-item { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--line); }
