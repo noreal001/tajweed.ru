@@ -26,6 +26,70 @@
   ];
   var scheduleAudioContext = null;
 
+  /* Лестница уровней. Открыт только первый; темы остальных — черновик,
+     уточнить у преподавателя перед публикацией следующих экзаменов. */
+  var LEVELS = [
+    { n: 1, title: 'Первый уровень', topic: 'Буквы и их названия, огласовки, сифаты, чтение вслух', open: true },
+    { n: 2, title: 'Второй уровень', topic: 'Сукун, шадда, танвин', open: false },
+    { n: 3, title: 'Третий уровень', topic: 'Правила нун сакина и танвина', open: false },
+    { n: 4, title: 'Четвёртый уровень', topic: 'Мадды — протяжения', open: false },
+    { n: 5, title: 'Пятый уровень', topic: 'Мим сакина, правила лям и ра', open: false },
+    { n: 6, title: 'Шестой уровень', topic: 'Вакф и ибтида — остановки в чтении', open: false }
+  ];
+
+  /* Цвет уровня по проценту: от тревожного красного к неоновой зелени. */
+  function scoreColor(percent, lightness) {
+    var p = Math.max(0, Math.min(100, Number(percent) || 0));
+    var hue = Math.round(4 + (p / 100) * 142);
+    return 'hsl(' + hue + ' 92% ' + (lightness || 58) + '%)';
+  }
+
+  function scoreVerdict(percent) {
+    var p = Number(percent) || 0;
+    if (p >= 90) return 'уровень освоен';
+    if (p >= 75) return 'уровень почти освоен';
+    if (p >= 50) return 'половина пройдена';
+    return 'нужно повторить материал';
+  }
+
+  /* best: { percent, points, max, id } либо null, если экзамен ещё не сдан. */
+  function levelLadder(best, options) {
+    var opts = options || {};
+    var html = '<ol class="levels">';
+    LEVELS.forEach(function (lv) {
+      if (!lv.open) {
+        html += '<li class="level is-locked" aria-disabled="true">' +
+          '<div class="level-head"><span class="level-n">Уровень ' + lv.n + '</span>' +
+          '<span class="level-lock">закрыт</span></div>' +
+          '<p class="level-topic">' + esc(lv.topic) + '</p>' +
+          '<p class="level-hint">Откроется, когда преподаватель подготовит экзамен</p>' +
+        '</li>';
+        return;
+      }
+      if (!best) {
+        html += '<li class="level is-open is-empty">' +
+          '<div class="level-head"><span class="level-n">Уровень ' + lv.n + '</span>' +
+          '<span class="level-lock is-ready">доступен</span></div>' +
+          '<p class="level-topic">' + esc(lv.topic) + '</p>' +
+          '<p class="level-hint">Экзамен ещё не сдан</p>' +
+        '</li>';
+        return;
+      }
+      var pct = Math.round(best.percent);
+      html += '<li class="level is-open is-scored" style="--score-color: ' + scoreColor(pct) + '">' +
+        '<div class="level-head"><span class="level-n">Уровень ' + lv.n + '</span>' +
+        '<span class="level-verdict">' + scoreVerdict(pct) + '</span></div>' +
+        '<p class="level-topic">' + esc(lv.topic) + '</p>' +
+        '<div class="level-score"><span class="level-percent">' + pct + '<i>%</i></span>' +
+          '<span class="level-points">' + esc(best.points) + ' из ' + esc(best.max) + ' баллов письменной части</span></div>' +
+        '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
+        (opts.resultId ? '<button class="level-open" data-open-result="' + esc(opts.resultId) + '">Разбор и отчёт →</button>' : '') +
+      '</li>';
+    });
+    html += '</ol>';
+    return html;
+  }
+
   /* ── Состояние ─────────────────────────────────────────── */
 
   var steps = buildSteps();
@@ -307,12 +371,18 @@
         '</button>' +
         (studentToken ? '<button class="path" id="goCabinet">' +
           '<span class="path-title">Личный кабинет</span>' +
-          '<span class="path-desc">История экзаменов, баллы и разбор по заданиям.</span>' +
+          '<span class="path-desc">Ваш уровень, разбор по заданиям и отчёт.</span>' +
         '</button>' : (lastId ? '<button class="path" id="goResult">' +
           '<span class="path-title">Мой результат</span>' +
           '<span class="path-desc">Посмотреть итог последнего сданного экзамена.</span>' +
         '</button>' : '')) +
-      '</div>'
+      '</div>' +
+      '<section class="levels-teaser" aria-labelledby="levelsTitle">' +
+        '<hr class="rule">' +
+        '<p class="kicker" id="levelsTitle">Уровни программы</p>' +
+        '<p class="lede">Сейчас открыт первый уровень. Остальные преподаватель готовит — они появятся здесь же.</p>' +
+        levelLadder(null) +
+      '</section>'
     );
     document.getElementById('goExam').onclick = function () { state.phase = 'reg'; show(); };
     document.getElementById('goLead').onclick = function () { state.phase = 'lead'; show(); };
@@ -330,26 +400,40 @@
       try { localStorage.setItem(STUDENT_KEY, token); } catch (e) { /* ок */ }
       if (history.replaceState) history.replaceState(null, '', '#student=' + token);
       var s = d.student;
+      var results = d.results || [];
+      // лучший результат определяет свечение уровня
+      var best = null;
+      results.forEach(function (r) {
+        if (!best || r.percent > best.percent) best = r;
+      });
+
       var html = '<h1>Личный кабинет</h1>' +
         '<p class="lede">' + esc(s.lastName) + ' ' + esc(s.firstName) + ' · ' + esc(s.city) + '</p>';
-      if (!d.results || !d.results.length) {
-        html += '<p class="notice">В кабинете пока нет завершённых экзаменов.</p>';
-      } else {
-        html += '<div class="result-list">';
-        d.results.forEach(function (r) {
-          html += '<button class="path result-item" data-result-id="' + esc(r.id) + '">' +
+
+      html += levelLadder(best, { resultId: best ? best.id : '' });
+
+      if (results.length > 1) {
+        html += '<hr class="rule"><p class="kicker">Все попытки</p><div class="result-list">';
+        results.forEach(function (r) {
+          html += '<button class="result-item" data-result-id="' + esc(r.id) + '">' +
             '<span><b>Экзамен первого уровня</b><br><span class="meta">' +
             esc(new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(r.createdAt))) +
             ' · ' + (r.hasAudio ? 'чтение записано' : 'без аудиозаписи') + '</span></span>' +
-            '<span class="score">' + Math.round(r.percent) + '%</span></button>';
+            '<span class="score" style="color: ' + scoreColor(r.percent, 34) + '">' + Math.round(r.percent) + '%</span></button>';
         });
         html += '</div>';
       }
-      html += '<div class="btn-row"><button class="btn" id="newExamBtn">Пройти ещё раз</button>' +
+
+      html += '<div class="btn-row">' +
+        (best ? '<button class="btn" data-open-result="' + esc(best.id) + '">Разбор и отчёт</button>' : '') +
+        '<button class="btn' + (best ? ' is-ghost' : '') + '" id="newExamBtn">' +
+          (best ? 'Пройти ещё раз' : 'Сдать экзамен первого уровня') + '</button>' +
         '<button class="btn is-ghost" id="homeBtn">На главную</button></div>';
       render(html);
-      [].slice.call(app.querySelectorAll('[data-result-id]')).forEach(function (b) {
-        b.onclick = function () { showSavedResult(b.getAttribute('data-result-id'), token); };
+      [].slice.call(app.querySelectorAll('[data-result-id], [data-open-result]')).forEach(function (b) {
+        b.onclick = function () {
+          showSavedResult(b.getAttribute('data-result-id') || b.getAttribute('data-open-result'), token);
+        };
       });
       document.getElementById('newExamBtn').onclick = function () { state.phase = 'reg'; show(); };
       document.getElementById('homeBtn').onclick = function () {
@@ -375,26 +459,33 @@
       .then(function (d) {
         if (!d.ok) throw new Error('нет данных');
         var res = d.result;
+        var pct = Math.round(res.percent);
         var html = '<h1>Результат экзамена</h1>' +
           '<p class="lede">' + esc(res.lastName) + ' ' + esc(res.firstName) + ' (' + esc(res.city) + ') · ' +
             new Date(res.createdAt).toLocaleString('ru-RU') + '</p>' +
-          '<div class="score-hero">' +
-            '<div class="score-percent">' + Math.round(res.percent) + '%</div>' +
-            '<p class="score-caption">первого уровня по письменной части (' + res.points + ' из ' + res.max + ' баллов)</p>' +
+          '<div class="score-hero is-scored" style="--score-color: ' + scoreColor(pct) + '">' +
+            '<div class="score-percent">' + pct + '<i>%</i></div>' +
+            '<p class="score-caption">Первый уровень · ' + scoreVerdict(pct) + '</p>' +
+            '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
+            '<p class="score-points">Письменная часть: ' + esc(res.points) + ' из ' + esc(res.max) + ' баллов</p>' +
           '</div>';
         if (res.breakdown && res.breakdown.length) {
           html += '<div class="breakdown">';
           res.breakdown.forEach(function (b) {
             html += '<div class="breakdown-row"><span>' + esc(b.label) + '</span>' +
-              '<span class="pts">' + b.points + ' / ' + b.max + '</span></div>';
+              '<span class="pts">' + esc(b.points) + ' / ' + esc(b.max) + '</span></div>';
           });
           html += '<div class="breakdown-row is-muted"><span>Устное чтение и диктант</span><span class="pts">оценит преподаватель</span></div>';
           html += '</div>';
         }
+        html += '<hr class="rule"><p class="kicker">Отчёт для преподавателя</p>' +
+          '<p class="lede">Отчёт уже у преподавателя. Эти кнопки нужны, если хотите сохранить копию себе или переслать её сами.</p>' +
+          reportButtonsHtml();
         html += '<p class="notice">Сохраните адрес этой страницы — по нему результат откроется снова.</p>' +
           '<div class="btn-row"><button class="btn is-ghost" id="homeBtn">' +
           (cabinetToken ? '← В кабинет' : '← На главную') + '</button></div>';
         render(html);
+        wireReportButtons(reportFromResult(res), res.lastName);
         document.getElementById('homeBtn').onclick = function () {
           if (history.replaceState) history.replaceState(null, '', location.pathname);
           if (cabinetToken) return showStudentCabinet(cabinetToken);
@@ -670,15 +761,35 @@
       e.preventDefault();
       var data = readPersonForm(form);
       if (!data) return;
-      state.student = data;
-      state.startedAt = new Date().toISOString();
-      state.submissionId = uuid();
-      state.answers = freshAnswers();
-      state.phase = 'exam';
-      state.stepIdx = 0;
-      examFinished = false;
-      save();
-      show();
+      var btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Открываем кабинет…';
+
+      function startExam() {
+        state.student = data;
+        state.startedAt = new Date().toISOString();
+        state.submissionId = uuid();
+        state.answers = freshAnswers();
+        state.phase = 'exam';
+        state.stepIdx = 0;
+        examFinished = false;
+        save();
+        show();
+      }
+
+      // кабинет заводим до экзамена: ученик сразу закреплён за своим номером
+      var savedToken = '';
+      try { savedToken = localStorage.getItem(STUDENT_KEY) || ''; } catch (err) { /* ок */ }
+      api('/api/student/register', {
+        firstName: data.firstName, lastName: data.lastName,
+        city: data.city, phone: data.phone, studentToken: savedToken
+      }).then(function (res) {
+        if (res && res.studentToken) {
+          try { localStorage.setItem(STUDENT_KEY, res.studentToken); } catch (err) { /* ок */ }
+        }
+      }).catch(function () {
+        // без сети кабинет создастся позже, при отправке результата
+      }).then(startExam);
     };
   }
 
@@ -1221,6 +1332,70 @@
     });
   }
 
+  /* Отчёт по данным сервера — работает и без локальных ответов
+     (например, когда результат открыт по ссылке на другом устройстве). */
+  function reportFromResult(res) {
+    var lines = [];
+    lines.push('ЭКЗАМЕН ПО ТАДЖВИДУ · 1-Й УРОВЕНЬ');
+    lines.push('Ученик: ' + res.lastName + ' ' + res.firstName + ' (' + res.city + ')');
+    lines.push('Дата: ' + new Date(res.createdAt).toLocaleString('ru-RU'));
+    lines.push('');
+    lines.push('РЕЗУЛЬТАТ: ' + Math.round(res.percent) + '% — ' + scoreVerdict(res.percent));
+    lines.push('Письменная часть: ' + res.points + ' из ' + res.max + ' баллов');
+    lines.push('');
+    lines.push('ПО ЗАДАНИЯМ:');
+    (res.breakdown || []).forEach(function (b) {
+      lines.push('  ' + b.label + ': ' + b.points + ' / ' + b.max);
+    });
+    lines.push('  Устное чтение и диктант: оценит преподаватель' +
+      (res.hasAudio ? ' (аудиозапись отправлена)' : ''));
+    return lines.join('\n');
+  }
+
+  function reportButtonsHtml(withAudio) {
+    return '<div class="btn-row">' +
+      '<button class="btn is-ghost" id="copyBtn">Скопировать отчёт</button>' +
+      '<button class="btn is-ghost" id="dlBtn">Скачать отчёт</button>' +
+      (withAudio ? '<button class="btn is-ghost" id="dlAudioBtn">Скачать аудио</button>' : '') +
+      '<a class="btn is-ghost" id="waBtn" target="_blank" rel="noopener">WhatsApp</a>' +
+      '<a class="btn is-ghost" id="tgBtn" target="_blank" rel="noopener">Telegram</a>' +
+    '</div>';
+  }
+
+  function wireReportButtons(text, lastName) {
+    var copyBtn = document.getElementById('copyBtn');
+    if (!copyBtn) return;
+    copyBtn.onclick = function () {
+      var btn = this;
+      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+        .then(function () { btn.textContent = 'Скопировано'; })
+        .catch(function () { window.prompt('Скопируйте отчёт:', text); });
+    };
+    document.getElementById('dlBtn').onclick = function () {
+      var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var aEl = document.createElement('a');
+      aEl.href = url;
+      aEl.download = 'Экзамен_' + (lastName || 'ученик') + '.txt';
+      aEl.click();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    };
+    var dlAudio = document.getElementById('dlAudioBtn');
+    if (dlAudio && audioBlob) {
+      dlAudio.onclick = function () {
+        var url = URL.createObjectURL(audioBlob);
+        var aEl = document.createElement('a');
+        aEl.href = url;
+        aEl.download = 'Чтение_' + (lastName || 'ученик') + (/mp4|aac/.test(audioMime) ? '.m4a' : '.webm');
+        aEl.click();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      };
+    }
+    document.getElementById('waBtn').href = 'https://wa.me/?text=' + encodeURIComponent(text);
+    document.getElementById('tgBtn').href = 'https://t.me/share/url?url=' +
+      encodeURIComponent(CFG.SITE_URL || location.href) + '&text=' + encodeURIComponent(text);
+  }
+
   function reportText() {
     var a = state.answers;
     var s = state.student || {};
@@ -1276,12 +1451,16 @@
     }
 
     if (serverResult && typeof serverResult.percent === 'number') {
-      html += 'Ответы отправлены преподавателю. Адрес этой страницы — постоянная ссылка на ваш результат, сохраните её.</p>';
-      html += '<div class="score-hero">' +
-        '<div class="score-percent">' + Math.round(serverResult.percent) + '%</div>' +
-        '<p class="score-caption">первого уровня по письменной части (' +
-          serverResult.points + ' из ' + serverResult.max + ' баллов)</p>' +
+      var pct = Math.round(serverResult.percent);
+      html += 'Ответы отправлены преподавателю. Вот ваш уровень:</p>';
+      html += '<div class="score-hero is-scored" style="--score-color: ' + scoreColor(pct) + '">' +
+        '<div class="score-percent">' + pct + '<i>%</i></div>' +
+        '<p class="score-caption">Первый уровень · ' + scoreVerdict(pct) + '</p>' +
+        '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
+        '<p class="score-points">Письменная часть: ' + esc(serverResult.points) + ' из ' + esc(serverResult.max) + ' баллов</p>' +
       '</div>';
+      html += '<p class="lede">Остальные уровни откроются позже — их готовит преподаватель.</p>';
+      html += levelLadder({ percent: pct, points: serverResult.points, max: serverResult.max });
       if (serverResult.breakdown && serverResult.breakdown.length) {
         html += '<div class="breakdown">';
         serverResult.breakdown.forEach(function (b) {
@@ -1304,14 +1483,8 @@
 
     html += '<hr class="rule">';
     html += '<p class="kicker">Отчёт</p>';
-    html += '<div class="btn-row">' +
-      '<button class="btn is-ghost" id="copyBtn">Скопировать отчёт</button>' +
-      '<button class="btn is-ghost" id="dlBtn">Скачать отчёт</button>' +
-      (audioBlob && (!serverResult || !serverResult.audioUploaded)
-        ? '<button class="btn is-ghost" id="dlAudioBtn">Скачать аудио</button>' : '') +
-      '<a class="btn is-ghost" id="waBtn" target="_blank" rel="noopener">WhatsApp</a>' +
-      '<a class="btn is-ghost" id="tgBtn" target="_blank" rel="noopener">Telegram</a>' +
-    '</div>';
+    html += '<p class="lede">Отчёт уже ушёл преподавателю. Кнопки ниже — если хотите сохранить копию себе или переслать её сами.</p>';
+    html += reportButtonsHtml(audioBlob && (!serverResult || !serverResult.audioUploaded));
 
     if (serverResult && serverResult.studentToken) {
       html += '<div class="btn-row"><button class="btn" id="cabinetBtn">Открыть личный кабинет</button>' +
@@ -1321,33 +1494,7 @@
     }
 
     render(html);
-
-    var text = reportText();
-    document.getElementById('copyBtn').onclick = function () {
-      var btn = this;
-      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
-        .then(function () { btn.textContent = 'Скопировано'; })
-        .catch(function () { window.prompt('Скопируйте отчёт:', text); });
-    };
-    document.getElementById('dlBtn').onclick = function () {
-      var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-      var aEl = document.createElement('a');
-      aEl.href = URL.createObjectURL(blob);
-      aEl.download = 'Экзамен_' + (s.lastName || 'ученик') + '.txt';
-      aEl.click();
-    };
-    var dlAudio = document.getElementById('dlAudioBtn');
-    if (dlAudio) {
-      dlAudio.onclick = function () {
-        var aEl = document.createElement('a');
-        aEl.href = URL.createObjectURL(audioBlob);
-        aEl.download = 'Чтение_' + (s.lastName || 'ученик') + (/mp4|aac/.test(audioMime) ? '.m4a' : '.webm');
-        aEl.click();
-      };
-    }
-    document.getElementById('waBtn').href = 'https://wa.me/?text=' + encodeURIComponent(text);
-    document.getElementById('tgBtn').href = 'https://t.me/share/url?url=' +
-      encodeURIComponent(CFG.SITE_URL || location.href) + '&text=' + encodeURIComponent(text);
+    wireReportButtons(reportText(), s.lastName);
 
     var retrySubmit = document.getElementById('retrySubmitBtn');
     if (retrySubmit) {

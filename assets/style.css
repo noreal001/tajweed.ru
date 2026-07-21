@@ -765,6 +765,144 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 .notice { margin-top: 22px; padding: 10px 0 10px 16px; border-left: 3px solid var(--line-strong); color: var(--text-soft); font-size: 14px; overflow-wrap: anywhere; }
 .notice.is-error { border-left-style: double; color: var(--text); }
 
+/* Оценённый результат: тёмная плашка, чтобы читался цвет уровня */
+
+.score-hero.is-scored {
+  padding: 40px 24px 32px;
+  color: var(--inverse-text);
+  background: var(--inverse-bg);
+  border-color: var(--inverse-bg);
+}
+
+.score-hero.is-scored .score-percent {
+  color: var(--score-color, var(--inverse-text));
+  text-shadow: 0 0 38px color-mix(in srgb, var(--score-color, #fff) 45%, transparent);
+}
+
+.score-percent i { font-style: normal; font-size: 0.42em; letter-spacing: 0.02em; }
+.score-hero.is-scored .score-caption { color: rgba(255, 255, 255, 0.72); }
+.score-hero.is-scored .level-bar { max-width: 320px; margin: 22px auto 0; }
+.score-points { margin-top: 14px; color: rgba(255, 255, 255, 0.72); font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* Лестница уровней */
+
+.levels-teaser { margin-top: 40px; }
+.levels { margin-top: 20px; list-style: none; display: grid; gap: 12px; }
+
+.level {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.level-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+
+.level-n {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.level-lock, .level-verdict {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.level-lock { color: var(--text-faint); }
+.level-lock.is-ready { color: var(--text); }
+.level-topic { margin-top: 6px; color: var(--text-soft); font-size: 15px; }
+.level-hint { margin-top: 10px; color: var(--text-faint); font-size: 13px; }
+
+.level.is-locked {
+  border-style: dashed;
+  background: transparent;
+}
+
+.level.is-locked .level-n { color: var(--text-faint); }
+.level.is-locked .level-topic { color: var(--text-faint); }
+
+/* Пройденный уровень горит цветом результата */
+
+.level.is-scored {
+  color: var(--inverse-text);
+  background: var(--inverse-bg);
+  border-color: var(--inverse-bg);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--score-color) 35%, transparent),
+              0 14px 40px color-mix(in srgb, var(--score-color) 18%, transparent);
+}
+
+.level.is-scored .level-verdict { color: var(--score-color); }
+.level.is-scored .level-topic { color: rgba(255, 255, 255, 0.66); }
+
+.level-score { margin-top: 18px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; }
+
+.level-percent {
+  color: var(--score-color);
+  font-family: var(--font-display);
+  font-size: clamp(46px, 12vw, 64px);
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 30px color-mix(in srgb, var(--score-color) 50%, transparent);
+}
+
+.level-percent i { font-style: normal; font-size: 0.42em; }
+.level-points { color: rgba(255, 255, 255, 0.66); font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+.level-bar {
+  height: 6px;
+  margin-top: 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.level-bar span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: var(--score-color, currentColor);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--score-color, #fff) 65%, transparent);
+  animation: level-fill 0.9s var(--ease) both;
+}
+
+@keyframes level-fill {
+  from { transform: scaleX(0); transform-origin: left; }
+  to { transform: scaleX(1); transform-origin: left; }
+}
+
+.level-open {
+  margin-top: 18px;
+  padding: 0;
+  color: var(--score-color);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.level-open:hover { text-decoration: underline; text-underline-offset: 4px; }
+.level-open:focus-visible { outline: 2px solid var(--score-color); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .level-bar span { animation: none; }
+}
+
+/* Старые браузеры без color-mix: свечение отключается, цвет остаётся */
+@supports not (color: color-mix(in srgb, red 50%, transparent)) {
+  .level.is-scored { box-shadow: none; }
+  .level-percent, .score-hero.is-scored .score-percent { text-shadow: none; }
+  .level-bar span { box-shadow: none; }
+}
+
 /* Подвал */
 
 .pagefoot {
