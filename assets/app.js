@@ -1797,10 +1797,15 @@
 
   function renderReading(task) {
     var rowsHtml = task.rows.map(function (r) {
-      // номер строки берём из данных: в бланке они идут с пропусками (1,2,5,7…),
-      // а сквозная нумерация <ol> показывала бы ученику и преподавателю разное
-      return '<li class="read-row"' + (r.n ? ' value="' + (r.n | 0) + '"' : '') +
-        '><p class="ar-line" lang="ar" dir="rtl">' + esc(r.text) + '</p></li>';
+      /* Номер строки берём из данных и печатаем сам: в бланке номера идут
+         с пропусками (1, 2, 5, 7, 8, 9, 10), а маркеры <ol> отключены
+         стилем — без этого преподаватель говорит «строка 5», а ученик
+         видит третью по счёту. */
+      return '<li class="read-row"' + (r.n ? ' value="' + (r.n | 0) + '"' : '') + '>' +
+        (r.n ? '<span class="read-num" aria-hidden="true">' + (r.n | 0) + '</span>' : '') +
+        '<p class="ar-line" lang="ar" dir="rtl">' + esc(r.text) + '</p>' +
+        (r.n ? '<span class="visually-hidden">Строка ' + (r.n | 0) + '</span>' : '') +
+        '</li>';
     }).join('');
 
     render(

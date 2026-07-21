@@ -1407,7 +1407,18 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 /* Чтение и запись */
 
 .read-rows { margin-top: 20px; overflow: visible; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); list-style: none; }
-.read-row { padding: 14px 20px; }
+.read-row { position: relative; padding: 14px 20px 14px 48px; }
+
+/* номер строки бланка — слева, моношрифтом, не мешает арабскому справа */
+.read-num {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--mono-lg);
+  font-variant-numeric: tabular-nums;
+}
 .read-row + .read-row { border-top: 1px solid var(--line); }
 
 .recorder {
