@@ -28,6 +28,10 @@
   --focus: #f2f2f4;
   --radius: 0;
   --grid-step: 22px;
+  /* ширина чертёжного листа: одна на шапку, лист, узлы и подвал */
+  --sheet-w: 780px;
+  /* вынос приводных уголков за рамку — не больше отступа листа */
+  --mark-out: 10px;
   --hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%23ffffff' stroke-opacity='0.13' stroke-width='0.7'/></svg>");
   --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
@@ -67,6 +71,47 @@
 
 :root[data-theme="light"] .level-bar { background: rgba(10, 10, 11, 0.12); }
 
+/* ── Вдавленные плашки ──────────────────────────────────────
+   Один приём в обеих темах: плашка чуть отличается от фона и получает
+   ДВЕ мягкие внутренние тени — тёмную сверху-слева и светлую снизу-справа.
+   На чёрном светлая тень слабее (иначе выглядит подсветкой), на белом —
+   сильнее. Конструкция снята с карточек фабрик на wiki.bahur.store. */
+
+.level.is-open,
+.levels-locked {
+  border-color: transparent;
+  background: #141416;
+  box-shadow:
+    inset 4px 4px 12px rgba(0, 0, 0, 0.75),
+    inset -3px -3px 10px rgba(255, 255, 255, 0.045);
+}
+
+:root[data-theme="light"] .level.is-open,
+:root[data-theme="light"] .levels-locked {
+  border-color: transparent;
+  background: #f3f3f5;
+  box-shadow:
+    inset 4px 4px 10px rgba(20, 19, 16, 0.1),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.95);
+}
+
+/* чипы закрытых уровней — маленькие плашки того же семейства */
+.locked-chip {
+  border-color: transparent;
+  background: #1b1b1e;
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 0, 0, 0.7),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="light"] .locked-chip {
+  border-color: transparent;
+  background: #ececef;
+  box-shadow:
+    inset 2px 2px 5px rgba(20, 19, 16, 0.12),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.95);
+}
+
 /* Вдавленная плашка на белом — как карточки фабрик (Luzi, EPS) на вики:
    светлая плашка и ДВЕ мягкие внутренние тени — тёмная сверху-слева,
    белая снизу-справа. Плашка выглядит вдавленной в бумагу. */
@@ -82,15 +127,6 @@
   box-shadow:
     inset 4px 4px 10px rgba(20, 19, 16, 0.17),
     inset -4px -4px 10px rgba(255, 255, 255, 0.92);
-}
-
-/* открытый уровень — та же вдавленная плашка */
-:root[data-theme="light"] .level.is-open {
-  border-color: transparent;
-  background: #f3f3f5;
-  box-shadow:
-    inset 4px 4px 10px rgba(20, 19, 16, 0.09),
-    inset -4px -4px 10px rgba(255, 255, 255, 0.95);
 }
 
 /* активный пункт меню вдавлен, само меню — белая пилюля с тенью-отрывом */
@@ -200,7 +236,7 @@ html.is-exam body { padding-bottom: 0; }
   html.is-exam .sitenav { display: none; }
 
   .sitenav-inner {
-    max-width: 780px;
+    max-width: var(--sheet-w);
     height: auto;
     margin: 0 auto;
     padding: 26px 56px 0;
@@ -359,7 +395,9 @@ body::before {
 /* Приводные метки — переиспользуемый компонент: внутри любого .frame
    лежат absolute, на уровне страницы — fixed. Как на wiki.bahur.store. */
 .marks { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.marks.is-page { position: fixed; z-index: 31; }
+/* Метки листа НЕ fixed: иначе уголки висят на экране при прокрутке
+   и читаются как «застрявшие квадраты». Крепим к документу. */
+.marks.is-page { position: absolute; top: 0; left: 0; right: 0; height: 100vh; z-index: 0; }
 
 /* Рамка блока: та же конструкция, что .frame на вики */
 .frame { position: relative; padding: 26px; }
@@ -410,6 +448,9 @@ body::before {
 
 html {
   min-width: 320px;
+  /* clip, а не hidden: hidden на body не мешает html растягиваться
+     от декоративных элементов, и страница начинает ездить вбок */
+  overflow-x: clip;
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
 }
@@ -498,13 +539,16 @@ a { color: inherit; }
 .sheet {
   flex: 1;
   width: 100%;
-  max-width: 780px;
+  max-width: var(--sheet-w);
   min-width: 0;
   margin: 0 auto;
   padding: 40px 16px 56px;
 }
 
-@media (min-width: 400px) { .sheet { padding-left: 20px; padding-right: 20px; } }
+@media (min-width: 400px) {
+  :root { --mark-out: 14px; }
+  .sheet { padding-left: 20px; padding-right: 20px; }
+}
 
 .screen { animation: screen-in 0.22s var(--ease); }
 
@@ -514,21 +558,30 @@ a { color: inherit; }
 }
 
 @media (min-width: 760px) {
+  :root { --sheet-w: 1120px; --mark-out: 22px; }
+
   .sheet {
     position: relative;
-    padding: 64px 56px 80px;
+    padding: 72px 64px 96px;
     border-right: 1px solid var(--line);
     border-left: 1px solid var(--line);
   }
 
   /* узловые точки на углах листа — как на чертёжной сетке */
-  /* узловые точки по углам листа — отдельным слоем, кант у всех четырёх */
+  /* узловые точки по углам листа — отдельным слоем, кант у всех четырёх.
+     Показываем только когда лист УЖЕ экрана: иначе точки садятся ровно
+     на край вьюпорта и обрезаются пополам. */
   .sheet-nodes {
     position: absolute;
     inset: 0;
-    max-width: 780px;
+    max-width: var(--sheet-w);
     margin: 0 auto;
     pointer-events: none;
+    display: none;
+  }
+
+  @media (min-width: 1180px) {
+    .sheet-nodes { display: block; }
   }
 
   .sheet-nodes span {
@@ -741,57 +794,76 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 /* Главная и кабинет */
 
-/* Баннер — конструкция мобильного баннера wiki.bahur.store/prays:
-   сетка ОДИНАКОВЫХ квадратов на любом экране (размер задан токеном,
-   а не долей ширины — квадраты совпадают на телефоне и десктопе),
-   штриховка одной полосой в верхнем ряду, текст на чистом поле. */
+/* Баннер — конструкция баннера wiki.bahur.store/prays: сетка ОДИНАКОВЫХ
+   квадратов на любом экране (шаг задан токеном, а не долей ширины, поэтому
+   квадрат на телефоне и на десктопе одного размера), крупные штрихованные
+   зоны по краям, чистое поле под текстом. Линии проходят насквозь — они
+   волосяные и текст не рассекают, подложек под текст не делаем. */
 
-:root { --hero-cell: 140px; }
+:root { --hero-cell: 116px; }
+
+@media (min-width: 760px) {
+  :root { --hero-cell: 132px; }
+}
 
 .welcome-hero,
 .cta-banner {
   position: relative;
-  padding: 24px 20px 28px;
+  padding: 26px 24px 30px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-end;
   border: 1px solid var(--line);
   isolation: isolate;
-  /* квадраты рисуются повторяющимся градиентом: шаг фиксированный,
-     значит на 390px помещается ~2.5 колонки — ровно как на эталоне */
+  /* overflow не режем: приводные уголки .marks.is-out живут ЗА рамкой,
+     а штриховка и так позиционирована строго внутри */
   background-image:
     repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px var(--hero-cell)),
     repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px var(--hero-cell));
 }
 
-.welcome-hero { min-height: calc(var(--hero-cell) * 2 + 20px); }
-.cta-banner { min-height: calc(var(--hero-cell) * 1.6); margin-top: 44px; }
+.welcome-hero { min-height: calc(var(--hero-cell) * 3); }
+.cta-banner { min-height: calc(var(--hero-cell) * 2); margin-top: 52px; }
 
-/* штриховка верхнего ряда: от второй колонки до правого края,
-   первая ячейка и всё поле текста остаются чистыми */
+/* Штриховка — крупной зоной от правого края внутрь, как на эталоне,
+   а не одиноким квадратом посередине. Ширина кратна шагу сетки,
+   поэтому край штриховки всегда ложится ровно на линию. */
 .hero-hatch {
   position: absolute;
   top: 0;
-  left: var(--hero-cell);
   right: 0;
-  height: var(--hero-cell);
-  border-bottom: 1px solid var(--line);
+  bottom: 0;
+  width: calc(var(--hero-cell) * 2);
   background-image: var(--hatch);
-  opacity: 0.8;
+  opacity: 0.75;
   pointer-events: none;
 }
 
-/* Приводные уголки СНАРУЖИ рамки — как у баннера на прайсе:
-   тот же .marks, но его поле расширено за границы блока */
-.marks.is-out { inset: -24px; }
+@media (max-width: 559px) {
+  /* на узком экране правая зона съедает пол-экрана — оставляем одну колонку */
+  .hero-hatch { width: var(--hero-cell); }
+}
 
-.welcome-hero h1 { max-width: 11ch; font-size: clamp(32px, 7.4vw, 62px); overflow-wrap: anywhere; }
+/* Приводные уголки СНАРУЖИ рамки — как у баннера на прайсе.
+   Вынос НЕ должен превышать боковой отступ листа, иначе уголки уезжают
+   за край экрана и страница начинает ездить вбок. Поэтому вынос —
+   отдельный токен, синхронный с padding листа на каждом брейкпоинте. */
+.marks.is-out { inset: calc(-1 * var(--mark-out)); }
+
+.welcome-hero h1 {
+  max-width: 12ch;
+  font-size: clamp(38px, 8vw, 76px);
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
 .welcome-hero h1 em { font-style: italic; font-weight: 500; color: var(--text-soft); }
 :root[data-theme="light"] .welcome-hero h1 em { color: rgba(10, 10, 11, 0.5); }
+.cta-banner h2 { font-size: clamp(30px, 5.6vw, 52px); }
 
 /* кикер под заголовком — ритм эталона */
-.kicker.is-under { margin: 12px 0 0; }
+.kicker.is-under { margin: 14px 0 0; }
 .welcome-hero .lede { max-width: 46ch; position: relative; }
 
 /* Шапка экзамена: таймер и единственный выход */
@@ -800,15 +872,17 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 .level { cursor: default; }
 
-/* контент баннера поверх сетки, чтобы линии не рассекали текст:
-   текстовые элементы получают белую подложку — линии до них не доходят */
+/* содержимое баннера — поверх сетки и штриховки */
 .welcome-hero > *:not(.hero-hatch):not(.marks),
 .cta-banner > *:not(.hero-hatch):not(.marks) { position: relative; z-index: 1; }
 
-.welcome-hero h1, .welcome-hero .kicker, .welcome-hero .hero-meta,
-.cta-banner h2, .cta-banner .kicker {
-  background: var(--bg);
-  box-shadow: 0 0 0 8px var(--bg);
+/* Флаг у имени преподавателя: единственная цветная деталь на бланке,
+   поэтому набирается системным эмодзи-шрифтом и не масштабируется. */
+.flag {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-size: 1em;
+  letter-spacing: normal;
+  vertical-align: -0.08em;
 }
 
 /* Мета-блок баннера с перекрестием — деталь эталона */
@@ -896,6 +970,12 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
   text-align: center;
   opacity: 0.055;
   transform: rotate(-24deg);
+  /* на белом та же непрозрачность читается заметно слабее — поднимаем,
+     иначе знак перестаёт выполнять свою работу */
+  }
+
+:root[data-theme="light"] .watermark span {
+  opacity: 0.085;
   white-space: nowrap;
 }
 
@@ -1438,18 +1518,11 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  border: 1px dashed var(--line);
+  border: 1px solid transparent;
   overflow: hidden;
 }
 
-.levels-locked::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: var(--hatch);
-  opacity: 0.5;
-  pointer-events: none;
-}
+/* штриховки внутри вдавленной плашки нет — она забивала мягкие тени */
 
 .locked-chip {
   position: relative;
@@ -1586,7 +1659,7 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 
 .pagefoot {
   width: 100%;
-  max-width: 780px;
+  max-width: var(--sheet-w);
   margin: 0 auto;
   padding: 18px 20px calc(18px + env(safe-area-inset-bottom));
   display: flex;

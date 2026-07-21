@@ -698,7 +698,8 @@
         '<div class="hero-actions"><button class="btn" id="heroExam">Сдать экзамен →</button></div>' +
         '<div class="hero-meta">' +
           '<span class="crosshair" aria-hidden="true"></span>' +
-          '<span>ТАДЖВИД.РФ // 2026<br>ПРЕПОДАВАТЕЛЬ ДЕАБ АНАС Т.</span>' +
+          '<span>ТАДЖВИД.РФ // 2026<br>ПРЕПОДАВАТЕЛЬ ДЕАБ АНАС Т. ' +
+            '<span class="flag" role="img" aria-label="Палестина">🇵🇸</span></span>' +
         '</div>' +
       '</section>' +
       '<section class="levels-teaser" aria-labelledby="levelsTitle">' +
