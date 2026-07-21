@@ -94,6 +94,8 @@
             if (saved.answers[k] !== undefined) state.answers[k] = saved.answers[k];
           }
         }
+        // аудио живёт только в памяти — после перезагрузки записи нет
+        state.answers.readingRecorded = false;
       }
     } catch (e) { /* повреждённое сохранение игнорируем */ }
   }
@@ -707,6 +709,7 @@
     var recorder = null;
     var chunks = [];
     var advanceAfterStop = false;
+    var skipped = false;
 
     function pickMime() {
       if (window.MediaRecorder && MediaRecorder.isTypeSupported) {
@@ -738,6 +741,7 @@
         recorder.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
         recorder.onstop = function () {
           stream.getTracks().forEach(function (t) { t.stop(); });
+          if (skipped) return; // ученик отказался от записи — ничего не сохраняем
           audioBlob = new Blob(chunks, { type: audioMime });
           state.answers.readingRecorded = true;
           save();
@@ -764,6 +768,8 @@
     };
 
     document.getElementById('skipBtn').onclick = function () {
+      skipped = true;
+      advanceAfterStop = false;
       if (recorder && recorder.state === 'recording') recorder.stop();
       audioBlob = null;
       state.answers.readingRecorded = false;
@@ -792,7 +798,11 @@
 
   /* ── Завершение и отправка ─────────────────────────────── */
 
+  var examFinished = false;
+
   function finishExam() {
+    if (examFinished) return; // защита от двойного завершения (гонка onstop/skip)
+    examFinished = true;
     hideTimer();
     state.phase = 'done';
     save();
@@ -946,7 +956,10 @@
     document.getElementById('tgBtn').href = 'https://t.me/share/url?url=' +
       encodeURIComponent(CFG.SITE_URL || location.href) + '&text=' + encodeURIComponent(text);
 
-    try { localStorage.removeItem(LS_KEY); } catch (e) { /* не критично */ }
+    // черновик стираем только когда сервер принял ответы
+    if (serverResult && serverResult.id) {
+      try { localStorage.removeItem(LS_KEY); } catch (e) { /* не критично */ }
+    }
   }
 
   /* ── Запуск ────────────────────────────────────────────── */
