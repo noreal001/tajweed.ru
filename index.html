@@ -11,7 +11,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230A0A0B'/%3E%3Cpath d='M6 6h52v52H6z' fill='none' stroke='%23F2F2F4' stroke-opacity='.35' stroke-width='1'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle' fill='%23F2F2F4' font-family='Georgia,serif'%3E%D8%AA%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&amp;family=Golos+Text:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
   <script>
     /* Тема ставится до отрисовки, иначе моргает белым при загрузке. */
@@ -54,10 +54,12 @@
   <header class="topbar" id="topbar" hidden>
     <div class="topbar-inner">
       <span class="topbar-label" id="topbarLabel"></span>
-      <span class="topbar-timer" id="topbarTimer" role="timer" aria-label="Осталось времени" hidden>3:00</span>
+      <span class="topbar-timer" id="topbarTimer" role="timer" aria-label="Осталось времени" hidden></span>
     </div>
     <progress class="timebar" id="timebar" aria-label="Оставшееся время" max="180" value="180" hidden>180 секунд</progress>
   </header>
+
+  <p class="visually-hidden" id="timeAlert" role="status" aria-live="assertive"></p>
 
   <main class="sheet" id="app" tabindex="-1"></main>
 

@@ -319,8 +319,15 @@
 
   /* ── Таймер ────────────────────────────────────────────── */
 
+  var warned30 = false;
+
   function startTimer(seconds, onExpire) {
     stopTimer();
+    warned30 = false;
+    var alertEl = document.getElementById('timeAlert');
+    if (alertEl) alertEl.textContent = '';
+    topbarTimer.textContent = fmtTime(seconds);
+    topbarTimer.classList.remove('is-low');
     deadline = Date.now() + seconds * 1000;
     topbarTimer.hidden = false;
     timebar.hidden = false;
@@ -339,6 +346,11 @@
       topbarTimer.textContent = fmtTime(sec);
       topbarTimer.classList.toggle('is-low', sec <= 30);
       timebar.value = sec;
+      if (sec === 30 && !warned30) {
+        warned30 = true;
+        var alert = document.getElementById('timeAlert');
+        if (alert) alert.textContent = 'Осталось 30 секунд';
+      }
     }, 200);
   }
 
@@ -440,7 +452,7 @@
 
       var html = '<h1>Профиль</h1>' +
         '<section class="frame profile-card">' + marks() +
-          '<p class="kicker">Ученик</p>' +
+          '<p class="kicker">Ученик<span class="cur">_</span></p>' +
           '<p class="profile-name">' + esc(s.lastName) + ' ' + esc(s.firstName) + '</p>' +
           '<dl class="profile-meta">' +
             '<div><dt>Город</dt><dd>' + esc(s.city) + '</dd></div>' +
@@ -449,9 +461,9 @@
           '</dl>' +
         '</section>';
 
-      html += '<p class="kicker">Уровень</p>' + levelLadder(best, { resultId: best ? best.id : '' });
+      html += '<p class="kicker">Уровень<span class="cur">_</span></p>' + levelLadder(best, { resultId: best ? best.id : '' });
 
-      html += '<p class="kicker">Настройки</p><div class="settings">' + themeRow() +
+      html += '<p class="kicker">Настройки<span class="cur">_</span></p><div class="settings">' + themeRow() +
         (s.hasPassword
           ? '<button class="setting-row" id="changePass" type="button">' +
               '<span><b>Пароль</b><small>Вход с другого телефона</small></span>' +
@@ -515,7 +527,7 @@
         '<div class="btn-row"><button class="btn btn-block" type="submit">Войти</button></div>' +
       '</form>' +
       '<div class="btn-row"><button class="btn is-ghost btn-block" id="toExam">Сдать экзамен и завести профиль</button></div>' +
-      '<p class="kicker">Настройки</p><div class="settings">' + themeRow() + '</div>'
+      '<p class="kicker">Настройки<span class="cur">_</span></p><div class="settings">' + themeRow() + '</div>'
     );
     wireThemeRow();
     document.getElementById('toExam').onclick = function () { state.phase = 'reg'; show(); };
@@ -651,16 +663,21 @@
     render(
       '<section class="welcome-hero frame" aria-labelledby="welcomeTitle">' +
         cells + marks() +
-        '<p class="kicker">Учебный проект · Первый уровень</p>' +
+        '<p class="kicker">Учебный проект · Первый уровень<span class="cur">_</span></p>' +
         '<div class="hero-glyph ar" lang="ar" dir="rtl" aria-hidden="true">ت</div>' +
         '<h1 id="welcomeTitle">Экзамен по <em>таджвиду</em></h1>' +
-        '<p class="lede">Таджвид — наука правильного чтения Корана. Сдайте экзамен первого уровня или запишитесь на занятия к преподавателю Деабу Анасу Т.</p>' +
+        '<p class="lede">Наука правильного чтения Корана. Проверьте свой уровень или запишитесь на занятия к преподавателю Деабу Анасу Т.</p>' +
+        '<div class="hero-actions"><button class="btn" id="heroExam">Сдать экзамен →</button></div>' +
+        '<div class="hero-meta">' +
+          '<span class="crosshair" aria-hidden="true"></span>' +
+          '<span>ТАДЖВИД.РФ // 2026<br>ПЕРВЫЙ УРОВЕНЬ</span>' +
+        '</div>' +
       '</section>' +
       '<div class="paths">' +
         '<button class="path" id="goExam">' + marks() +
           '<span class="path-index">01 · Экзамен</span>' +
           '<span class="path-title">Проверить свой уровень</span>' +
-          '<span class="path-desc">51 письменный вопрос и чтение вслух. Около 40 минут.</span>' +
+          '<span class="path-desc">51 письменный вопрос и чтение вслух. До 3 минут на вопрос, обычно уходит около часа.</span>' +
           '<span class="path-go">Начать</span>' +
         '</button>' +
         '<button class="path" id="goLead">' + marks() +
@@ -682,11 +699,13 @@
         '</button>' : '')) +
       '</div>' +
       '<section class="levels-teaser" aria-labelledby="levelsTitle">' +
-        '<p class="kicker" id="levelsTitle">Уровни программы</p>' +
+        '<p class="kicker" id="levelsTitle">Уровни программы<span class="cur">_</span></p>' +
         levelLadder(null) +
       '</section>'
     );
-    document.getElementById('goExam').onclick = function () { state.phase = 'reg'; show(); };
+    var startExam = function () { state.phase = 'reg'; show(); };
+    document.getElementById('goExam').onclick = startExam;
+    document.getElementById('heroExam').onclick = startExam;
     document.getElementById('goLead').onclick = function () { state.phase = 'lead'; show(); };
     var goCabinet = document.getElementById('goCabinet');
     if (goCabinet) goCabinet.onclick = function () { showStudentCabinet(studentToken); };
@@ -784,7 +803,7 @@
         html += '<hr class="rule"><p class="kicker">Отчёт для преподавателя</p>' +
           '<p class="lede">Отчёт уже у преподавателя. Эти кнопки нужны, если хотите сохранить копию себе или переслать её сами.</p>' +
           reportButtonsHtml();
-        html += '<p class="notice">Сохраните адрес этой страницы — по нему результат откроется снова.</p>' +
+        html += (cabinetToken ? '' : '<p class="notice">Сохраните адрес этой страницы — по нему результат откроется снова.</p>') +
           '<div class="btn-row"><button class="btn is-ghost" id="homeBtn">' +
           (cabinetToken ? '← В кабинет' : '← На главную') + '</button></div>';
         render(html);
@@ -1272,8 +1291,18 @@
     return '<div class="btn-row"><button class="btn btn-block" id="answerBtn">Сохранить ответ и продолжить</button></div>';
   }
 
-  function bindAnswer() {
-    document.getElementById('answerBtn').onclick = function () {
+  /* Пустой ответ уходит только с подтверждения: вернуться назад нельзя,
+     а случайный тап иначе стоил бы вопроса. */
+  function bindAnswer(isAnswered) {
+    var btn = document.getElementById('answerBtn');
+    var armed = false;
+        btn.onclick = function () {
+      if (typeof isAnswered === 'function' && !isAnswered() && !armed) {
+        armed = true;
+        btn.textContent = 'Ответ не выбран — пропустить вопрос?';
+        btn.classList.add('is-warning');
+        return;
+      }
       stopTimer();
       commitAndNext();
     };
@@ -1362,7 +1391,7 @@
 
     paint();
     cur = { collect: function () { state.answers.match = pairs; } };
-    bindAnswer();
+    bindAnswer(function () { return Object.keys(pairs).length > 0; });
   }
 
   /* Задание 2: слоги */
@@ -1388,7 +1417,7 @@
     document.getElementById('plus').onclick = function () { set(val == null ? 1 : val + 1); };
     document.getElementById('minus').onclick = function () { set(val == null ? 1 : val - 1); };
     cur = { collect: function () { state.answers.syllables[i] = val; } };
-    bindAnswer();
+    bindAnswer(function () { return val != null; });
   }
 
   /* Задание 3: сифаты */
@@ -1418,7 +1447,7 @@
       };
     });
     cur = { collect: function () { state.answers.sifat[letter] = chosen; } };
-    bindAnswer();
+    bindAnswer(function () { return chosen.length > 0; });
   }
 
   /* Задание 4: сборка слова */
@@ -1489,7 +1518,7 @@
     }
 
     cur = { collect: function () { state.answers.compose[i] = word(); } };
-    bindAnswer();
+    bindAnswer(function () { return !!word(); });
   }
 
   /* Задание 5: да / нет */
@@ -1516,7 +1545,7 @@
       val = false; no.closest('.opt').classList.add('is-on'); yes.closest('.opt').classList.remove('is-on');
     };
     cur = { collect: function () { state.answers.yesno[i] = val; } };
-    bindAnswer();
+    bindAnswer(function () { return typeof val === 'boolean'; });
   }
 
   /* Задание 6: чтение с записью */
@@ -1945,7 +1974,7 @@
     }
 
     html += '<hr class="rule">';
-    html += '<p class="kicker">Отчёт</p>';
+    html += '<p class="kicker">Отчёт<span class="cur">_</span></p>';
     html += '<p class="lede">' + (serverResult && serverResult.id
       ? 'Отчёт уже ушёл преподавателю. Кнопки ниже — если хотите сохранить копию себе или переслать её сами.'
       : 'Пока отчёт до преподавателя не дошёл. Сохраните его или перешлите сами — так результат точно не потеряется.') + '</p>';
