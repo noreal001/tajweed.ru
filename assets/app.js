@@ -37,6 +37,17 @@
     { n: 6, open: false }
   ];
 
+  /* Приводные метки внутри блока — компонент .marks с вики */
+  function marks() {
+    return '<div class="marks" aria-hidden="true">' +
+      '<span class="tick tl-v"></span><span class="tick tl-h"></span>' +
+      '<span class="tick tr-v"></span><span class="tick tr-h"></span>' +
+      '<span class="tick bl-v"></span><span class="tick bl-h"></span>' +
+      '<span class="tick br-v"></span><span class="tick br-h"></span>' +
+      '<span class="hatch tr"></span><span class="hatch bl"></span>' +
+    '</div>';
+  }
+
   /* Цвет уровня по проценту: от тревожного красного к неоновой зелени. */
   function scoreColor(percent, lightness) {
     var p = Math.max(0, Math.min(100, Number(percent) || 0));
@@ -367,19 +378,16 @@
 
   /* ── Навигация ─────────────────────────────────────────── */
 
+  /* Три постоянных пункта: главная всегда под рукой, кабинет — карточкой
+     на главной, чтобы навигация не менялась под пользователем. */
   function navItems() {
-    var token = '';
-    try { token = localStorage.getItem(STUDENT_KEY) || ''; } catch (e) { /* ок */ }
     return [
+      { id: 'home', label: 'Главная', act: function () { state.phase = 'welcome'; show(); },
+        on: function () { return state.phase === 'welcome'; } },
       { id: 'exam', label: 'Экзамен', act: function () { state.phase = 'reg'; show(); },
         on: function () { return state.phase === 'reg' || state.phase === 'exam'; } },
       { id: 'lead', label: 'Уроки', act: function () { state.phase = 'lead'; show(); },
-        on: function () { return state.phase === 'lead' || state.phase === 'leadDone'; } },
-      token
-        ? { id: 'cabinet', label: 'Кабинет', act: function () { showStudentCabinet(token); },
-            on: function () { return false; } }
-        : { id: 'home', label: 'Главная', act: function () { state.phase = 'welcome'; show(); },
-            on: function () { return state.phase === 'welcome'; } }
+        on: function () { return state.phase === 'lead' || state.phase === 'leadDone'; } }
     ];
   }
 
@@ -435,21 +443,21 @@
       }).join('') + '</div>';
 
     render(
-      '<section class="welcome-hero" aria-labelledby="welcomeTitle">' +
-        cells +
+      '<section class="welcome-hero frame" aria-labelledby="welcomeTitle">' +
+        cells + marks() +
         '<p class="kicker">Учебный проект · Первый уровень</p>' +
         '<div class="hero-glyph ar" lang="ar" dir="rtl" aria-hidden="true">ت</div>' +
         '<h1 id="welcomeTitle">Экзамен по <em>таджвиду</em></h1>' +
         '<p class="lede">Таджвид — наука правильного чтения Корана. Сдайте экзамен первого уровня или запишитесь на занятия к преподавателю Деабу Анасу Т.</p>' +
       '</section>' +
       '<div class="paths">' +
-        '<button class="path" id="goExam">' +
+        '<button class="path" id="goExam">' + marks() +
           '<span class="path-index">01 · Экзамен</span>' +
           '<span class="path-title">Проверить свой уровень</span>' +
           '<span class="path-desc">51 письменный вопрос и чтение вслух. Около 40 минут.</span>' +
           '<span class="path-go">Начать</span>' +
         '</button>' +
-        '<button class="path" id="goLead">' +
+        '<button class="path" id="goLead">' + marks() +
           '<span class="path-index">02 · Занятия</span>' +
           '<span class="path-title">Записаться на уроки</span>' +
           '<span class="path-desc">Для новичков. Выберите удобные дни и время, преподаватель свяжется с вами.</span>' +
@@ -551,7 +559,8 @@
         var html = '<h1>Результат экзамена</h1>' +
           '<p class="lede">' + esc(res.lastName) + ' ' + esc(res.firstName) + ' (' + esc(res.city) + ') · ' +
             new Date(res.createdAt).toLocaleString('ru-RU') + '</p>' +
-          '<div class="score-hero is-scored" style="--score-color: ' + scoreColor(pct) + '">' +
+          '<div class="score-hero is-scored frame" style="--score-color: ' + scoreColor(pct) + '">' +
+            marks() +
             '<div class="score-percent">' + pct + '<i>%</i></div>' +
             '<p class="score-caption">Первый уровень · ' + scoreVerdict(pct) + '</p>' +
             '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
@@ -1700,7 +1709,8 @@
     if (serverResult && typeof serverResult.percent === 'number') {
       var pct = Math.round(serverResult.percent);
       html += 'Ответы отправлены преподавателю. Вот ваш уровень:</p>';
-      html += '<div class="score-hero is-scored" style="--score-color: ' + scoreColor(pct) + '">' +
+      html += '<div class="score-hero is-scored frame" style="--score-color: ' + scoreColor(pct) + '">' +
+        marks() +
         '<div class="score-percent">' + pct + '<i>%</i></div>' +
         '<p class="score-caption">Первый уровень · ' + scoreVerdict(pct) + '</p>' +
         '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +

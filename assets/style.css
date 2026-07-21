@@ -67,46 +67,48 @@
 
 .sitenav { display: none; }
 
+/* Плавающая пилюля-сегментник, как .pillrow на вики */
 .tabbar {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
   z-index: 30;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  padding-bottom: env(safe-area-inset-bottom);
-  border-top: 1px solid var(--line);
-  background: var(--bg); /* сплошная заливка: блюр пачкает волосяную линию */
+  max-width: calc(100vw - 28px);
+  padding: 4px;
+  display: flex;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
 }
 
 .tab {
-  min-height: 56px;
-  padding: 8px 4px;
-  display: flex;
-  flex-direction: column;
+  min-height: 42px;
+  padding: 10px 18px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
   border: 0;
+  border-radius: 999px;
   background: transparent;
   color: var(--text-faint);
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: 10.5px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  white-space: nowrap;
   touch-action: manipulation;
+  transition: color 0.14s, background-color 0.14s;
 }
 
-.tab + .tab { border-left: 1px solid var(--line); }
-.tab::before { content: ""; width: 16px; height: 1px; background: transparent; }
-.tab.is-on { color: var(--text); }
-.tab.is-on::before { background: var(--text); }
-.tab:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+.tab.is-on { color: var(--inverse-text); background: var(--inverse-bg); }
+.tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 /* меню есть — освобождаем место, чтобы подвал не уезжал под него */
-html.has-tabbar body { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+html.has-tabbar body { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
 html.is-exam .tabbar { display: none; }
 html.is-exam body { padding-bottom: 0; }
 
@@ -151,16 +153,15 @@ html.is-exam body { padding-bottom: 0; }
   .sitenav-mark:hover { color: var(--text); }
   .sitenav-tabs { display: flex; align-self: stretch; }
 
-  .sitenav-tabs .tab {
-    height: 60px;
-    min-height: 0;
-    padding: 0 18px;
-    flex-direction: row;
-    border-left: 1px solid var(--line);
+  .sitenav-tabs {
+    align-self: center;
+    padding: 4px;
+    gap: 2px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
   }
 
-  .sitenav-tabs .tab::before { display: none; }
-  .sitenav-tabs .tab.is-on { box-shadow: inset 0 -1px 0 var(--text); }
+  .sitenav-tabs .tab { min-height: 34px; padding: 8px 16px; }
 }
 
 /* Переключатель темы */
@@ -175,9 +176,9 @@ html.is-exam body { padding-bottom: 0; }
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  border: 1px solid var(--control-line);
-  border-radius: var(--radius);
-  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-soft);
   background: var(--bg);
   cursor: pointer;
   font-family: var(--font-mono);
@@ -185,7 +186,7 @@ html.is-exam body { padding-bottom: 0; }
   letter-spacing: 0.14em;
   text-transform: uppercase;
   touch-action: manipulation;
-  transition: border-color 0.14s, background-color 0.14s;
+  transition: border-color 0.14s, background-color 0.14s, color 0.14s;
 }
 
 .theme-toggle:hover { border-color: var(--line-strong); background: var(--surface); }
@@ -224,8 +225,17 @@ body::before {
   mask-image: linear-gradient(to right, #000, transparent 92%);
 }
 
-/* Приводные метки и штриховка по углам листа */
-.marks { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+/* Приводные метки — переиспользуемый компонент: внутри любого .frame
+   лежат absolute, на уровне страницы — fixed. Как на wiki.bahur.store. */
+.marks { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.marks.is-page { position: fixed; }
+
+/* Рамка блока: та же конструкция, что .frame на вики */
+.frame { position: relative; padding: 24px; border: 1px solid var(--line); }
+
+@media (max-width: 640px) {
+  .frame { padding: 20px; }
+}
 .marks .tick { position: absolute; background: var(--text-faint); }
 .marks .tick.tl-v { top: 2px; left: 26px; width: 1px; height: 18px; }
 .marks .tick.tl-h { top: 26px; left: 2px; width: 18px; height: 1px; }
@@ -487,21 +497,23 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 /* Кнопки */
 
+/* Кнопки — пилюли, как .wiki-more на вики: структура прямая, действие круглое */
 .btn {
   min-height: 50px;
-  padding: 14px 24px;
+  padding: 14px 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
+  border: 1px solid var(--inverse-bg);
+  border-radius: 999px;
   color: var(--inverse-text);
   background: var(--inverse-bg);
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   text-decoration: none;
   touch-action: manipulation;
@@ -523,15 +535,15 @@ h2 { font-size: clamp(24px, 5vw, 33px); }
 
 .btn.is-quiet:hover { color: var(--text); background: transparent; text-decoration: underline; text-underline-offset: 4px; }
 
-.btn:hover { color: var(--text); background: var(--surface-strong); }
+.btn:hover { color: var(--inverse-text); background: var(--text); border-color: var(--text); }
 .btn:active { transform: translateY(1px); }
 .btn:focus-visible, .path:focus-visible, .opt:focus-visible, .check:focus-visible, .stepper button:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 3px;
 }
 
-.btn.is-ghost { color: var(--text); background: var(--bg); border-color: var(--line); }
-.btn.is-ghost:hover { border-color: var(--line-strong); background: var(--surface); }
+.btn.is-ghost { color: var(--text-soft); background: transparent; border-color: var(--line); }
+.btn.is-ghost:hover { color: var(--text); border-color: var(--line-strong); background: var(--surface); }
 
 .btn:disabled {
   color: var(--text-faint);
