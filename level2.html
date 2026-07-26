@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <title>Экзамен по таджвиду · Второй уровень</title>
+  <meta name="description" content="Экзамен по таджвиду, второй уровень. Доступ открывается после результата 100% за первый уровень.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/level2.css">
+  <script>
+    (function () {
+      var theme = 'light';
+      try {
+        if (localStorage.getItem('tajweed_theme') === 'dark') theme = 'dark';
+      } catch (e) {}
+      document.documentElement.setAttribute('data-theme', theme);
+      if (theme === 'dark') {
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#080808');
+      }
+    })();
+  </script>
+</head>
+<body class="level2-page">
+  <a class="skip-link" href="#level2App">Перейти к экзамену</a>
+
+  <header class="exam-sitebar">
+    <a class="exam-brand" href="./" translate="no">таджвид.рф</a>
+    <div class="exam-sitebar-actions">
+      <button class="language-button" id="languageButton" type="button" aria-haspopup="menu" aria-expanded="false">
+        <span aria-hidden="true">🇷🇺</span><span>RU</span>
+      </button>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">
+        <span class="theme-dial" aria-hidden="true"></span>
+        <span class="theme-label" id="themeLabel">Светлая</span>
+      </button>
+    </div>
+    <div class="language-menu" id="languageMenu" role="menu" hidden></div>
+  </header>
+
+  <main class="level2-shell" id="level2App" tabindex="-1" aria-live="polite">
+    <section class="access-state">
+      <p class="eyebrow">Второй уровень</p>
+      <h1>Проверяем доступ…</h1>
+      <p>Второй экзамен открывается после результата 100% за первый.</p>
+    </section>
+  </main>
+
+  <footer class="level2-footer">
+    <span>таджвид.рф</span>
+    <span>Преподаватель: Деаб Анас Т. 🇵🇸</span>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/level2-data.js"></script>
+  <script src="assets/level2.js"></script>
+</body>
+</html>

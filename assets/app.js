@@ -36,11 +36,11 @@
   ];
   var scheduleAudioContext = null;
 
-  /* Лестница уровней. Открыт только первый. Темы закрытых уровней НЕ
-     показываем: программу составляет преподаватель, обещать нечего. */
+  /* Второй уровень существует, но сервер откроет его только после 100%
+     за первый. Следующие уровни остаются без обещаний по содержанию. */
   var LEVELS = [
     { n: 1, title: 'Первый уровень', topic: 'Буквы и их названия, огласовки, сифаты, чтение вслух', open: true },
-    { n: 2, open: false },
+    { n: 2, title: 'Второй уровень', topic: 'Термины, танвин, мадд, звуковые отрезки и чтение', open: false },
     { n: 3, open: false },
     { n: 4, open: false },
     { n: 5, open: false },
@@ -132,32 +132,76 @@
     return 'нужно повторить материал';
   }
 
-  /* best: { percent, points, max, id } либо null, если экзамен ещё не сдан. */
-  function levelLadder(best) {
-    var locked = LEVELS.filter(function (lv) { return !lv.open; });
+  function progressFromResults(results) {
+    var progress = { level1: null, level2: null, canOpen2: false };
+    (results || []).forEach(function (result) {
+      var level = Number(result.examLevel) || 1;
+      var key = level === 2 ? 'level2' : 'level1';
+      if (!progress[key] || Number(result.percent) > Number(progress[key].percent)) progress[key] = result;
+    });
+    progress.canOpen2 = !!(progress.level1 && Math.round(Number(progress.level1.percent)) === 100);
+    return progress;
+  }
+
+  function normalizedProgress(value) {
+    if (value && Object.prototype.hasOwnProperty.call(value, 'level1')) return value;
+    return {
+      level1: value || null,
+      level2: null,
+      canOpen2: !!(value && Math.round(Number(value.percent)) === 100)
+    };
+  }
+
+  function wireLevelActions() {
+    [].slice.call(app.querySelectorAll('[data-open-level="2"]')).forEach(function (button) {
+      button.onclick = function () { location.href = 'level2.html'; };
+    });
+  }
+
+  function levelLadder(value) {
+    var progress = normalizedProgress(value);
+    var best = progress.level1;
+    var locked = LEVELS.filter(function (lv) { return lv.n > 2; });
     var html = '<ol class="levels">';
-    LEVELS.forEach(function (lv) {
-      if (!lv.open) return; // закрытые собираем отдельной полосой ниже
-      if (!best) {
-        html += '<li class="level is-open is-empty">' +
-          '<div class="level-head"><span class="level-n">Уровень ' + lv.n + '</span>' +
-          '<span class="level-lock is-ready">доступен</span></div>' +
-          '<p class="level-topic">' + esc(lv.topic) + '</p>' +
-          '<p class="level-hint">Экзамен ещё не сдан</p>' +
-        '</li>';
-        return;
-      }
+    var first = LEVELS[0];
+    if (!best) {
+      html += '<li class="level is-open is-empty">' +
+        '<div class="level-head"><span class="level-n">Уровень 1</span>' +
+        '<span class="level-lock is-ready">доступен</span></div>' +
+        '<p class="level-topic">' + esc(first.topic) + '</p>' +
+        '<p class="level-hint">Экзамен ещё не сдан</p>' +
+      '</li>';
+    } else {
       var pct = Math.round(best.percent);
       html += '<li class="level is-open is-scored" style="--score-color: ' + scoreColor(pct) + '">' +
-        '<div class="level-head"><span class="level-n">Уровень ' + lv.n + '</span>' +
+        '<div class="level-head"><span class="level-n">Уровень 1</span>' +
         '<span class="level-verdict">' + scoreVerdict(pct) + '</span></div>' +
-        '<p class="level-topic">' + esc(lv.topic) + '</p>' +
+        '<p class="level-topic">' + esc(first.topic) + '</p>' +
         '<div class="level-score"><span class="level-percent">' + pct + '<i>%</i></span>' +
           '<span class="level-points">' + esc(best.points) + ' из ' + esc(best.max) + ' баллов письменной части</span></div>' +
         '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
-
       '</li>';
-    });
+    }
+
+    var second = LEVELS[1];
+    if (progress.canOpen2) {
+      var level2 = progress.level2;
+      html += '<li><button class="level level-button is-open' + (level2 ? ' is-submitted' : ' is-empty') +
+        '" type="button" data-open-level="2">' +
+        '<div class="level-head"><span class="level-n">Уровень 2</span>' +
+          '<span class="level-lock is-ready">' + (level2 ? 'отправлен' : 'открыт') + '</span></div>' +
+        '<p class="level-topic">' + esc(second.topic) + '</p>' +
+        '<p class="level-hint">' + (level2
+          ? 'Работа ожидает проверки преподавателем →'
+          : 'Результат 100% подтверждён. Начать экзамен →') + '</p>' +
+      '</button></li>';
+    } else {
+      html += '<li class="level is-locked">' +
+        '<div class="level-head"><span class="level-n">Уровень 2</span><span class="level-lock">🔒 закрыт</span></div>' +
+        '<p class="level-topic">' + esc(second.topic) + '</p>' +
+        '<p class="level-hint">Откроется после результата 100% за первый уровень</p>' +
+      '</li>';
+    }
     html += '</ol>';
 
     // Закрытые уровни — узкая штрихованная полоса без обещаний по темам
@@ -578,8 +622,8 @@
       if (!d.ok) throw new Error('нет данных');
       var s = d.student;
       var results = d.results || [];
-      var best = null;
-      results.forEach(function (r) { if (!best || r.percent > best.percent) best = r; });
+      var progress = progressFromResults(results);
+      var best = progress.level1;
 
       var html = '<h1>Профиль</h1>' +
         '<section class="frame profile-card">' +
@@ -592,7 +636,7 @@
           '</dl>' +
         '</section>';
 
-      html += '<h2 class="kicker">Уровень<span class="cur">_</span></h2>' + levelLadder(best);
+      html += '<h2 class="kicker">Уровни<span class="cur">_</span></h2>' + levelLadder(progress);
 
       html += '<h2 class="kicker">Настройки<span class="cur">_</span></h2><div class="settings">' + themeRow() +
         (s.hasPassword
@@ -614,6 +658,7 @@
 
       render(html);
       wireThemeRow();
+      wireLevelActions();
       [].slice.call(app.querySelectorAll('[data-open-result]')).forEach(function (b) {
         b.onclick = function () { showSavedResult(b.getAttribute('data-open-result'), token); };
       });
@@ -863,7 +908,7 @@
       '</section>' +
       '<section class="levels-teaser" aria-labelledby="levelsTitle">' +
         '<p class="kicker" id="levelsTitle">Уровни программы<span class="cur">_</span></p>' +
-        levelLadder(null) +
+        '<div id="welcomeLevels">' + levelLadder(null) + '</div>' +
         (studentTok || lastId
           ? '<div class="btn-row"><button class="btn is-pill" id="goSaved">' +
             (studentTok ? 'Мой кабинет →' : 'Мой результат →') + '</button></div>'
@@ -905,6 +950,15 @@
       if (studentTok) return showStudentCabinet(studentTok);
       showSavedResult(lastId);
     };
+    wireLevelActions();
+    if (studentTok) {
+      apiGet('/api/student/' + encodeURIComponent(studentTok)).then(function (data) {
+        var host = document.getElementById('welcomeLevels');
+        if (!host || state.phase !== 'welcome' || !data.ok) return;
+        host.innerHTML = levelLadder(progressFromResults(data.results || []));
+        wireLevelActions();
+      }).catch(function () { /* без сети остаётся безопасно закрытым */ });
+    }
   }
 
   function showStudentCabinet(token) {
@@ -918,25 +972,26 @@
       if (history.replaceState) history.replaceState(null, '', '#student=' + token);
       var s = d.student;
       var results = d.results || [];
-      // лучший результат определяет свечение уровня
-      var best = null;
-      results.forEach(function (r) {
-        if (!best || r.percent > best.percent) best = r;
-      });
+      var progress = progressFromResults(results);
+      var best = progress.level1;
 
       var html = '<h1>Личный кабинет</h1>' +
         '<p class="lede">' + esc(s.lastName) + ' ' + esc(s.firstName) + ' · ' + esc(s.city) + '</p>';
 
-      html += levelLadder(best);
+      html += levelLadder(progress);
 
       if (results.length > 1) {
         html += '<hr class="rule"><h2 class="kicker">Все попытки</h2><div class="result-list">';
         results.forEach(function (r) {
+          var level = Number(r.examLevel) || 1;
           html += '<button class="result-item" data-result-id="' + esc(r.id) + '">' +
-            '<span><b>Экзамен первого уровня</b><br><span class="meta">' +
+            '<span><b>Экзамен ' + (level === 2 ? 'второго' : 'первого') + ' уровня</b><br><span class="meta">' +
             esc(new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(r.createdAt))) +
             ' · ' + (r.hasAudio ? 'чтение записано' : 'без аудиозаписи') + '</span></span>' +
-            '<span class="score" style="color: ' + scoreColor(r.percent, 62) + '">' + Math.round(r.percent) + '%</span></button>';
+            (r.gradingStatus === 'pending'
+              ? '<span class="score">на проверке</span>'
+              : '<span class="score" style="color: ' + scoreColor(r.percent, 62) + '">' + Math.round(r.percent) + '%</span>') +
+            '</button>';
         });
         html += '</div>';
       }
@@ -947,6 +1002,7 @@
           (best ? 'Пройти ещё раз' : 'Сдать экзамен первого уровня') + '</button>' +
         '<button class="btn is-ghost" id="homeBtn">На главную</button></div>';
       render(html);
+      wireLevelActions();
       [].slice.call(app.querySelectorAll('[data-result-id], [data-open-result]')).forEach(function (b) {
         b.onclick = function () {
           showSavedResult(b.getAttribute('data-result-id') || b.getAttribute('data-open-result'), token);
@@ -976,22 +1032,34 @@
         if (!d.ok) throw new Error('нет данных');
         var res = d.result;
         var pct = Math.round(res.percent);
+        var level = Number(res.examLevel) || 1;
+        var pending = res.gradingStatus === 'pending';
         var html = '<h1>Результат экзамена</h1>' +
           '<p class="lede">' + esc(res.lastName) + ' ' + esc(res.firstName) + ' (' + esc(res.city) + ') · ' +
-            new Date(res.createdAt).toLocaleString('ru-RU') + '</p>' +
-          '<div class="score-hero is-scored frame" style="--score-color: ' + scoreColor(pct) + '">' +
+            new Date(res.createdAt).toLocaleString('ru-RU') + '</p>';
+        if (pending) {
+          html += '<div class="score-hero frame">' +
+            '<p class="kicker">Второй уровень</p>' +
+            '<h2>На проверке у преподавателя</h2>' +
+            '<p class="score-points">Автопроверка: ' + esc(res.points) + ' из ' + esc(res.max) +
+              '. Это не итоговая оценка.</p></div>';
+        } else {
+          html += '<div class="score-hero is-scored frame" style="--score-color: ' + scoreColor(pct) + '">' +
             '<div class="score-percent">' + pct + '<i>%</i></div>' +
-            '<p class="score-caption">Первый уровень · ' + scoreVerdict(pct) + '</p>' +
+            '<p class="score-caption">' + (level === 2 ? 'Второй' : 'Первый') + ' уровень · ' + scoreVerdict(pct) + '</p>' +
             '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
             '<p class="score-points">Письменная часть: ' + esc(res.points) + ' из ' + esc(res.max) + ' баллов</p>' +
           '</div>';
+        }
         if (res.breakdown && res.breakdown.length) {
           html += '<div class="breakdown">';
           res.breakdown.forEach(function (b) {
             html += '<div class="breakdown-row"><span>' + esc(b.label) + '</span>' +
               '<span class="pts">' + esc(b.points) + ' / ' + esc(b.max) + '</span></div>';
           });
-          html += '<div class="breakdown-row is-muted"><span>Устное чтение и диктант</span><span class="pts">оценит преподаватель</span></div>';
+          html += '<div class="breakdown-row is-muted"><span>' +
+            (level === 2 ? 'Мадд, слоги, диктант и устное чтение' : 'Устное чтение и диктант') +
+            '</span><span class="pts">оценит преподаватель</span></div>';
           html += '</div>';
         }
         html += '<hr class="rule"><h2 class="kicker">Отчёт для преподавателя</h2>' +
@@ -2052,6 +2120,7 @@
     var savedStudentToken = '';
     try { savedStudentToken = localStorage.getItem(STUDENT_KEY) || ''; } catch (e) { /* ок */ }
     var payload = {
+      examLevel: 1,
       submissionId: state.submissionId,
       studentToken: savedStudentToken,
       student: state.student,
@@ -2086,18 +2155,26 @@
      (например, когда результат открыт по ссылке на другом устройстве). */
   function reportFromResult(res) {
     var lines = [];
-    lines.push('ЭКЗАМЕН ПО ТАДЖВИДУ · 1-Й УРОВЕНЬ');
+    var level = Number(res.examLevel) || 1;
+    var pending = res.gradingStatus === 'pending';
+    lines.push('ЭКЗАМЕН ПО ТАДЖВИДУ · ' + (level === 2 ? '2-Й' : '1-Й') + ' УРОВЕНЬ');
     lines.push('Ученик: ' + res.lastName + ' ' + res.firstName + ' (' + res.city + ')');
     lines.push('Дата: ' + new Date(res.createdAt).toLocaleString('ru-RU'));
     lines.push('');
-    lines.push('РЕЗУЛЬТАТ: ' + Math.round(res.percent) + '% — ' + scoreVerdict(res.percent));
-    lines.push('Письменная часть: ' + res.points + ' из ' + res.max + ' баллов');
+    if (pending) {
+      lines.push('СТАТУС: ожидает проверки преподавателем');
+      lines.push('Автоматически проверяемая часть: ' + res.points + ' из ' + res.max + ' баллов');
+    } else {
+      lines.push('РЕЗУЛЬТАТ: ' + Math.round(res.percent) + '% — ' + scoreVerdict(res.percent));
+      lines.push('Письменная часть: ' + res.points + ' из ' + res.max + ' баллов');
+    }
     lines.push('');
     lines.push('ПО ЗАДАНИЯМ:');
     (res.breakdown || []).forEach(function (b) {
       lines.push('  ' + b.label + ': ' + b.points + ' / ' + b.max);
     });
-    lines.push('  Устное чтение и диктант: оценит преподаватель' +
+    lines.push('  ' + (level === 2 ? 'Мадд, слоги, диктант и устное чтение' : 'Устное чтение и диктант') +
+      ': оценит преподаватель' +
       (res.hasAudio ? ' (аудиозапись отправлена)' : ''));
     return lines.join('\n');
   }
@@ -2209,8 +2286,14 @@
         '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
         '<p class="score-points">Письменная часть: ' + esc(serverResult.points) + ' из ' + esc(serverResult.max) + ' баллов</p>' +
       '</div>';
-      html += '<p class="lede">Остальные уровни откроются позже — их готовит преподаватель.</p>';
-      html += levelLadder({ percent: pct, points: serverResult.points, max: serverResult.max });
+      html += '<p class="lede">' + (pct === 100
+        ? 'Идеальный результат: второй экзамен открыт.'
+        : 'Второй уровень откроется, когда результат первого будет ровно 100%.') + '</p>';
+      html += levelLadder({
+        level1: { percent: pct, points: serverResult.points, max: serverResult.max, id: serverResult.id },
+        level2: null,
+        canOpen2: pct === 100
+      });
       if (serverResult.breakdown && serverResult.breakdown.length) {
         html += '<div class="breakdown">';
         serverResult.breakdown.forEach(function (b) {
@@ -2257,6 +2340,7 @@
     }
 
     render(html);
+    wireLevelActions();
     wireReportButtons(reportText(), s.lastName);
 
     var retrySubmit = document.getElementById('retrySubmitBtn');
@@ -2329,6 +2413,71 @@
     document.documentElement.setAttribute('data-theme', currentTheme());
     syncThemeToggle();
     toggle.onclick = function () { applyTheme(currentTheme() === 'light' ? 'dark' : 'light'); };
+  })();
+
+  (function initLanguages() {
+    var button = document.getElementById('languageButton');
+    var menu = document.getElementById('languageMenu');
+    if (!button || !menu) return;
+    var languages = [
+      ['ru', '🇷🇺', 'Русский'], ['en', '🇬🇧', 'English'], ['ar', '🇸🇦', 'العربية'],
+      ['tr', '🇹🇷', 'Türkçe'], ['az', '🇦🇿', 'Azərbaycan'], ['kk', '🇰🇿', 'Қазақша'],
+      ['uz', '🇺🇿', 'Oʻzbekcha'], ['ky', '🇰🇬', 'Кыргызча'], ['tg', '🇹🇯', 'Тоҷикӣ'],
+      ['tk', '🇹🇲', 'Türkmençe'], ['hy', '🇦🇲', 'Հայերեն']
+    ];
+    var match = document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
+    var current = match ? decodeURIComponent(match[1]).split('/').pop() : 'ru';
+    var selected = languages.filter(function (item) { return item[0] === current; })[0] || languages[0];
+    button.innerHTML = '<span aria-hidden="true">' + selected[1] + '</span><span>' +
+      selected[0].toUpperCase() + '</span>';
+    menu.innerHTML = languages.map(function (item) {
+      return '<button class="language-option" type="button" role="menuitem" data-language="' + item[0] +
+        '" aria-current="' + (item[0] === current ? 'true' : 'false') + '"><span aria-hidden="true">' +
+        item[1] + '</span><span>' + item[2] + '</span></button>';
+    }).join('');
+    button.onclick = function (event) {
+      event.stopPropagation();
+      menu.hidden = !menu.hidden;
+      button.setAttribute('aria-expanded', String(!menu.hidden));
+    };
+    menu.onclick = function (event) {
+      var option = event.target.closest('[data-language]');
+      if (!option) return;
+      var code = option.getAttribute('data-language');
+      var domains = ['', location.hostname, '.' + location.hostname];
+      domains.forEach(function (domain) {
+        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/' +
+          (domain ? '; domain=' + domain : '');
+      });
+      if (code !== 'ru') {
+        domains.forEach(function (domain) {
+          document.cookie = 'googtrans=/ru/' + code + '; path=/' +
+            (domain ? '; domain=' + domain : '');
+        });
+      }
+      location.reload();
+    };
+    document.addEventListener('click', function () {
+      menu.hidden = true;
+      button.setAttribute('aria-expanded', 'false');
+    });
+    if (current === 'ar') document.documentElement.setAttribute('dir', 'rtl');
+    if (current !== 'ru') {
+      var host = document.createElement('div');
+      host.id = 'google_translate_element';
+      host.hidden = true;
+      document.body.appendChild(host);
+      window.googleTranslateElementInit = function () {
+        new google.translate.TranslateElement({
+          pageLanguage: 'ru',
+          includedLanguages: 'en,ar,tr,az,kk,uz,ky,tg,tk,hy',
+          autoDisplay: false
+        }, 'google_translate_element');
+      };
+      var script = document.createElement('script');
+      script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      document.body.appendChild(script);
+    }
   })();
 
   var navHome = document.getElementById('navHome');
