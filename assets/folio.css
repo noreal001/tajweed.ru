@@ -126,7 +126,7 @@ html.is-exam body {
 
 .tab.is-on {
   color: #ffffff !important;
-  background: var(--brand-ink);
+  background: var(--nav-active-bg);
   box-shadow: none;
 }
 
@@ -149,7 +149,7 @@ html.is-exam body {
   border: 1px solid var(--line) !important;
   border-radius: 50%;
   color: var(--text) !important;
-  background: var(--surface-strong) !important;
+  background: var(--panel-deep-raised) !important;
 }
 
 :root[data-theme="light"] .theme-toggle,
@@ -159,12 +159,19 @@ html.is-exam body {
   background: var(--surface-strong) !important;
 }
 
+.language-button,
+:root[data-theme="light"] .language-button,
+:root[data-theme="dark"] .language-button {
+  border-color: transparent !important;
+  background: transparent !important;
+}
+
 @media (hover: hover) {
   .theme-toggle:hover,
   .language-button:hover {
     border-color: var(--line-strong) !important;
     color: var(--text) !important;
-    background: var(--folio-wash-strong) !important;
+    background: var(--panel-deep-raised) !important;
     transform: none;
   }
 
@@ -173,6 +180,13 @@ html.is-exam body {
     border-color: var(--line-strong) !important;
     color: var(--brand-ink) !important;
     background: var(--surface-strong) !important;
+  }
+
+  .language-button:hover,
+  :root[data-theme="light"] .language-button:hover,
+  :root[data-theme="dark"] .language-button:hover {
+    border-color: transparent !important;
+    background: transparent !important;
   }
 }
 
@@ -228,11 +242,11 @@ html.is-exam body {
 
   .sitenav-tabs .tab.is-on {
     color: #ffffff !important;
-    background: var(--brand-ink);
+    background: var(--nav-active-bg);
   }
 
   :root[data-theme="dark"] .sitenav-tabs .tab.is-on {
-    background: #141416;
+    background: var(--nav-active-bg);
   }
 
   .theme-toggle,
@@ -253,7 +267,12 @@ html.is-exam body {
   :root[data-theme="dark"] .theme-toggle,
   :root[data-theme="dark"] .language-button {
     color: var(--text) !important;
-    background: var(--surface-strong) !important;
+    background: var(--panel-deep-raised) !important;
+  }
+
+  :root[data-theme="dark"] .language-button {
+    border-color: transparent !important;
+    background: transparent !important;
   }
 }
 
@@ -264,12 +283,16 @@ html.is-exam body {
     transform: none;
   }
 
-  :root[data-theme="dark"] .theme-toggle:hover,
-  :root[data-theme="dark"] .language-button:hover {
+  :root[data-theme="dark"] .theme-toggle:hover {
     border-color: var(--line-strong) !important;
     color: var(--text) !important;
-    background: var(--folio-wash-strong) !important;
+    background: var(--panel-deep-raised) !important;
     transform: none;
+  }
+
+  :root[data-theme="dark"] .language-button:hover {
+    border-color: transparent !important;
+    background: transparent !important;
   }
 
   .sitenav-tabs .tab:active,
@@ -298,7 +321,7 @@ html.is-exam body {
 
 .language-option[aria-current="true"] {
   color: var(--text) !important;
-  background: var(--surface-strong) !important;
+  background: var(--panel-deep-raised) !important;
 }
 
 .theme-label {
@@ -329,22 +352,21 @@ html.is-exam body {
 }
 
 .language-flag {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
   border-radius: 50%;
-  background: var(--bg);
+  background: transparent;
 }
 
-.language-flag > span {
+.language-flag > svg {
+  width: 100%;
+  height: 100%;
   display: block;
-  font-size: 24px;
-  line-height: 1;
-  transform: scale(1.12);
 }
 
 .language-flag.is-small {
@@ -353,8 +375,10 @@ html.is-exam body {
   flex: 0 0 24px;
 }
 
-.language-flag.is-small > span {
-  font-size: 22px;
+.language-flag.is-small > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 /* Первичные действия сохраняют цвет #19191b в светлой теме. */
@@ -900,17 +924,25 @@ html.is-exam body {
 .auth-glass {
   position: relative;
   width: min(100%, 760px);
-  margin-top: 34px;
+  margin: 34px auto 0;
   padding: clamp(22px, 4vw, 34px);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 28px;
-  background: rgba(20, 20, 22, 0.72);
+  background: var(--panel-deep);
   box-shadow:
     0 26px 80px rgba(0, 0, 0, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(24px) saturate(1.08);
   -webkit-backdrop-filter: blur(24px) saturate(1.08);
+}
+
+:root[data-theme="dark"] .auth-glass {
+  border-color: var(--line);
+  background: var(--panel-deep);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 :root[data-theme="light"] .auth-glass {
@@ -934,6 +966,10 @@ html.is-exam body {
 
 :root[data-theme="light"] .auth-glass::before {
   background: rgba(255, 255, 255, 0.95);
+}
+
+:root[data-theme="dark"] .auth-glass::before {
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .auth-glass > * {
@@ -970,10 +1006,19 @@ html.is-exam body {
   background: rgba(255, 255, 255, 0.58);
 }
 
+:root[data-theme="dark"] .auth-choice {
+  border-color: var(--line);
+  background: var(--panel-deep-raised);
+}
+
 .auth-choice:hover:not(:disabled) {
   border-color: var(--line-strong);
   background: var(--folio-wash-strong);
   transform: translateY(-2px);
+}
+
+:root[data-theme="dark"] .auth-choice:hover:not(:disabled) {
+  background: var(--panel-deep-hover);
 }
 
 .auth-choice:focus-visible,
@@ -1082,8 +1127,13 @@ html.is-exam body {
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .auth-glass {
-    background: var(--surface);
+    background: var(--panel-deep);
   }
+}
+
+:root[data-theme="dark"] .tabbar .tab.is-on {
+  color: #ffffff !important;
+  background: var(--nav-active-bg);
 }
 
 @media (max-width: 680px) {

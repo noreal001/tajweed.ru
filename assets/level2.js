@@ -486,20 +486,15 @@
   syncTheme();
 
   (function wireLanguages() {
-    var languages = [
-      ['ru', '🇷🇺', 'Русский'], ['en', '🇬🇧', 'English'], ['ar', '🇸🇦', 'العربية'],
-      ['tr', '🇹🇷', 'Türkçe'], ['az', '🇦🇿', 'Azərbaycan'], ['kk', '🇰🇿', 'Қазақша'],
-      ['uz', '🇺🇿', 'Oʻzbekcha'], ['ky', '🇰🇬', 'Кыргызча'], ['tg', '🇹🇯', 'Тоҷикӣ'],
-      ['tk', '🇹🇲', 'Türkmençe'], ['hy', '🇦🇲', 'Հայերեն']
-    ];
+    var languages = window.TAJWEED_LANGUAGES || [];
     var cookie = document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
     var current = cookie ? decodeURIComponent(cookie[1]).split('/').pop() : 'ru';
     var button = document.getElementById('languageButton');
     var menu = document.getElementById('languageMenu');
     var currentLanguage = languages.filter(function (item) { return item[0] === current; })[0] || languages[0];
-    function languageFlag(emoji, small) {
+    function languageFlag(svg, small) {
       return '<span class="language-flag' + (small ? ' is-small' : '') +
-        '" aria-hidden="true"><span>' + emoji + '</span></span>';
+        '" aria-hidden="true">' + svg + '</span>';
     }
     button.innerHTML = languageFlag(currentLanguage[1], false) +
       '<span class="visually-hidden">' + currentLanguage[2] + '</span>';

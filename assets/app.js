@@ -753,13 +753,13 @@
             '<span class="auth-choice-copy"><b>По телефону</b><small>Номер и пароль</small></span>' +
             '<span class="auth-choice-arrow" aria-hidden="true">→</span>' +
           '</button>' +
-          '<button class="auth-choice" id="yandexBtn" type="button" aria-describedby="yandexHint" disabled>' +
+          '<button class="auth-choice" id="yandexBtn" type="button" aria-describedby="yandexHint">' +
             '<span class="yandex-mark" aria-hidden="true">Я</span>' +
             '<span class="auth-choice-copy"><b>Через Яндекс</b><small>Вход или регистрация</small></span>' +
             '<span class="auth-choice-arrow" aria-hidden="true">→</span>' +
           '</button>' +
         '</div>' +
-        '<p class="login-provider-hint" id="yandexHint" role="status">Проверяем подключение Яндекса…</p>' +
+        '<p class="login-provider-hint" id="yandexHint" role="status" hidden></p>' +
         '<p class="auth-note" id="authNote">Новый профиль можно создать через Яндекс или по номеру телефона перед первым экзаменом.</p>' +
         '<div class="auth-phone-panel" id="phoneAuthPanel" hidden>' +
           '<button class="auth-text-action" id="authBack" type="button">← Другой способ</button>' +
@@ -784,6 +784,12 @@
     var yandexButton = document.getElementById('yandexBtn');
     var yandexHint = document.getElementById('yandexHint');
     var authNote = document.getElementById('authNote');
+
+    /* Переход доступен сразу: медленная или неудачная фоновая проверка
+       больше не превращает рабочий Яндекс-вход в неактивную карточку. */
+    yandexButton.onclick = function () {
+      location.href = API + '/api/auth/yandex/start';
+    };
 
     phoneButton.onclick = function () {
       choices.hidden = true;
@@ -812,14 +818,17 @@
     apiGet('/api/auth/yandex/enabled').then(function (d) {
       if (!yandexButton || !yandexHint) return;
       if (!d || !d.enabled) {
+        yandexButton.disabled = true;
         yandexHint.textContent = 'Вход через Яндекс временно недоступен.';
+        yandexHint.hidden = false;
         return;
       }
-      yandexButton.disabled = false;
       yandexHint.hidden = true;
-      yandexButton.onclick = function () { location.href = API + '/api/auth/yandex/start'; };
     }).catch(function () {
-      if (yandexHint) yandexHint.textContent = 'Не удалось проверить подключение Яндекса.';
+      if (yandexHint) {
+        yandexHint.textContent = 'Не удалось проверить статус. Можно продолжить вход через Яндекс.';
+        yandexHint.hidden = false;
+      }
     });
 
     var form = document.getElementById('loginForm');
@@ -2527,18 +2536,13 @@
     var button = document.getElementById('languageButton');
     var menu = document.getElementById('languageMenu');
     if (!button || !menu) return;
-    var languages = [
-      ['ru', '🇷🇺', 'Русский'], ['en', '🇬🇧', 'English'], ['ar', '🇸🇦', 'العربية'],
-      ['tr', '🇹🇷', 'Türkçe'], ['az', '🇦🇿', 'Azərbaycan'], ['kk', '🇰🇿', 'Қазақша'],
-      ['uz', '🇺🇿', 'Oʻzbekcha'], ['ky', '🇰🇬', 'Кыргызча'], ['tg', '🇹🇯', 'Тоҷикӣ'],
-      ['tk', '🇹🇲', 'Türkmençe'], ['hy', '🇦🇲', 'Հայերեն']
-    ];
+    var languages = window.TAJWEED_LANGUAGES || [];
     var match = document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
     var current = match ? decodeURIComponent(match[1]).split('/').pop() : 'ru';
     var selected = languages.filter(function (item) { return item[0] === current; })[0] || languages[0];
-    function languageFlag(emoji, small) {
+    function languageFlag(svg, small) {
       return '<span class="language-flag' + (small ? ' is-small' : '') +
-        '" aria-hidden="true"><span>' + emoji + '</span></span>';
+        '" aria-hidden="true">' + svg + '</span>';
     }
     button.innerHTML = languageFlag(selected[1], false) +
       '<span class="visually-hidden">' + selected[2] + '</span>';
