@@ -152,7 +152,7 @@ body {
   .sitenav-tabs .tab {
     min-height: 44px;
     padding: 9px 15px;
-    border: 1px solid var(--line) !important;
+    border: 2px solid var(--line) !important;
     border-radius: 10px;
     color: var(--text) !important;
     background: var(--bg);
@@ -172,6 +172,8 @@ body {
   .theme-toggle,
   .language-button {
     min-height: 44px;
+    border-width: 2px !important;
+    border-style: solid !important;
     border-radius: 10px;
     transition:
       background-color 0.16s var(--ease),
