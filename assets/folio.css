@@ -397,6 +397,8 @@ html.is-exam body {
   height: 29px;
   display: block;
   overflow: visible;
+  stroke: currentColor;
+  stroke-width: 2.7;
   shape-rendering: geometricPrecision;
 }
 
@@ -415,17 +417,28 @@ html.is-exam body {
 .theme-toggle,
 :root[data-theme="light"] .theme-toggle,
 :root[data-theme="dark"] .theme-toggle {
-  border-color: transparent !important;
-  background: transparent !important;
+  border-color: var(--line) !important;
+  background: var(--panel-deep-raised) !important;
+}
+
+:root[data-theme="light"] .theme-toggle {
+  border-color: rgba(25, 25, 27, 0.28) !important;
+  color: #19191b !important;
+  background: #f4f4f5 !important;
 }
 
 @media (hover: hover) {
   .theme-toggle:hover,
-  :root[data-theme="light"] .theme-toggle:hover,
   :root[data-theme="dark"] .theme-toggle:hover {
-    border-color: transparent !important;
+    border-color: var(--line-strong) !important;
     color: var(--text) !important;
-    background: transparent !important;
+    background: var(--panel-deep-hover) !important;
+  }
+
+  :root[data-theme="light"] .theme-toggle:hover {
+    border-color: rgba(25, 25, 27, 0.46) !important;
+    color: #19191b !important;
+    background: #ececee !important;
   }
 
   .theme-toggle:hover .theme-dial {
