@@ -649,6 +649,38 @@ html.is-exam body {
   padding-right: 0;
 }
 
+.level-outline {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.level-outline li {
+  position: relative;
+  padding-left: 14px;
+  color: var(--text-soft);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.level-outline li::before {
+  position: absolute;
+  top: 0.58em;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  content: "";
+}
+
+.level-outline + .level-hint,
+.level-outline + .level-score {
+  margin-top: 14px;
+}
+
 .level-n,
 .level-lock,
 .level-verdict {
@@ -1265,8 +1297,18 @@ html.is-exam body {
 
   .level {
     --level-frame: 14px;
-    min-height: 0;
+    min-height: 238px;
+    aspect-ratio: auto;
     padding: 20px;
+  }
+
+  .level-outline {
+    gap: 5px;
+    margin-top: 12px;
+  }
+
+  .level-outline li {
+    font-size: 12px;
   }
 
   .levels {

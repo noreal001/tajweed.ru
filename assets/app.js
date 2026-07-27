@@ -39,8 +39,28 @@
   /* Второй уровень существует, но сервер откроет его только после 100%
      за первый. Следующие уровни остаются без обещаний по содержанию. */
   var LEVELS = [
-    { n: 1, title: 'Первый уровень', topic: 'Буквы и их названия, огласовки, сифаты, чтение вслух', open: true },
-    { n: 2, title: 'Второй уровень', topic: 'Термины, танвин, мадд, звуковые отрезки и чтение', open: false },
+    {
+      n: 1,
+      title: 'Первый уровень',
+      topic: 'Основа произношения и правил чтения',
+      outline: [
+        'Буквы, названия и огласовки',
+        'Слоги, сифаты и составление слов',
+        'Проверка правил и чтение вслух'
+      ],
+      open: true
+    },
+    {
+      n: 2,
+      title: 'Второй уровень',
+      topic: 'Продолжение правил и практики чтения',
+      outline: [
+        'Термины, определения и танвин',
+        'Мадд, звуковые отрезки и сифаты',
+        'Составление слов, диктант и чтение'
+      ],
+      open: false
+    },
     { n: 3, open: false },
     { n: 4, open: false },
     { n: 5, open: false },
@@ -192,6 +212,16 @@
     });
   }
 
+  function levelOutline(level) {
+    var items = level && Array.isArray(level.outline) ? level.outline : [];
+    if (!items.length) return '';
+    return '<ul class="level-outline">' +
+      items.map(function (item) {
+        return '<li>' + esc(item) + '</li>';
+      }).join('') +
+    '</ul>';
+  }
+
   function levelLadder(value) {
     var progress = normalizedProgress(value);
     var best = progress.level1;
@@ -204,6 +234,7 @@
         '<div class="level-head"><span class="level-n">Уровень 1</span>' +
         '<span class="level-lock is-ready">доступен</span></div>' +
         '<p class="level-topic">' + esc(first.topic) + '</p>' +
+        levelOutline(first) +
         '<p class="level-hint">Экзамен ещё не сдан</p>' +
       '</li>';
     } else {
@@ -213,6 +244,7 @@
         '<div class="level-head"><span class="level-n">Уровень 1</span>' +
         '<span class="level-verdict">' + scoreVerdict(pct) + '</span></div>' +
         '<p class="level-topic">' + esc(first.topic) + '</p>' +
+        levelOutline(first) +
         '<div class="level-score"><span class="level-percent">' + pct + '<i>%</i></span>' +
           '<span class="level-points">' + esc(best.points) + ' из ' + esc(best.max) + ' баллов письменной части</span></div>' +
         '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
@@ -228,6 +260,7 @@
         '<div class="level-head"><span class="level-n">Уровень 2</span>' +
           '<span class="level-lock is-ready">' + (level2 ? 'отправлен' : 'открыт') + '</span></div>' +
         '<p class="level-topic">' + esc(second.topic) + '</p>' +
+        levelOutline(second) +
         '<p class="level-hint">' + (level2
           ? 'Работа ожидает проверки преподавателем →'
           : 'Результат 100% подтверждён. Начать экзамен →') + '</p>' +
@@ -237,6 +270,7 @@
         levelDecor() +
         '<div class="level-head"><span class="level-n">Уровень 2</span><span class="level-lock">🔒 закрыт</span></div>' +
         '<p class="level-topic">' + esc(second.topic) + '</p>' +
+        levelOutline(second) +
         '<p class="level-hint">Откроется после результата 100% за первый уровень</p>' +
       '</li>';
     }
