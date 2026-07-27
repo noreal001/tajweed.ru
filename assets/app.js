@@ -1195,24 +1195,30 @@
     return '<fieldset class="schedule-picker" data-schedule aria-describedby="daysHint errScheduleDays">' +
       '<legend>Когда удобно заниматься?</legend>' +
       '<p class="field-hint" id="daysHint">Выберите один или несколько дней.</p>' +
-      '<div class="day-strip">' + days + '</div>' +
-      '<span class="err" id="errScheduleDays" data-msg="Выберите хотя бы один день" role="alert"></span>' +
-      '<div class="time-window">' +
-        '<div class="time-heading"><span>Диапазон времени</span>' +
-          '<strong id="scheduleSummary">10:00—20:00</strong></div>' +
-        '<div class="time-slider"><label for="timeFrom">Не раньше</label>' +
-          '<output id="timeFromOutput" for="timeFrom">10:00</output>' +
-          '<input id="timeFrom" name="timeFromMinutes" type="range" min="360" max="1380" step="30" value="600" autocomplete="off"></div>' +
-        '<div class="time-slider"><label for="timeTo">Не позже</label>' +
-          '<output id="timeToOutput" for="timeTo">20:00</output>' +
-          '<input id="timeTo" name="timeToMinutes" type="range" min="360" max="1380" step="30" value="1200" autocomplete="off"></div>' +
-        '<div class="time-scale" aria-hidden="true"><span>06:00</span><span>день</span><span>23:00</span></div>' +
-        '<input id="timeZone" name="timeZone" type="hidden" value="Europe/Moscow">' +
-        '<button class="sound-toggle" id="scheduleSound" type="button" aria-pressed="false">' +
-          '<span><b>Звук ползунка</b><small>Тихий отклик при смене времени</small></span>' +
-          '<span class="sound-switch" aria-hidden="true"><span></span></span>' +
-        '</button>' +
+      '<div class="schedule-controls">' +
+        '<div class="schedule-days">' +
+          '<span class="schedule-control-label">Дни недели</span>' +
+          '<div class="day-strip">' + days + '</div>' +
+        '</div>' +
+        '<div class="time-window">' +
+          '<div class="time-heading"><span>Время</span>' +
+            '<strong id="scheduleSummary"><span class="schedule-days-summary" id="scheduleDaysSummary"></span>' +
+              '<span id="scheduleTimeSummary">10:00—20:00</span></strong></div>' +
+          '<div class="time-slider"><label for="timeFrom">Не раньше</label>' +
+            '<output id="timeFromOutput" for="timeFrom">10:00</output>' +
+            '<input id="timeFrom" name="timeFromMinutes" type="range" min="360" max="1380" step="30" value="600" autocomplete="off"></div>' +
+          '<div class="time-slider"><label for="timeTo">Не позже</label>' +
+            '<output id="timeToOutput" for="timeTo">20:00</output>' +
+            '<input id="timeTo" name="timeToMinutes" type="range" min="360" max="1380" step="30" value="1200" autocomplete="off"></div>' +
+          '<div class="time-scale" aria-hidden="true"><span>06:00</span><span>день</span><span>23:00</span></div>' +
+          '<input id="timeZone" name="timeZone" type="hidden" value="Europe/Moscow">' +
+          '<button class="sound-toggle" id="scheduleSound" type="button" aria-pressed="false">' +
+            '<span><b>Звук ползунка</b><small>Тихий отклик при смене времени</small></span>' +
+            '<span class="sound-switch" aria-hidden="true"><span></span></span>' +
+          '</button>' +
+        '</div>' +
       '</div>' +
+      '<span class="err" id="errScheduleDays" data-msg="Выберите хотя бы один день" role="alert"></span>' +
     '</fieldset>';
   }
 
@@ -1426,7 +1432,8 @@
     var to = form.timeToMinutes;
     var fromOutput = document.getElementById('timeFromOutput');
     var toOutput = document.getElementById('timeToOutput');
-    var summary = document.getElementById('scheduleSummary');
+    var daysSummary = document.getElementById('scheduleDaysSummary');
+    var timeSummary = document.getElementById('scheduleTimeSummary');
     var soundButton = document.getElementById('scheduleSound');
     var soundEnabled = false;
     var lastTickAt = 0;
@@ -1447,7 +1454,8 @@
       toOutput.textContent = fmtMinutes(to.value);
       from.setAttribute('aria-valuetext', 'Не раньше ' + fmtMinutes(from.value));
       to.setAttribute('aria-valuetext', 'Не позже ' + fmtMinutes(to.value));
-      summary.textContent = (labels.length ? labels.join(', ') + ' · ' : '') + range;
+      daysSummary.textContent = labels.length ? labels.join(', ') + ' · ' : '';
+      timeSummary.textContent = range;
       if (labels.length) markInvalid(picker, false);
     }
 
