@@ -1008,8 +1008,12 @@
           (draft ? 'Продолжить экзамен →' : 'Сдать экзамен →') + '</button></div>' +
         '<div class="hero-meta">' +
           '<span class="crosshair" aria-hidden="true"></span>' +
-          '<span>ТАДЖВИД.РФ // 2026<br>ПРЕПОДАВАТЕЛЬ ДЕАБ АНАС Т. ' +
-            '<span class="flag" role="img" aria-label="Палестина">🇵🇸</span></span>' +
+          '<span class="hero-meta-lines">' +
+            '<span class="hero-meta-site">ТАДЖВИД.РФ // 2026</span>' +
+            '<span class="hero-meta-teacher">ПРЕПОДАВАТЕЛЬ ДЕАБ АНАС Т. ' +
+              '<span class="teacher-flag" role="img" aria-label="Палестина"></span>' +
+            '</span>' +
+          '</span>' +
         '</div>' +
       '</section>' +
       '<section class="levels-teaser" aria-labelledby="levelsTitle">' +
