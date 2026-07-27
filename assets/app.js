@@ -628,23 +628,6 @@
     try { return localStorage.getItem(STUDENT_KEY) || ''; } catch (e) { return ''; }
   }
 
-  function themeRow() {
-    var isLight = document.documentElement.getAttribute('data-theme') === 'light';
-    return '<button class="setting-row profile-theme-setting" id="profileTheme" type="button" aria-pressed="' + (isLight ? 'true' : 'false') + '">' +
-      '<span><b>Оформление</b><small>Тёмное или светлое</small></span>' +
-      '<span class="setting-value"><span class="theme-dial" aria-hidden="true"></span>' +
-        (isLight ? 'Светлое' : 'Тёмное') + '</span></button>';
-  }
-
-  function wireThemeRow() {
-    var row = document.getElementById('profileTheme');
-    if (!row) return;
-    row.onclick = function () {
-      applyTheme(currentTheme() === 'light' ? 'dark' : 'light');
-      showProfile();
-    };
-  }
-
   function showProfile() {
     if (state.phase === 'exam') return;
     state.phase = 'profile';
@@ -676,7 +659,7 @@
 
       html += '<h2 class="kicker">Уровни<span class="cur">_</span></h2>' + levelLadder(progress);
 
-      html += '<h2 class="kicker">Настройки<span class="cur">_</span></h2><div class="settings">' + themeRow() +
+      html += '<h2 class="kicker">Настройки<span class="cur">_</span></h2><div class="settings">' +
         (s.hasPassword
           ? '<button class="setting-row" id="changePass" type="button">' +
               '<span><b>Пароль</b><small>Вход с другого телефона</small></span>' +
@@ -695,7 +678,6 @@
           (best ? 'Пройти ещё раз' : 'Сдать экзамен') + '</button></div>';
 
       render(html);
-      wireThemeRow();
       wireLevelActions();
       [].slice.call(app.querySelectorAll('[data-open-result]')).forEach(function (b) {
         b.onclick = function () { showSavedResult(b.getAttribute('data-open-result'), token); };
@@ -723,61 +705,87 @@
   }
 
   function showLogin(startupError) {
-    setBar('Вход в профиль');
+    setBar('Профиль');
     render(
-      '<h1>Вход в профиль</h1>' +
-      '<p class="lede">Профиль появляется после первого экзамена. Если вы уже сдавали с другого телефона — войдите по номеру и паролю.</p>' +
-      '<form class="form" id="loginForm" novalidate>' +
-        '<div class="field" data-f="phone"><label for="lPhone">Телефон</label>' +
-          '<input id="lPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00" maxlength="20">' +
-          '<span class="err" data-msg="Введите номер целиком" role="alert"></span></div>' +
-        '<div class="field" data-f="password"><label for="lPass">Пароль</label>' +
-          '<input id="lPass" name="password" type="password" autocomplete="current-password" maxlength="200">' +
-          '<span class="err" data-msg="Введите пароль" role="alert"></span></div>' +
-        '<p class="notice" id="loginErr" role="status" aria-live="polite" hidden></p>' +
-        '<div class="btn-row"><button class="btn btn-block" type="submit">Войти</button></div>' +
-      '</form>' +
-      '<section class="login-actions" aria-labelledby="registrationTitle">' +
-        '<h2 class="kicker" id="registrationTitle">Нет профиля<span class="cur">_</span></h2>' +
-        '<div class="btn-row login-yandex-row" id="yandexRow">' +
-          '<button class="btn is-ghost btn-block yandex-button" id="yandexBtn" type="button" ' +
-            'aria-describedby="yandexHint" disabled>' +
+      '<h1>Профиль</h1>' +
+      '<p class="lede">Войдите или создайте профиль. Сначала выберите способ — остальные поля появятся дальше.</p>' +
+      '<section class="auth-glass" aria-labelledby="authMethodTitle">' +
+        '<h2 class="kicker" id="authMethodTitle">Вход или регистрация<span class="cur">_</span></h2>' +
+        '<p class="notice is-error" id="loginErr" role="status" aria-live="polite"' +
+          (startupError ? '>' + esc(startupError) : ' hidden>') + '</p>' +
+        '<div class="auth-choice-grid" id="authChoices">' +
+          '<button class="auth-choice" id="phoneAuth" type="button" aria-controls="phoneAuthPanel" aria-expanded="false">' +
+            '<span class="auth-choice-index" aria-hidden="true">01</span>' +
+            '<span class="auth-choice-copy"><b>По телефону</b><small>Номер и пароль</small></span>' +
+            '<span class="auth-choice-arrow" aria-hidden="true">→</span>' +
+          '</button>' +
+          '<button class="auth-choice" id="yandexBtn" type="button" aria-describedby="yandexHint" disabled>' +
             '<span class="yandex-mark" aria-hidden="true">Я</span>' +
-            '<span>Зарегистрироваться через Яндекс</span></button>' +
-          '<p class="login-provider-hint" id="yandexHint" role="status">Проверяем подключение…</p>' +
+            '<span class="auth-choice-copy"><b>Через Яндекс</b><small>Вход или регистрация</small></span>' +
+            '<span class="auth-choice-arrow" aria-hidden="true">→</span>' +
+          '</button>' +
         '</div>' +
-      '</section>' +
-      '<section class="login-settings" aria-labelledby="settingsTitle">' +
-        '<h2 class="kicker" id="settingsTitle">Настройки<span class="cur">_</span></h2>' +
-        '<div class="settings">' + themeRow() + '</div>' +
+        '<p class="login-provider-hint" id="yandexHint" role="status">Проверяем подключение Яндекса…</p>' +
+        '<p class="auth-note" id="authNote">Новый профиль можно создать через Яндекс или по номеру телефона перед первым экзаменом.</p>' +
+        '<div class="auth-phone-panel" id="phoneAuthPanel" hidden>' +
+          '<button class="auth-text-action" id="authBack" type="button">← Другой способ</button>' +
+          '<h2>Вход по телефону</h2>' +
+          '<form class="form auth-phone-form" id="loginForm" novalidate>' +
+            '<div class="field" data-f="phone"><label for="lPhone">Телефон</label>' +
+              '<input id="lPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00" maxlength="20">' +
+              '<span class="err" data-msg="Введите номер целиком" role="alert"></span></div>' +
+            '<div class="field" data-f="password"><label for="lPass">Пароль</label>' +
+              '<input id="lPass" name="password" type="password" autocomplete="current-password" maxlength="200">' +
+              '<span class="err" data-msg="Введите пароль" role="alert"></span></div>' +
+            '<div class="btn-row"><button class="btn btn-block" type="submit">Войти</button></div>' +
+          '</form>' +
+          '<button class="auth-text-action is-centered" id="phoneRegister" type="button">Создать профиль по телефону</button>' +
+        '</div>' +
       '</section>'
     );
-    wireThemeRow();
 
-    if (startupError) {
-      var startErr = document.getElementById('loginErr');
-      startErr.hidden = false;
-      startErr.classList.add('is-error');
-      startErr.textContent = startupError;
-    }
+    var choices = document.getElementById('authChoices');
+    var panel = document.getElementById('phoneAuthPanel');
+    var phoneButton = document.getElementById('phoneAuth');
+    var yandexButton = document.getElementById('yandexBtn');
+    var yandexHint = document.getElementById('yandexHint');
+    var authNote = document.getElementById('authNote');
 
-    /* Действие Яндекса всегда занимает своё место в интерфейсе.
-       Когда ключей ещё нет, показываем честное недоступное состояние,
-       а не прячем обещанную владельцу возможность целиком. */
+    phoneButton.onclick = function () {
+      choices.hidden = true;
+      panel.hidden = false;
+      authNote.hidden = true;
+      yandexHint.hidden = true;
+      phoneButton.setAttribute('aria-expanded', 'true');
+      try { document.getElementById('lPhone').focus({ preventScroll: true }); }
+      catch (e) { document.getElementById('lPhone').focus(); }
+    };
+    document.getElementById('authBack').onclick = function () {
+      panel.hidden = true;
+      choices.hidden = false;
+      authNote.hidden = false;
+      yandexHint.hidden = !yandexButton.disabled;
+      phoneButton.setAttribute('aria-expanded', 'false');
+      phoneButton.focus();
+    };
+    document.getElementById('phoneRegister').onclick = function () {
+      state.phase = 'reg';
+      show();
+    };
+
+    /* Яндекс остаётся одной из двух равноправных точек входа. Когда OAuth
+       не настроен, карточка не исчезает и честно показывает причину. */
     apiGet('/api/auth/yandex/enabled').then(function (d) {
-      var btn = document.getElementById('yandexBtn');
-      var hint = document.getElementById('yandexHint');
-      if (!btn || !hint) return;
+      if (!yandexButton || !yandexHint) return;
       if (!d || !d.enabled) {
-        hint.textContent = 'Регистрация через Яндекс временно недоступна.';
+        yandexHint.textContent = 'Вход через Яндекс временно недоступен.';
         return;
       }
-      btn.disabled = false;
-      hint.hidden = true;
-      btn.onclick = function () { location.href = API + '/api/auth/yandex/start'; };
+      yandexButton.disabled = false;
+      yandexHint.hidden = true;
+      yandexButton.onclick = function () { location.href = API + '/api/auth/yandex/start'; };
     }).catch(function () {
-      var hint = document.getElementById('yandexHint');
-      if (hint) hint.textContent = 'Не удалось проверить подключение Яндекса.';
+      if (yandexHint) yandexHint.textContent = 'Не удалось проверить подключение Яндекса.';
     });
 
     var form = document.getElementById('loginForm');
@@ -809,7 +817,7 @@
         err.textContent = e2 && e2.status === 429
           ? 'Слишком много попыток. Попробуйте через 15 минут.'
           : e2 && (e2.status === 401 || e2.status === 404)
-            ? 'Неверный номер или пароль. Если вы ещё не сдавали экзамен, откройте раздел «Экзамен» в главном меню.'
+            ? 'Неверный номер или пароль. Для нового профиля выберите «Создать профиль по телефону».'
           : 'Не получилось войти. Проверьте интернет и попробуйте ещё раз.';
       });
     };
