@@ -335,20 +335,54 @@ html.is-exam body {
 }
 
 .theme-dial {
-  position: relative;
-  width: 16px;
-  height: 16px;
-  overflow: hidden;
-  border: 1px solid currentColor;
-  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
   background: transparent;
 }
 
+.theme-dial::before {
+  color: currentColor;
+  content: "\263E\FE0E";
+  font-family: "Apple Symbols", "Segoe UI Symbol", sans-serif;
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+:root[data-theme="dark"] .theme-dial::before {
+  content: "\2600\FE0E";
+}
+
 .theme-dial::after {
-  position: absolute;
-  inset: 0 50% 0 0;
-  background: currentColor;
+  display: none;
   content: "";
+}
+
+.theme-toggle,
+:root[data-theme="light"] .theme-toggle,
+:root[data-theme="dark"] .theme-toggle {
+  border-color: transparent !important;
+  background: transparent !important;
+}
+
+@media (hover: hover) {
+  .theme-toggle:hover,
+  :root[data-theme="light"] .theme-toggle:hover,
+  :root[data-theme="dark"] .theme-toggle:hover {
+    border-color: transparent !important;
+    color: var(--text) !important;
+    background: transparent !important;
+  }
+
+  .theme-toggle:hover .theme-dial {
+    transform: scale(1.08);
+  }
 }
 
 .language-flag {
