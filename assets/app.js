@@ -609,6 +609,7 @@
       try { screenCleanup(); } catch (e) { /* экран всё равно должен смениться */ }
       screenCleanup = null;
     }
+    document.documentElement.classList.remove('is-auth');
     cur = null;
     app.innerHTML = '<div class="screen">' + html + '</div>';
     window.scrollTo(0, 0);
@@ -738,12 +739,15 @@
   }
 
   function showLogin(startupError) {
-    setBar('Профиль');
+    setBar(null);
+    document.title = 'Вход в профиль · таджвид.рф';
     render(
-      '<h1>Профиль</h1>' +
-      '<p class="lede">Войдите по номеру телефона или через Яндекс.</p>' +
       '<section class="auth-glass" aria-labelledby="authPhoneTitle">' +
-        '<h2 class="kicker" id="authPhoneTitle">Вход по телефону<span class="cur">_</span></h2>' +
+        '<div class="auth-brand" aria-hidden="true"><span class="auth-brand-mark">ت</span></div>' +
+        '<header class="auth-heading">' +
+          '<h1 id="authPhoneTitle">Вход в профиль</h1>' +
+          '<p>Продолжите обучение и откройте свои результаты.</p>' +
+        '</header>' +
         '<p class="notice is-error" id="loginErr" role="status" aria-live="polite"' +
           (startupError ? '>' + esc(startupError) : ' hidden>') + '</p>' +
         '<div class="auth-phone-panel">' +
@@ -751,24 +755,40 @@
             '<div class="field" data-f="phone"><label for="lPhone">Телефон</label>' +
               '<input id="lPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00" maxlength="20">' +
               '<span class="err" data-msg="Введите номер целиком" role="alert"></span></div>' +
-            '<div class="field" data-f="password"><label for="lPass">Пароль</label>' +
+            '<div class="field" data-f="password">' +
+              '<div class="auth-field-head"><label for="lPass">Пароль</label>' +
+                '<button class="auth-inline-action" id="forgotPassword" type="button" aria-expanded="false" aria-controls="forgotHint">Забыли пароль?</button></div>' +
               '<input id="lPass" name="password" type="password" autocomplete="current-password" maxlength="200">' +
               '<span class="err" data-msg="Введите пароль" role="alert"></span></div>' +
-            '<div class="btn-row"><button class="btn btn-block" type="submit">Войти</button></div>' +
+            '<button class="btn btn-block auth-submit" type="submit">Войти</button>' +
           '</form>' +
-          '<button class="auth-text-action is-centered" id="phoneRegister" type="button">Создать новый профиль</button>' +
+          '<p class="auth-register">Нет профиля? ' +
+            '<button class="auth-text-action" id="phoneRegister" type="button">Зарегистрироваться</button></p>' +
+          '<p class="auth-recovery" id="forgotHint" role="status" aria-live="polite" hidden>' +
+            'Восстановление по SMS подключается. Пока можно войти через Яндекс: если там указан тот же номер, профиль откроется автоматически.</p>' +
+          '<div class="auth-divider" aria-hidden="true"><span>или</span></div>' +
           '<button class="auth-provider-secondary" id="yandexBtn" type="button" aria-describedby="yandexHint">' +
             '<span class="yandex-mark" aria-hidden="true">Я</span>' +
-            '<span>Войти через Яндекс</span>' +
-            '<span class="auth-provider-arrow" aria-hidden="true">→</span>' +
+            '<span>Войти с помощью Яндекса</span>' +
           '</button>' +
           '<p class="login-provider-hint" id="yandexHint" role="status" hidden></p>' +
         '</div>' +
+        '<p class="auth-legal">Продолжая, вы принимаете ' +
+          '<a href="legal.html#terms">Условия использования</a> и ' +
+          '<a href="legal.html#privacy">Политику конфиденциальности</a>.</p>' +
       '</section>'
     );
+    document.documentElement.classList.add('is-auth');
 
     var yandexButton = document.getElementById('yandexBtn');
     var yandexHint = document.getElementById('yandexHint');
+    var forgotPassword = document.getElementById('forgotPassword');
+    var forgotHint = document.getElementById('forgotHint');
+
+    forgotPassword.onclick = function () {
+      forgotHint.hidden = !forgotHint.hidden;
+      forgotPassword.setAttribute('aria-expanded', String(!forgotHint.hidden));
+    };
 
     /* Переход доступен сразу: медленная или неудачная фоновая проверка
        больше не превращает рабочий Яндекс-вход в неактивную карточку. */
@@ -828,7 +848,7 @@
         err.textContent = e2 && e2.status === 429
           ? 'Слишком много попыток. Попробуйте через 15 минут.'
           : e2 && (e2.status === 401 || e2.status === 404)
-            ? 'Неверный номер или пароль. Для нового профиля выберите «Создать профиль по телефону».'
+            ? 'Неверный номер или пароль. Для нового профиля выберите «Зарегистрироваться».'
           : 'Не получилось войти. Проверьте интернет и попробуйте ещё раз.';
       });
     };
