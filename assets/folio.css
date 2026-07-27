@@ -481,15 +481,15 @@ html.is-exam body {
 
 .blueprint-cell {
   position: relative;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--blueprint-line, var(--line));
+  border-bottom: 1px solid var(--blueprint-line, var(--line));
 }
 
 .blueprint-cell::after {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: var(--hatch);
+  background-image: var(--blueprint-hatch, var(--hatch));
   background-size: 4px 4px;
   opacity: 0;
   transition: opacity 0.55s ease;
@@ -622,6 +622,25 @@ html.is-exam body {
 
 .level > .blueprint-layer.is-level {
   display: block;
+}
+
+.level.is-level-one > .blueprint-layer.is-level {
+  --blueprint-line: var(--level-one-grid-line);
+  --blueprint-hatch: var(--level-one-grid-hatch);
+}
+
+.level.is-level-two > .blueprint-layer.is-level {
+  --blueprint-line: var(--level-two-grid-line);
+  --blueprint-hatch: var(--level-two-grid-hatch);
+}
+
+/* Цвет получает только внутренний чертёж; край карточки остаётся нейтральным. */
+.level > .blueprint-layer.is-level .blueprint-cell:nth-child(3n) {
+  border-right-color: transparent;
+}
+
+.level > .blueprint-layer.is-level .blueprint-cell:nth-child(n + 4) {
+  border-bottom-color: transparent;
 }
 
 .level > .marks {
@@ -772,18 +791,6 @@ html.is-exam body {
 :root[data-theme="light"] .level.is-open,
 :root[data-theme="light"] .level.is-scored {
   background: var(--bg);
-}
-
-.level.is-level-one,
-:root[data-theme="light"] .level.is-level-one {
-  border-color: var(--level-one-line);
-  background: var(--level-one-bg);
-}
-
-.level.is-level-two.is-locked,
-:root[data-theme="light"] .level.is-level-two.is-locked {
-  border-color: var(--level-two-line);
-  background: var(--level-two-bg);
 }
 
 .level-button {
