@@ -1053,12 +1053,12 @@
           '<span class="hero-meta-lines">' +
             '<span class="hero-meta-site">ТАДЖВИД.РФ // 2026</span>' +
             '<span class="hero-meta-teacher">ПРЕПОДАВАТЕЛЬ ДЕАБ АНАС Т. ' +
-              '<span class="teacher-flag" role="img" aria-label="Палестина">' +
-                '<svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true">' +
-                  '<rect width="60" height="14" fill="#101012"></rect>' +
-                  '<rect y="14" width="60" height="13" fill="#fff"></rect>' +
-                  '<rect y="27" width="60" height="13" fill="#149954"></rect>' +
-                  '<path d="M0 0 25 20 0 40Z" fill="#e4312b"></path>' +
+              '<span class="teacher-icon" role="img" aria-label="Преподаватель">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" ' +
+                  'stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">' +
+                  '<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"></path>' +
+                  '<path d="M22 10v6"></path>' +
+                  '<path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"></path>' +
                 '</svg>' +
               '</span>' +
             '</span>' +
@@ -1246,60 +1246,44 @@
 
   function scheduleFields() {
     var days = WEEK_DAYS.map(function (day, index) {
-      var id = 'day' + index;
-      return '<label class="day-option" for="' + id + '">' +
-        '<input id="' + id + '" name="scheduleDays" type="checkbox" value="' + day.value + '">' +
-        '<span class="day-face"><span class="day-short" aria-hidden="true">' + day.short + '</span>' +
-        '<span class="day-full">' + day.full + '</span></span></label>';
+      return '<div class="schedule-wheel-option' + (index === 0 ? ' is-selected' : '') + '"' +
+        ' id="wheelDay' + day.value + '" role="option" data-value="' + day.value + '"' +
+        ' aria-selected="' + (index === 0 ? 'true' : 'false') + '">' + day.full + '</div>';
     }).join('');
     var hours = '';
-    for (var hour = 6; hour <= 23; hour++) {
-      var hourText = String(hour).padStart(2, '0');
-      hours += '<div class="time-wheel-option' + (hour === 10 ? ' is-selected' : '') + '"' +
-        ' id="wheelHour' + hour + '" role="option" data-value="' + hour + '"' +
-        ' aria-selected="' + (hour === 10 ? 'true' : 'false') + '">' + hourText + '</div>';
+    for (var hour = 5; hour <= 23; hour++) {
+      var hourText = String(hour).padStart(2, '0') + ':00';
+      hours += '<div class="schedule-wheel-option' + (hour === 18 ? ' is-selected' : '') + '"' +
+        ' id="wheelTime' + hour + '" role="option" data-value="' + (hour * 60) + '"' +
+        ' aria-selected="' + (hour === 18 ? 'true' : 'false') + '">' + hourText + '</div>';
     }
-    var minutes = [0, 30].map(function (minute) {
-      var minuteText = String(minute).padStart(2, '0');
-      return '<div class="time-wheel-option' + (minute === 0 ? ' is-selected' : '') + '"' +
-        ' id="wheelMinute' + minute + '" role="option" data-value="' + minute + '"' +
-        ' aria-selected="' + (minute === 0 ? 'true' : 'false') + '">' + minuteText + '</div>';
-    }).join('');
     return '<fieldset class="schedule-picker" data-schedule aria-describedby="daysHint errScheduleDays">' +
       '<legend>Когда удобно заниматься?</legend>' +
-      '<p class="field-hint" id="daysHint">Выберите один или несколько дней.</p>' +
-      '<div class="schedule-controls">' +
-        '<div class="schedule-days">' +
-          '<span class="schedule-control-label">Дни недели</span>' +
-          '<div class="day-strip">' + days + '</div>' +
-        '</div>' +
-        '<div class="time-window">' +
-          '<div class="time-heading"><span>Время</span>' +
-            '<strong id="scheduleSummary"><span class="schedule-days-summary" id="scheduleDaysSummary"></span>' +
-              '<span id="scheduleTimeSummary">10:00—20:00</span></strong></div>' +
-          '<div class="time-boundaries" role="group" aria-label="Границы удобного времени">' +
-            '<button class="time-boundary is-active" type="button" data-time-boundary="from" aria-pressed="true">' +
-              '<span>С</span><output id="timeFromOutput" for="timeFrom">10:00</output></button>' +
-            '<button class="time-boundary" type="button" data-time-boundary="to" aria-pressed="false">' +
-              '<span>До</span><output id="timeToOutput" for="timeTo">20:00</output></button>' +
+      '<p class="field-hint" id="daysHint">Прокрутите два столбика и выберите один день и одно время.</p>' +
+      '<div class="schedule-dual-wheel">' +
+        '<section class="schedule-wheel-field" aria-labelledby="scheduleDayLabel">' +
+          '<span class="schedule-wheel-label" id="scheduleDayLabel">День</span>' +
+          '<div class="schedule-wheel">' +
+            '<span class="schedule-wheel-focus" aria-hidden="true"></span>' +
+            '<div class="schedule-wheel-column is-days" role="listbox" tabindex="0" ' +
+              'aria-labelledby="scheduleDayLabel" aria-activedescendant="wheelDaymon" data-schedule-unit="day">' +
+              days + '</div>' +
           '</div>' +
-          '<div class="time-wheel" role="group" aria-label="Выбор времени">' +
-            '<span class="time-wheel-focus" aria-hidden="true"></span>' +
-            '<div class="time-wheel-column is-hours" role="listbox" tabindex="0" aria-label="Часы, не раньше" aria-activedescendant="wheelHour10" data-time-unit="hour">' +
+        '</section>' +
+        '<section class="schedule-wheel-field" aria-labelledby="scheduleTimeLabel">' +
+          '<span class="schedule-wheel-label" id="scheduleTimeLabel">Время</span>' +
+          '<div class="schedule-wheel">' +
+            '<span class="schedule-wheel-focus" aria-hidden="true"></span>' +
+            '<div class="schedule-wheel-column is-time" role="listbox" tabindex="0" ' +
+              'aria-labelledby="scheduleTimeLabel" aria-activedescendant="wheelTime18" data-schedule-unit="time">' +
               hours + '</div>' +
-            '<span class="time-wheel-colon" aria-hidden="true">:</span>' +
-            '<div class="time-wheel-column is-minutes" role="listbox" tabindex="0" aria-label="Минуты, не раньше" aria-activedescendant="wheelMinute0" data-time-unit="minute">' +
-              minutes + '</div>' +
           '</div>' +
-          '<input id="timeFrom" name="timeFromMinutes" type="hidden" value="600">' +
-          '<input id="timeTo" name="timeToMinutes" type="hidden" value="1200">' +
-          '<input id="timeZone" name="timeZone" type="hidden" value="Europe/Moscow">' +
-          '<button class="sound-toggle" id="scheduleSound" type="button" aria-pressed="false">' +
-            '<span><b>Звук барабана</b><small>Тихий щелчок при смене времени</small></span>' +
-            '<span class="sound-switch" aria-hidden="true"><span></span></span>' +
-          '</button>' +
-        '</div>' +
+        '</section>' +
       '</div>' +
+      '<p class="schedule-selection" id="scheduleSummary" aria-live="polite">Понедельник · 18:00</p>' +
+      '<input id="scheduleDay" name="scheduleDay" type="hidden" value="mon">' +
+      '<input id="scheduleTime" name="scheduleTimeMinutes" type="hidden" value="1080">' +
+      '<input id="timeZone" name="timeZone" type="hidden" value="Europe/Moscow">' +
       '<span class="err" id="errScheduleDays" data-msg="Выберите хотя бы один день" role="alert"></span>' +
     '</fieldset>';
   }
@@ -1454,30 +1438,20 @@
     });
     var schedule = form.querySelector('[data-schedule]');
     if (schedule) {
-      var selectedDays = [].slice.call(form.querySelectorAll('[name="scheduleDays"]:checked')).map(function (input) {
-        return input.value;
-      });
-      var daysBad = selectedDays.length === 0;
-      markInvalid(schedule, daysBad);
-      if (daysBad) {
+      var selectedDay = form.scheduleDay ? form.scheduleDay.value : '';
+      var timeMinute = form.scheduleTimeMinutes ? Number(form.scheduleTimeMinutes.value) : NaN;
+      var scheduleBad = !selectedDay || !Number.isInteger(timeMinute) ||
+        timeMinute < 300 || timeMinute > 1380 || timeMinute % 60 !== 0;
+      markInvalid(schedule, scheduleBad);
+      if (scheduleBad) {
         ok = false;
-        if (!firstInvalid) firstInvalid = form.querySelector('[name="scheduleDays"]');
-      }
-      var startMinute = Number(form.timeFromMinutes.value);
-      var endMinute = Number(form.timeToMinutes.value);
-      if (startMinute >= endMinute) {
-        ok = false;
-        markInvalid(schedule, true);
-        var slot = schedule.querySelector('.err');
-        if (slot) slot.textContent = 'Время «не раньше» должно быть меньше, чем «не позже»';
-        if (!firstInvalid) firstInvalid = schedule.querySelector('[data-time-boundary="from"]');
+        if (!firstInvalid) firstInvalid = schedule.querySelector('[data-schedule-unit="day"]');
       }
       data.requestId = form.requestId.value || form.getAttribute('data-request-id') || uuid();
       data.availability = {
-        version: 1,
-        days: selectedDays,
-        startMinute: startMinute,
-        endMinute: endMinute,
+        version: 2,
+        days: selectedDay ? [selectedDay] : [],
+        timeMinute: timeMinute,
         timeZone: form.timeZone.value || 'Europe/Moscow'
       };
     }
@@ -1485,8 +1459,7 @@
     return ok ? data : null;
   }
 
-  function playScheduleTick(enabled, value) {
-    if (!enabled) return;
+  function playScheduleTick(value) {
     var AudioCtor = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtor) return;
     try {
@@ -1495,8 +1468,10 @@
       var now = scheduleAudioContext.currentTime;
       var oscillator = scheduleAudioContext.createOscillator();
       var gain = scheduleAudioContext.createGain();
+      var step = Number(value);
+      if (!Number.isFinite(step)) step = 0;
       oscillator.type = 'triangle';
-      oscillator.frequency.value = 720 + ((Math.round(Number(value) / 30) % 6) * 18);
+      oscillator.frequency.value = 720 + ((Math.round(step / 60) % 6) * 18);
       gain.gain.setValueAtTime(0.0001, now);
       gain.gain.exponentialRampToValueAtTime(0.008, now + 0.002);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.022);
@@ -1510,31 +1485,18 @@
   function initSchedule(form) {
     var picker = form.querySelector('[data-schedule]');
     if (!picker) return;
-    var from = form.timeFromMinutes;
-    var to = form.timeToMinutes;
-    var fromOutput = document.getElementById('timeFromOutput');
-    var toOutput = document.getElementById('timeToOutput');
-    var daysSummary = document.getElementById('scheduleDaysSummary');
-    var timeSummary = document.getElementById('scheduleTimeSummary');
-    var soundButton = document.getElementById('scheduleSound');
-    var boundaryButtons = [].slice.call(picker.querySelectorAll('[data-time-boundary]'));
-    var wheelColumns = [].slice.call(picker.querySelectorAll('[data-time-unit]'));
-    var hourColumn = picker.querySelector('[data-time-unit="hour"]');
-    var minuteColumn = picker.querySelector('[data-time-unit="minute"]');
-    var activeBoundary = 'from';
-    var soundEnabled = true;
+    var dayInput = form.scheduleDay;
+    var timeInput = form.scheduleTimeMinutes;
+    var summary = document.getElementById('scheduleSummary');
+    var wheelColumns = [].slice.call(picker.querySelectorAll('[data-schedule-unit]'));
+    var dayColumn = picker.querySelector('[data-schedule-unit="day"]');
+    var timeColumn = picker.querySelector('[data-schedule-unit="time"]');
     var lastTickAt = 0;
     var wheelFrame = 0;
     var ignoreWheelUntil = 0;
-    try { soundEnabled = localStorage.getItem('tajweed_schedule_sound') !== 'off'; } catch (e) { /* ок */ }
     try { form.timeZone.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Moscow'; } catch (e) { /* ок */ }
 
-    function updateSoundButton() {
-      soundButton.setAttribute('aria-pressed', soundEnabled ? 'true' : 'false');
-    }
-
     function primeScheduleSound() {
-      if (!soundEnabled) return;
       var AudioCtor = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtor) return;
       try {
@@ -1544,11 +1506,11 @@
     }
 
     function selectedOption(column) {
-      return column.querySelector('.time-wheel-option.is-selected');
+      return column.querySelector('.schedule-wheel-option.is-selected');
     }
 
     function markWheelOption(column, option) {
-      var options = [].slice.call(column.querySelectorAll('.time-wheel-option'));
+      var options = [].slice.call(column.querySelectorAll('.schedule-wheel-option'));
       var selectedIndex = options.indexOf(option);
       options.forEach(function (item, index) {
         var distance = Math.abs(index - selectedIndex);
@@ -1562,7 +1524,7 @@
     }
 
     function nearestWheelOption(column) {
-      var options = [].slice.call(column.querySelectorAll('.time-wheel-option'));
+      var options = [].slice.call(column.querySelectorAll('.schedule-wheel-option'));
       var center = column.scrollTop + column.clientHeight / 2;
       return options.reduce(function (best, option) {
         var optionCenter = option.offsetTop + option.offsetHeight / 2;
@@ -1582,64 +1544,24 @@
       });
     }
 
-    function syncWheel(minutesValue, smooth) {
-      var safeValue = Math.max(360, Math.min(1380, Number(minutesValue)));
-      scrollWheelTo(hourColumn, Math.floor(safeValue / 60), smooth);
-      scrollWheelTo(minuteColumn, safeValue % 60, smooth);
-    }
-
-    function updateBoundaryButtons() {
-      boundaryButtons.forEach(function (button) {
-        var active = button.getAttribute('data-time-boundary') === activeBoundary;
-        button.classList.toggle('is-active', active);
-        button.setAttribute('aria-pressed', active ? 'true' : 'false');
-      });
-      var suffix = activeBoundary === 'from' ? 'не раньше' : 'не позже';
-      hourColumn.setAttribute('aria-label', 'Часы, ' + suffix);
-      minuteColumn.setAttribute('aria-label', 'Минуты, ' + suffix);
-    }
-
     function updateSummary() {
-      var labels = [].slice.call(form.querySelectorAll('[name="scheduleDays"]:checked')).map(function (input) {
-        var day = WEEK_DAYS.filter(function (item) { return item.value === input.value; })[0];
-        return day ? day.short : input.value;
-      });
-      var range = fmtMinutes(from.value) + '—' + fmtMinutes(to.value);
-      fromOutput.textContent = fmtMinutes(from.value);
-      toOutput.textContent = fmtMinutes(to.value);
-      from.setAttribute('aria-valuetext', 'Не раньше ' + fmtMinutes(from.value));
-      to.setAttribute('aria-valuetext', 'Не позже ' + fmtMinutes(to.value));
-      daysSummary.textContent = labels.length ? labels.join(', ') + ' · ' : '';
-      timeSummary.textContent = range;
-      if (labels.length) markInvalid(picker, false);
+      var day = WEEK_DAYS.filter(function (item) { return item.value === dayInput.value; })[0];
+      summary.textContent = (day ? day.full : dayInput.value) + ' · ' + fmtMinutes(timeInput.value);
+      if (dayInput.value) markInvalid(picker, false);
     }
 
-    function commitWheel(playTick) {
-      var hourOption = selectedOption(hourColumn);
-      var minuteOption = selectedOption(minuteColumn);
-      if (!hourOption || !minuteOption) return;
-      var next = Number(hourOption.getAttribute('data-value')) * 60 +
-        Number(minuteOption.getAttribute('data-value'));
-
-      if (activeBoundary === 'from') {
-        next = Math.min(next, 1320);
-        from.value = next;
-        if (Number(to.value) < next + 60) to.value = next + 60;
-      } else {
-        next = Math.max(next, 420);
-        to.value = next;
-        if (Number(from.value) > next - 60) from.value = next - 60;
-      }
-
+    function commitWheel(column, playTick) {
+      var option = selectedOption(column);
+      if (!option) return;
+      var value = option.getAttribute('data-value');
+      if (column === dayColumn) dayInput.value = value;
+      if (column === timeColumn) timeInput.value = value;
       updateSummary();
       var now = Date.now();
       if (playTick && now - lastTickAt >= 45) {
         lastTickAt = now;
-        playScheduleTick(soundEnabled, next);
-      }
-      if (next !== Number(hourOption.getAttribute('data-value')) * 60 +
-          Number(minuteOption.getAttribute('data-value'))) {
-        syncWheel(next, false);
+        var options = [].slice.call(column.querySelectorAll('.schedule-wheel-option'));
+        playScheduleTick(column === timeColumn ? value : options.indexOf(option) * 60);
       }
     }
 
@@ -1651,20 +1573,10 @@
         var option = nearestWheelOption(column);
         var before = selectedOption(column);
         markWheelOption(column, option);
-        commitWheel(before !== option);
+        commitWheel(column, before !== option);
       });
     }
 
-    [].slice.call(form.querySelectorAll('[name="scheduleDays"]')).forEach(function (input) {
-      input.addEventListener('change', updateSummary);
-    });
-    boundaryButtons.forEach(function (button) {
-      button.addEventListener('click', function () {
-        activeBoundary = button.getAttribute('data-time-boundary');
-        updateBoundaryButtons();
-        syncWheel(activeBoundary === 'from' ? from.value : to.value, false);
-      });
-    });
     wheelColumns.forEach(function (column) {
       column.addEventListener('pointerdown', primeScheduleSound, { passive: true });
       column.addEventListener('scroll', function () { onWheelScroll(column); }, { passive: true });
@@ -1673,7 +1585,7 @@
             event.key !== 'PageUp' && event.key !== 'PageDown' &&
             event.key !== 'Home' && event.key !== 'End') return;
         event.preventDefault();
-        var options = [].slice.call(column.querySelectorAll('.time-wheel-option'));
+        var options = [].slice.call(column.querySelectorAll('.schedule-wheel-option'));
         var current = selectedOption(column);
         var index = Math.max(0, options.indexOf(current));
         if (event.key === 'ArrowUp') index -= 1;
@@ -1685,23 +1597,16 @@
         index = Math.max(0, Math.min(options.length - 1, index));
         scrollWheelTo(column, options[index].getAttribute('data-value'), true);
       });
-      [].slice.call(column.querySelectorAll('.time-wheel-option')).forEach(function (option) {
+      [].slice.call(column.querySelectorAll('.schedule-wheel-option')).forEach(function (option) {
         option.addEventListener('click', function () {
           scrollWheelTo(column, option.getAttribute('data-value'), true);
         });
       });
     });
-    soundButton.addEventListener('click', function () {
-      soundEnabled = !soundEnabled;
-      try { localStorage.setItem('tajweed_schedule_sound', soundEnabled ? 'on' : 'off'); } catch (e) { /* ок */ }
-      updateSoundButton();
-      if (soundEnabled) playScheduleTick(true, from.value);
-    });
-    updateSoundButton();
     updateSummary();
-    updateBoundaryButtons();
     requestAnimationFrame(function () {
-      syncWheel(from.value, false);
+      scrollWheelTo(dayColumn, dayInput.value, false);
+      scrollWheelTo(timeColumn, timeInput.value, false);
     });
   }
 

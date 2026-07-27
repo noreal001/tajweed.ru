@@ -1,11 +1,11 @@
 /* Folio 2026
    Монохромная редакция по мотивам wiki.bahur.store/prays/.
-   #19191b применяется к тёмным кнопкам светлой темы. Фон тёмной темы
+   Глубокий графит применяется к тёмным кнопкам светлой темы. Фон тёмной темы
    остаётся эталонным #0a0a0b. */
 
 :root {
   --site-nav-space: 80px;
-  --brand-ink: #19191b;
+  --brand-ink: #343439;
   --bg: #0a0a0b;
   --surface: #141416;
   --surface-strong: #1b1b1e;
@@ -61,6 +61,13 @@
   --folio-highlight: rgba(25, 25, 27, 0.08);
   --auth-action: #2b2b2f;
   --auth-action-hover: #343439;
+  --plaque-bg: #ffffff;
+  --plaque-ink: #19191b;
+  --plaque-soft: #5f5d63;
+  --plaque-line: rgba(25, 25, 27, 0.14);
+  --plaque-hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%2319191b' stroke-opacity='0.1' stroke-width='0.7'/></svg>");
+  --plaque-level-one-hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%23147551' stroke-opacity='0.2' stroke-width='0.7'/></svg>");
+  --plaque-level-two-hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%23aa305b' stroke-opacity='0.18' stroke-width='0.7'/></svg>");
 }
 
 body {
@@ -150,7 +157,7 @@ html.is-exam body {
 
 .sitenav-tabs {
   border: 1px solid var(--line) !important;
-  border-radius: 14px !important;
+  border-radius: 0 !important;
   background: transparent;
 }
 
@@ -160,7 +167,7 @@ html.is-exam body {
 
 .tab {
   color: var(--text-soft) !important;
-  border-radius: 11px;
+  border-radius: 0;
 }
 
 .tab.is-on {
@@ -186,7 +193,7 @@ html.is-exam body {
   justify-content: center;
   gap: 0;
   border: 1px solid var(--line) !important;
-  border-radius: 50%;
+  border-radius: 0;
   color: var(--text) !important;
   background: var(--panel-deep-raised) !important;
 }
@@ -243,7 +250,7 @@ html.is-exam body {
     gap: 0;
     padding: 0 !important;
     border: 1px solid var(--line) !important;
-    border-radius: 14px !important;
+    border-radius: 0 !important;
     background: transparent;
   }
 
@@ -268,11 +275,11 @@ html.is-exam body {
   /* Первый активный сегмент повторяет внутренний радиус общей рамки.
      Иначе прямоугольный фон «Главной» визуально залезает на левый контур. */
   .sitenav-tabs .tab:first-child {
-    border-radius: 12px 0 0 12px;
+    border-radius: 0;
   }
 
   .sitenav-tabs .tab:last-child {
-    border-radius: 0 12px 12px 0;
+    border-radius: 0;
   }
 
   .sitenav-tabs .tab + .tab {
@@ -295,7 +302,7 @@ html.is-exam body {
     height: 44px;
     min-height: 44px;
     border: 1px solid var(--line) !important;
-    border-radius: 50%;
+    border-radius: 0;
     transform: none;
     transition:
       background-color 0.16s var(--ease),
@@ -349,7 +356,7 @@ html.is-exam body {
 }
 
 .language-option {
-  border-radius: 12px;
+  border-radius: 0;
 }
 
 .language-option:hover,
@@ -456,13 +463,13 @@ html.is-exam body {
   display: block;
 }
 
-/* Первичные действия сохраняют цвет #19191b в светлой теме. */
+/* Первичные действия используют глубокий графит, а не абсолютный чёрный. */
 .btn,
 .btn:hover:not(:disabled),
 .btn:active,
 .btn.is-warning {
   border: 0;
-  border-radius: 999px;
+  border-radius: 0;
   color: var(--inverse-text);
   background: var(--inverse-bg);
 }
@@ -474,17 +481,16 @@ html.is-exam body {
   background: var(--brand-ink);
 }
 
-/* В светлой теме тёмная кнопка всегда имеет один точный цвет — #19191b.
-   Никакой смены оттенка при hover/active/focus и никаких старых #080808. */
+/* В светлой теме тёмная кнопка сохраняет один графитовый оттенок. */
 :root[data-theme="light"] .sitenav-tabs .tab.is-on,
 :root[data-theme="light"] .tabbar .tab.is-on,
 :root[data-theme="light"] .btn:not(:disabled):not(.is-pill):not(.is-ghost):not(.is-quiet):not(.is-recording),
 :root[data-theme="light"] .btn:not(:disabled):not(.is-pill):not(.is-ghost):not(.is-quiet):not(.is-recording):hover,
 :root[data-theme="light"] .btn:not(:disabled):not(.is-pill):not(.is-ghost):not(.is-quiet):not(.is-recording):active,
 :root[data-theme="light"] .btn:not(:disabled):not(.is-pill):not(.is-ghost):not(.is-quiet):not(.is-recording):focus-visible {
-  border-color: #19191b !important;
+  border-color: var(--brand-ink) !important;
   color: #ffffff !important;
-  background: #19191b !important;
+  background: var(--brand-ink) !important;
 }
 
 .btn:hover:not(:disabled) {
@@ -497,7 +503,7 @@ html.is-exam body {
 .btn.is-ghost,
 .btn.is-ghost:hover:not(:disabled) {
   border: 1px solid var(--control-line);
-  border-radius: 999px;
+  border-radius: 0;
   color: var(--text);
   background: transparent;
 }
@@ -525,6 +531,11 @@ html.is-exam body {
   box-shadow:
     inset 6px 6px 18px rgba(0, 0, 0, 0.55),
     inset -5px -5px 16px rgba(255, 255, 255, 0.03);
+}
+
+:root[data-theme="light"] .welcome-hero,
+:root[data-theme="light"] .cta-banner {
+  box-shadow: none;
 }
 
 .welcome-hero {
@@ -694,19 +705,17 @@ html.is-exam body {
   margin-top: 3px;
 }
 
-.teacher-flag {
+.teacher-icon {
   width: 30px;
   height: 30px;
   margin-left: 7px;
-  overflow: hidden;
-  display: inline-block;
-  border: 1px solid var(--plaque-line);
-  border-radius: 50%;
-  background: transparent;
+  display: inline-grid;
+  place-items: center;
+  color: var(--plaque-soft);
   vertical-align: middle;
 }
 
-.teacher-flag > svg {
+.teacher-icon > svg {
   width: 100%;
   height: 100%;
   display: block;
@@ -727,6 +736,15 @@ html.is-exam body {
   background: rgba(255, 255, 255, 0.34);
 }
 
+:root[data-theme="light"] .welcome-hero .crosshair {
+  border-color: rgba(25, 25, 27, 0.3);
+}
+
+:root[data-theme="light"] .welcome-hero .crosshair::before,
+:root[data-theme="light"] .welcome-hero .crosshair::after {
+  background: rgba(25, 25, 27, 0.3);
+}
+
 .cta-banner {
   margin-top: 86px;
   aspect-ratio: 16 / 7;
@@ -742,7 +760,7 @@ html.is-exam body {
   padding: 20px;
   grid-template-columns: repeat(2, minmax(0, 420px));
   justify-content: center;
-  gap: 36px;
+  gap: 56px;
 }
 
 .levels > li {
@@ -917,6 +935,10 @@ html.is-exam body {
   content: "";
 }
 
+:root[data-theme="light"] .level-outline li::before {
+  background: rgba(25, 25, 27, 0.34);
+}
+
 .level-outline + .level-hint,
 .level-outline + .level-score {
   margin-top: 14px;
@@ -973,6 +995,14 @@ html.is-exam body {
     inset -5px -5px 16px rgba(255, 255, 255, 0.03);
 }
 
+:root[data-theme="light"] .level,
+:root[data-theme="light"] .level.is-locked,
+:root[data-theme="light"] .level.is-open,
+:root[data-theme="light"] .level.is-scored {
+  background: #ffffff;
+  box-shadow: none;
+}
+
 .level .level-topic,
 .level .level-hint,
 .level .level-lock,
@@ -993,6 +1023,10 @@ html.is-exam body {
 
 .level .level-bar span {
   background: var(--plaque-ink);
+}
+
+:root[data-theme="light"] .level .level-bar {
+  background: rgba(25, 25, 27, 0.12);
 }
 
 .level-button {
@@ -1024,14 +1058,18 @@ html.is-exam body {
   :root[data-theme="light"] .level-button:hover .level-verdict {
     color: var(--plaque-soft);
   }
+
+  :root[data-theme="light"] .level-button:hover {
+    border-color: rgba(25, 25, 27, 0.28);
+    background: #ffffff;
+    box-shadow: none;
+  }
 }
 
 /* Кнопки баннеров повторяют квадратную светлую CTA-плашку эталона:
    прямые углы, тёмная внутренняя тень сверху и мягкий свет снизу. */
 .welcome-hero .hero-actions .btn:not(.is-pill),
-.cta-banner .hero-actions .btn:not(.is-pill),
-:root[data-theme="light"] .welcome-hero .hero-actions .btn:not(.is-pill),
-:root[data-theme="light"] .cta-banner .hero-actions .btn:not(.is-pill) {
+.cta-banner .hero-actions .btn:not(.is-pill) {
   min-height: 42px;
   padding: 9px 16px;
   border: 0 !important;
@@ -1044,13 +1082,20 @@ html.is-exam body {
 }
 
 .welcome-hero .hero-actions .btn:not(.is-pill):hover:not(:disabled),
-.cta-banner .hero-actions .btn:not(.is-pill):hover:not(:disabled),
-:root[data-theme="light"] .welcome-hero .hero-actions .btn:not(.is-pill):hover:not(:disabled),
-:root[data-theme="light"] .cta-banner .hero-actions .btn:not(.is-pill):hover:not(:disabled) {
+.cta-banner .hero-actions .btn:not(.is-pill):hover:not(:disabled) {
   background: linear-gradient(180deg, #e7e7ea, #fbfbfc) !important;
   box-shadow:
     inset 0 3px 6px rgba(0, 0, 0, 0.42),
     inset 0 -1px 2px rgba(255, 255, 255, 0.85) !important;
+}
+
+:root[data-theme="light"] .welcome-hero .hero-actions .btn:not(.is-pill),
+:root[data-theme="light"] .cta-banner .hero-actions .btn:not(.is-pill),
+:root[data-theme="light"] .welcome-hero .hero-actions .btn:not(.is-pill):hover:not(:disabled),
+:root[data-theme="light"] .cta-banner .hero-actions .btn:not(.is-pill):hover:not(:disabled) {
+  color: #ffffff !important;
+  background: var(--brand-ink) !important;
+  box-shadow: none !important;
 }
 
 .levels-locked {
@@ -1132,10 +1177,9 @@ html.is-exam body {
 /* Авторизация: узкая и спокойная композиция в духе современных сервисов.
    Внешнего серого «окна» нет — иерархию создают воздух, поля и действия. */
 html.is-auth body {
-  padding-top: 0;
+  padding-top: var(--site-nav-space);
 }
 
-html.is-auth .sitenav,
 html.is-auth .sheet-nodes {
   display: none;
 }
@@ -1231,7 +1275,7 @@ html.is-auth .sheet {
   justify-content: center;
   gap: 10px;
   border: 1px solid var(--control-line);
-  border-radius: 14px;
+  border-radius: 0;
   color: var(--text);
   background: transparent;
   cursor: pointer;
@@ -1317,7 +1361,7 @@ html.is-auth .sheet {
 .auth-submit {
   min-height: 52px;
   margin-top: 4px;
-  border-radius: 14px !important;
+  border-radius: 0 !important;
   color: #ffffff !important;
   background: var(--auth-action) !important;
 }
@@ -1572,7 +1616,7 @@ html.is-auth .sheet {
   flex: 1 1 0;
   flex-direction: column;
   gap: 3px;
-  border-radius: 13px;
+  border-radius: 0;
   font-size: 10.5px;
   line-height: 1.1;
 }
@@ -1731,7 +1775,7 @@ html.has-tabbar body {
     gap: 5px;
   }
 
-  .welcome-hero .teacher-flag {
+  .welcome-hero .teacher-icon {
     width: 28px;
     height: 28px;
     margin-left: 0;
@@ -1976,73 +2020,62 @@ html.has-tabbar body {
   }
 }
 
-/* Барабан времени: один iPhone-подобный выбор часов и минут обслуживает
-   обе границы диапазона «С / До» и не раздувает мобильную анкету. */
-.time-window {
-  border-color: var(--line);
-  border-radius: 18px;
-  background: var(--bg);
-}
-
-.time-boundaries {
-  margin-top: 16px;
+/* Два iPhone-подобных барабана: ровно один день и одно время.
+   Щелчок встроен в механику прокрутки и не требует отдельной настройки. */
+.schedule-dual-wheel {
+  --wheel-row: 54px;
+  margin-top: 18px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 14px;
 }
 
-.time-boundary {
+.schedule-wheel-field {
   min-width: 0;
-  min-height: 50px;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
+}
+
+.schedule-wheel-label {
+  display: block;
+  margin-bottom: 9px;
   color: var(--text-soft);
-  background: transparent;
-  cursor: pointer;
-  font: 600 12px/1.2 var(--font-ui);
-}
-
-.time-boundary output {
-  color: var(--text);
   font-family: var(--font-mono);
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
+  font-size: var(--mono-md);
+  letter-spacing: var(--track-pill);
+  text-align: center;
+  text-transform: uppercase;
 }
 
-.time-boundary.is-active {
-  border-color: var(--auth-action);
-  color: #ffffff;
-  background: var(--auth-action);
-}
-
-.time-boundary.is-active output {
-  color: #ffffff;
-}
-
-.time-boundary:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 3px;
-}
-
-.time-wheel {
-  --wheel-row: 52px;
+.schedule-wheel {
   position: relative;
   height: calc(var(--wheel-row) * 3);
-  margin-top: 14px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr);
   overflow: hidden;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  border: 1px solid var(--line);
+  background: var(--bg);
   isolation: isolate;
 }
 
-.time-wheel-focus {
+.schedule-wheel::before,
+.schedule-wheel::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  height: var(--wheel-row);
+  pointer-events: none;
+  content: "";
+}
+
+.schedule-wheel::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--bg), color-mix(in srgb, var(--bg) 72%, transparent));
+}
+
+.schedule-wheel::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--bg), color-mix(in srgb, var(--bg) 72%, transparent));
+}
+
+.schedule-wheel-focus {
   position: absolute;
   top: var(--wheel-row);
   right: 0;
@@ -2055,7 +2088,7 @@ html.has-tabbar body {
   pointer-events: none;
 }
 
-.time-wheel-column {
+.schedule-wheel-column {
   position: relative;
   z-index: 1;
   height: calc(var(--wheel-row) * 3);
@@ -2068,163 +2101,79 @@ html.has-tabbar body {
   touch-action: pan-y;
 }
 
-.time-wheel-column::-webkit-scrollbar {
+.schedule-wheel-column::-webkit-scrollbar {
   display: none;
 }
 
-.time-wheel-column:focus-visible {
+.schedule-wheel-column:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: -3px;
 }
 
-.time-wheel-option {
+.schedule-wheel-option {
   height: var(--wheel-row);
+  padding-inline: 8px;
   display: flex;
   align-items: center;
+  justify-content: center;
   scroll-snap-align: center;
   scroll-snap-stop: always;
   color: var(--text-soft);
   cursor: ns-resize;
   font-family: var(--font-ui);
-  font-size: 27px;
+  font-size: clamp(17px, 2.4vw, 22px);
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  opacity: 0.55;
+  opacity: 0.5;
   transform: scale(0.94);
   transition: color 0.12s var(--ease), opacity 0.12s var(--ease), transform 0.12s var(--ease);
   -webkit-user-select: none;
   user-select: none;
 }
 
-.time-wheel-column.is-hours .time-wheel-option {
-  justify-content: flex-end;
-  padding-right: 10px;
-}
-
-.time-wheel-column.is-minutes .time-wheel-option {
-  justify-content: flex-start;
-  padding-left: 10px;
-}
-
-.time-wheel-option.is-selected {
+.schedule-wheel-option.is-selected {
   color: var(--text);
-  font-size: 31px;
-  font-weight: 600;
+  font-size: clamp(19px, 2.8vw, 25px);
+  font-weight: 650;
   opacity: 1;
   transform: none;
 }
 
-.time-wheel-option.is-near {
-  opacity: 0.52;
+.schedule-wheel-option.is-near {
+  opacity: 0.5;
 }
 
-.time-wheel-option.is-far {
-  opacity: 0.22;
+.schedule-wheel-option.is-far {
+  opacity: 0.18;
   transform: scale(0.88);
 }
 
-.time-wheel-colon {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  place-items: center;
+.schedule-selection {
+  margin-top: 14px;
   color: var(--text);
-  font-size: 28px;
+  font-size: 14px;
   font-weight: 600;
-}
-
-.time-window .sound-toggle {
-  min-height: 52px;
-  margin-top: 12px;
-  padding-top: 12px;
-}
-
-.time-window .sound-switch {
-  border-color: var(--line-strong);
-  border-radius: 999px;
-  background: transparent;
-}
-
-.time-window .sound-switch span {
-  border-radius: 50%;
+  text-align: center;
 }
 
 @media (max-width: 759px) {
-  .time-window {
-    border-radius: 14px;
+  .schedule-dual-wheel {
+    --wheel-row: 48px;
+    gap: 8px;
   }
 
-  .time-boundaries {
-    margin-top: 12px;
-    gap: 5px;
+  .schedule-wheel-option {
+    padding-inline: 4px;
+    font-size: 15px;
   }
 
-  .time-boundary {
-    min-height: 44px;
-    padding: 7px 8px;
-    display: grid;
-    justify-content: stretch;
-    gap: 2px;
-  }
-
-  .time-boundary output {
-    font-size: 12px;
-  }
-
-  .time-wheel {
-    --wheel-row: 44px;
-    grid-template-columns: minmax(0, 1fr) 10px minmax(0, 1fr);
-  }
-
-  .time-wheel-option {
-    font-size: 22px;
-  }
-
-  .time-wheel-option.is-selected {
-    font-size: 25px;
-  }
-
-  .time-wheel-column.is-hours .time-wheel-option {
-    padding-right: 5px;
-  }
-
-  .time-wheel-column.is-minutes .time-wheel-option {
-    padding-left: 5px;
-  }
-
-  .time-wheel-colon {
-    font-size: 22px;
-  }
-
-  .time-window .sound-toggle {
-    min-height: 44px;
-    display: flex;
-    margin-top: 8px;
-    padding-top: 8px;
-  }
-
-  .time-window .sound-toggle small {
-    display: none;
-  }
-
-  .time-window .sound-switch {
-    flex-basis: 40px;
-    height: 24px;
-    padding: 3px;
-  }
-
-  .time-window .sound-switch span {
-    width: 16px;
-    height: 16px;
-  }
-
-  .time-window .sound-toggle[aria-pressed="true"] .sound-switch span {
-    transform: translateX(16px);
+  .schedule-wheel-option.is-selected {
+    font-size: clamp(16px, 4.8vw, 21px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .time-wheel-option {
+  .schedule-wheel-option {
     transition: none;
   }
 }

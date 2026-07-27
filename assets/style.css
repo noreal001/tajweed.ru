@@ -46,7 +46,7 @@
   --panel-deep: #060607;
   --panel-deep-raised: #0d0d0f;
   --panel-deep-hover: #111113;
-  --nav-active-bg: #030304;
+  --nav-active-bg: #202024;
   --level-one-grid-line: rgba(48, 196, 141, 0.28);
   --level-one-grid-hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%2330c48d' stroke-opacity='0.2' stroke-width='0.7'/></svg>");
   --level-two-grid-line: rgba(220, 79, 120, 0.28);
@@ -95,7 +95,7 @@
   --panel-deep: #ffffff;
   --panel-deep-raised: #f6f6f7;
   --panel-deep-hover: #eeeef0;
-  --nav-active-bg: #19191b;
+  --nav-active-bg: #343439;
   --level-one-grid-line: rgba(20, 117, 81, 0.28);
   --level-one-grid-hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%23147551' stroke-opacity='0.18' stroke-width='0.7'/></svg>");
   --level-two-grid-line: rgba(170, 48, 91, 0.26);
