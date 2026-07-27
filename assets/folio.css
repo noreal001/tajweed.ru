@@ -1361,24 +1361,28 @@ html.is-exam body {
 }
 
 .tab-icon.is-home::before {
-  left: 4px;
-  top: 8px;
-  width: 14px;
-  height: 12px;
-  border: 1.5px solid currentColor;
-  border-top: 0;
-  border-radius: 0 0 3px 3px;
+  inset: 1px;
+  background: currentColor;
+  clip-path: polygon(56% 5%, 16% 57%, 42% 57%, 34% 95%, 82% 39%, 55% 39%);
 }
 
 .tab-icon.is-home::after {
-  left: 5px;
-  top: 3px;
-  width: 12px;
-  height: 12px;
-  border-top: 1.5px solid currentColor;
-  border-left: 1.5px solid currentColor;
-  border-radius: 2px 0 0;
-  transform: rotate(45deg);
+  display: none;
+}
+
+.tabbar .tab-home .tab-icon {
+  width: 28px;
+  height: 28px;
+  flex-basis: 28px;
+}
+
+.tabbar .tab-home .tab-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .tab-icon.is-exam::before {

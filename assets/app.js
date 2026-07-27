@@ -929,6 +929,7 @@
         label.textContent = item.label;
         b.appendChild(icon);
         b.appendChild(label);
+        b.setAttribute('aria-label', item.label);
         if (item.on()) b.setAttribute('aria-current', 'page');
         b.onclick = function () {
           if (state.phase === 'exam') return;
