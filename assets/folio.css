@@ -126,14 +126,14 @@ body {
   .language-button:hover {
     border-color: var(--line-strong) !important;
     color: #ffffff !important;
-    background: #2c2c2f !important;
+    background: var(--brand-ink) !important;
   }
 
   :root[data-theme="light"] .theme-toggle:hover,
   :root[data-theme="light"] .language-button:hover {
-    border-color: #2c2c2f !important;
+    border-color: var(--brand-ink) !important;
     color: #ffffff !important;
-    background: #2c2c2f !important;
+    background: var(--brand-ink) !important;
   }
 }
 
@@ -163,19 +163,42 @@ body {
 .btn,
 .btn:hover:not(:disabled),
 .btn:active,
-.btn.is-warning,
-.btn.is-recording {
+.btn.is-warning {
   border: 0;
   border-radius: 999px;
   color: var(--inverse-text);
   background: var(--inverse-bg);
 }
 
-:root[data-theme="light"] .btn,
-:root[data-theme="light"] .btn:hover:not(:disabled),
-:root[data-theme="light"] .btn:active {
+:root[data-theme="light"] .btn:not(.is-recording),
+:root[data-theme="light"] .btn:not(.is-recording):hover:not(:disabled),
+:root[data-theme="light"] .btn:not(.is-recording):active {
   color: #ffffff;
   background: var(--brand-ink);
+}
+
+/* В светлой теме тёмная кнопка всегда имеет один точный цвет — #19191b.
+   Никакой смены оттенка при hover/active/focus и никаких старых #080808. */
+:root[data-theme="light"] .sitenav-tabs .tab.is-on,
+:root[data-theme="light"] .tabbar .tab.is-on,
+:root[data-theme="light"] .theme-toggle,
+:root[data-theme="light"] .theme-toggle:hover,
+:root[data-theme="light"] .theme-toggle:active,
+:root[data-theme="light"] .theme-toggle:focus-visible,
+:root[data-theme="light"] .language-button,
+:root[data-theme="light"] .language-button:hover,
+:root[data-theme="light"] .language-button:active,
+:root[data-theme="light"] .language-button:focus-visible,
+:root[data-theme="light"] .language-option[aria-current="true"],
+:root[data-theme="light"] .language-option:hover,
+:root[data-theme="light"] .language-option:focus-visible,
+:root[data-theme="light"] .btn:not(:disabled):not(.is-pill):not(.is-ghost):not(.is-quiet):not(.is-recording),
+:root[data-theme="light"] .btn:not(:disabled):not(.is-pill):not(.is-ghost):not(.is-quiet):not(.is-recording):hover,
+:root[data-theme="light"] .btn:not(:disabled):not(.is-pill):not(.is-ghost):not(.is-quiet):not(.is-recording):active,
+:root[data-theme="light"] .btn:not(:disabled):not(.is-pill):not(.is-ghost):not(.is-quiet):not(.is-recording):focus-visible {
+  border-color: #19191b !important;
+  color: #ffffff !important;
+  background: #19191b !important;
 }
 
 .btn:hover:not(:disabled) {
