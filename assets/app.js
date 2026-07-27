@@ -1053,12 +1053,13 @@
           '<span class="hero-meta-lines">' +
             '<span class="hero-meta-site">ТАДЖВИД.РФ // 2026</span>' +
             '<span class="hero-meta-teacher">ПРЕПОДАВАТЕЛЬ ДЕАБ АНАС Т. ' +
-              '<span class="teacher-icon" role="img" aria-label="Преподаватель">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" ' +
-                  'stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">' +
-                  '<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"></path>' +
-                  '<path d="M22 10v6"></path>' +
-                  '<path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"></path>' +
+              '<span class="teacher-flag" role="img" aria-label="Палестина">' +
+                '<svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice" ' +
+                  'focusable="false" aria-hidden="true">' +
+                  '<rect width="60" height="14" fill="#101012"></rect>' +
+                  '<rect y="14" width="60" height="13" fill="#ffffff"></rect>' +
+                  '<rect y="27" width="60" height="13" fill="#149954"></rect>' +
+                  '<path d="M0 0 25 20 0 40Z" fill="#e4312b"></path>' +
                 '</svg>' +
               '</span>' +
             '</span>' +
