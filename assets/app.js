@@ -969,7 +969,9 @@
         '<span class="hero-hatch" aria-hidden="true"></span>' +
         marks('is-out') +
         blueprintLayers() +
-        '<h1 id="welcomeTitle">Экзамен по <em>таджвиду</em></h1>' +
+        '<h1 id="welcomeTitle" class="notranslate" translate="no">' +
+          (window.TAJWEED_I18N ? window.TAJWEED_I18N.text('examTitle')
+                              : 'Экзамен по <em>таджвиду</em>') + '</h1>' +
         '<p class="kicker is-under">' +
           (draft ? 'Экзамен начат · шаг ' + doneCount + ' из ' + steps.length
                  : 'Наука чтения Корана · Первый уровень') +

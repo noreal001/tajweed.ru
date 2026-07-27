@@ -24,6 +24,20 @@ window.TAJWEED_LANGUAGES = [
   ['hy', '<svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="32" height="10.7" fill="#d90012"/><rect y="10.7" width="32" height="10.6" fill="#0033a0"/><rect y="21.3" width="32" height="10.7" fill="#f2a800"/></svg>', 'Հայերեն']
 ];
 
+window.TAJWEED_TRANSLATIONS = {
+  ru: { examTitle: 'Экзамен по <em>таджвиду</em>' },
+  en: { examTitle: '<em>Tajweed</em> exam' },
+  ar: { examTitle: 'اختبار <em>التجويد</em>' },
+  tr: { examTitle: '<em>Tecvid</em> sınavı' },
+  az: { examTitle: '<em>Təcvid</em> imtahanı' },
+  kk: { examTitle: '<em>Тәжуид</em> емтиханы' },
+  uz: { examTitle: '<em>Tajvid</em> imtihoni' },
+  ky: { examTitle: '<em>Тажвид</em> экзамени' },
+  tg: { examTitle: 'Имтиҳони <em>таҷвид</em>' },
+  tk: { examTitle: '<em>Tejwid</em> synagy' },
+  hy: { examTitle: '<em>Թաջվիդի</em> քննություն' }
+};
+
 /* Выбор языка хранится отдельно от служебной cookie Google Translate.
    Так флаг и выбранный язык не сбрасываются, даже если браузер очистил cookie. */
 window.TAJWEED_I18N = (function () {
@@ -82,9 +96,18 @@ window.TAJWEED_I18N = (function () {
     if (code !== 'ru' && cookieLanguage() !== code) writeTranslateCookie(code);
   }
 
+  function text(key) {
+    var code = current();
+    var translations = window.TAJWEED_TRANSLATIONS || {};
+    var selected = translations[code] || translations.ru || {};
+    var fallback = translations.ru || {};
+    return selected[key] || fallback[key] || '';
+  }
+
   return {
     current: current,
     set: set,
-    ensureTranslateCookie: ensureTranslateCookie
+    ensureTranslateCookie: ensureTranslateCookie,
+    text: text
   };
 })();

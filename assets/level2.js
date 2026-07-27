@@ -91,7 +91,9 @@
       '<header class="level2-hero">' +
         '<div class="level2-hero-copy">' +
           '<p class="eyebrow">Доступ открыт · Экзамен №2</p>' +
-          '<h1>Экзамен по <em>таджвиду</em></h1>' +
+          '<h1 class="notranslate" translate="no">' +
+            (window.TAJWEED_I18N ? window.TAJWEED_I18N.text('examTitle')
+                                : 'Экзамен по <em>таджвиду</em>') + '</h1>' +
           '<p>Второй уровень открыт после идеального результата за первый. Ответы сохраняются на этом устройстве, а окончательную оценку поставит преподаватель.</p>' +
         '</div>' +
         '<dl class="level2-meta">' +
