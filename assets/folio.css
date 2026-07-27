@@ -55,27 +55,27 @@ body {
   background: var(--bg);
 }
 
-/* Навигация — отдельная лёгкая панель, а не чёрная линия через экран. */
+/* Навигация — одна плоская строка без серой панели-контейнера. */
 .sitenav {
-  padding: 10px 0;
+  padding: 8px 0;
   border: 0;
-  background: var(--surface-glass);
-  backdrop-filter: blur(20px);
+  background: var(--bg);
+  backdrop-filter: none;
 }
 
 :root[data-theme="light"] .sitenav {
   border: 0;
-  background: rgba(255, 255, 255, 0.94);
+  background: #ffffff;
 }
 
 .sitenav-inner {
   width: min(calc(100% - 24px), var(--sheet-w));
   min-height: 58px;
-  padding: 6px 8px 6px 16px;
+  padding: 0;
   justify-content: flex-end;
   border: 0;
-  border-radius: 19px;
-  background: var(--bg);
+  border-radius: 0;
+  background: transparent;
 }
 
 .sitenav-mark {
@@ -85,8 +85,8 @@ body {
 
 .sitenav-tabs {
   border: 0 !important;
-  border-radius: 14px !important;
-  background: var(--folio-wash);
+  border-radius: 0 !important;
+  background: transparent;
 }
 
 .tab {
@@ -108,9 +108,9 @@ body {
 
 :root[data-theme="light"] .theme-toggle,
 :root[data-theme="light"] .language-button {
-  border-color: var(--control-line) !important;
-  color: var(--text) !important;
-  background: var(--bg) !important;
+  border-color: var(--brand-ink) !important;
+  color: #ffffff !important;
+  background: var(--brand-ink) !important;
 }
 
 @media (hover: hover) {
@@ -119,6 +119,13 @@ body {
     border-color: var(--line-strong) !important;
     color: var(--text) !important;
     background: var(--folio-wash) !important;
+  }
+
+  :root[data-theme="light"] .theme-toggle:hover,
+  :root[data-theme="light"] .language-button:hover {
+    border-color: #2c2c2f !important;
+    color: #ffffff !important;
+    background: #2c2c2f !important;
   }
 }
 
@@ -493,18 +500,18 @@ body {
 
 /* Второй экзамен продолжает тот же язык манускрипта. */
 .exam-sitebar {
-  top: 10px;
+  top: 0;
   min-height: 60px;
-  padding: 6px 8px 6px 16px;
+  padding: 8px 0;
   border: 0;
-  border-radius: 19px;
-  background: var(--surface-glass);
-  backdrop-filter: blur(20px);
+  border-radius: 0;
+  background: var(--bg);
+  backdrop-filter: none;
 }
 
 :root[data-theme="light"] .exam-sitebar {
   border-color: var(--line);
-  background: rgba(255, 255, 255, 0.94);
+  background: #ffffff;
 }
 
 .level2-shell {
@@ -645,14 +652,14 @@ body {
 
 @media (max-width: 680px) {
   .sitenav {
-    padding: 7px 0;
+    padding: 6px 0;
   }
 
   .sitenav-inner {
     width: calc(100% - 16px);
     min-height: 56px;
-    padding-left: 12px;
-    border-radius: 17px;
+    padding: 0;
+    border-radius: 0;
   }
 
   .welcome-hero,
@@ -679,11 +686,11 @@ body {
   }
 
   .exam-sitebar {
-    top: 7px;
+    top: 0;
     width: calc(100% - 16px);
     min-height: 56px;
-    padding: 5px 7px 5px 12px;
-    border-radius: 17px;
+    padding: 6px 0;
+    border-radius: 0;
   }
 
   .level2-shell {
