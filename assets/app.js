@@ -699,10 +699,22 @@
         '<p class="notice" id="loginErr" role="status" aria-live="polite" hidden></p>' +
         '<div class="btn-row"><button class="btn btn-block" type="submit">Войти</button></div>' +
       '</form>' +
-      '<div class="btn-row" id="yandexRow" hidden>' +
-        '<button class="btn is-ghost btn-block" id="yandexBtn" type="button">Войти через Яндекс</button></div>' +
-      '<div class="btn-row"><button class="btn is-ghost btn-block" id="toExam">Сдать экзамен и завести профиль</button></div>' +
-      '<h2 class="kicker">Настройки<span class="cur">_</span></h2><div class="settings">' + themeRow() + '</div>'
+      '<section class="login-actions" aria-labelledby="registrationTitle">' +
+        '<h2 class="kicker" id="registrationTitle">Нет профиля<span class="cur">_</span></h2>' +
+        '<div class="btn-row"><button class="btn is-ghost btn-block" id="toExam">Сдать экзамен и завести профиль</button></div>' +
+        '<div class="login-divider" aria-hidden="true"><span>или</span></div>' +
+        '<div class="btn-row login-yandex-row" id="yandexRow">' +
+          '<button class="btn is-ghost btn-block yandex-button" id="yandexBtn" type="button" ' +
+            'aria-describedby="yandexHint" disabled>' +
+            '<span class="yandex-mark" aria-hidden="true">Я</span>' +
+            '<span>Зарегистрироваться через Яндекс</span></button>' +
+          '<p class="login-provider-hint" id="yandexHint" role="status">Проверяем подключение…</p>' +
+        '</div>' +
+      '</section>' +
+      '<section class="login-settings" aria-labelledby="settingsTitle">' +
+        '<h2 class="kicker" id="settingsTitle">Настройки<span class="cur">_</span></h2>' +
+        '<div class="settings">' + themeRow() + '</div>' +
+      '</section>'
     );
     wireThemeRow();
     document.getElementById('toExam').onclick = function () { state.phase = 'reg'; show(); };
@@ -714,15 +726,24 @@
       startErr.textContent = startupError;
     }
 
-    /* Кнопка Яндекса появляется, только если вход настроен на сервере */
+    /* Действие Яндекса всегда занимает своё место в интерфейсе.
+       Когда ключей ещё нет, показываем честное недоступное состояние,
+       а не прячем обещанную владельцу возможность целиком. */
     apiGet('/api/auth/yandex/enabled').then(function (d) {
-      if (!d || !d.enabled) return;
-      var row = document.getElementById('yandexRow');
       var btn = document.getElementById('yandexBtn');
-      if (!row || !btn) return;
-      row.hidden = false;
+      var hint = document.getElementById('yandexHint');
+      if (!btn || !hint) return;
+      if (!d || !d.enabled) {
+        hint.textContent = 'Регистрация через Яндекс временно недоступна.';
+        return;
+      }
+      btn.disabled = false;
+      hint.hidden = true;
       btn.onclick = function () { location.href = API + '/api/auth/yandex/start'; };
-    }).catch(function () { /* нет сети — вход по паролю остаётся */ });
+    }).catch(function () {
+      var hint = document.getElementById('yandexHint');
+      if (hint) hint.textContent = 'Не удалось проверить подключение Яндекса.';
+    });
 
     var form = document.getElementById('loginForm');
     form.onsubmit = function (e) {
