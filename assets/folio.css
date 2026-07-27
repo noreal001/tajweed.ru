@@ -702,10 +702,8 @@ html.is-exam body {
   border: 1px solid var(--line);
   border-top: 1px solid var(--line);
   border-radius: 0;
-  background: var(--plate);
-  box-shadow:
-    inset 6px 6px 18px var(--plate-in),
-    inset -5px -5px 16px var(--plate-out);
+  background: var(--bg);
+  box-shadow: none;
 }
 
 .level::before {
@@ -717,17 +715,22 @@ html.is-exam body {
 }
 
 .level.is-level-one > .blueprint-layer.is-level {
-  --blueprint-line: var(--level-one-grid-line);
+  --blueprint-line: rgba(255, 255, 255, 0.2);
   --blueprint-hatch: var(--level-one-grid-hatch);
 }
 
 .level.is-level-two > .blueprint-layer.is-level {
-  --blueprint-line: var(--level-two-grid-line);
+  --blueprint-line: rgba(255, 255, 255, 0.2);
   --blueprint-hatch: var(--level-two-grid-hatch);
 }
 
-/* Изумрудный и розовый получают только линии внутреннего чертежа.
-   Внешний кант остаётся нейтральным, как у plaque на эталонном прайсе. */
+/* Постоянная сетка нейтральная: цвет появляется только внутри клетки
+   во время автоматической анимации или наведения. На белой теме линия
+   остаётся столь же тихой, но получает тёмный контраст вместо белого. */
+:root[data-theme="light"] .level > .blueprint-layer.is-level {
+  --blueprint-line: rgba(25, 25, 27, 0.14);
+}
+
 .level > .blueprint-layer.is-level .blueprint-cell:nth-child(3n) {
   border-right-color: transparent;
 }
@@ -875,10 +878,8 @@ html.is-exam body {
 .level.is-locked,
 :root[data-theme="light"] .level.is-locked {
   border-style: solid;
-  background: var(--plate);
-  box-shadow:
-    inset 6px 6px 18px var(--plate-in),
-    inset -5px -5px 16px var(--plate-out);
+  background: var(--bg);
+  box-shadow: none;
   opacity: 1;
 }
 
@@ -886,10 +887,8 @@ html.is-exam body {
 .level.is-scored,
 :root[data-theme="light"] .level.is-open,
 :root[data-theme="light"] .level.is-scored {
-  background: var(--plate);
-  box-shadow:
-    inset 6px 6px 18px var(--plate-in),
-    inset -5px -5px 16px var(--plate-out);
+  background: var(--bg);
+  box-shadow: none;
 }
 
 .level-button {
@@ -907,10 +906,8 @@ html.is-exam body {
   :root[data-theme="light"] .level-button:hover {
     border-color: var(--line-strong);
     color: var(--text);
-    background: var(--plate);
-    box-shadow:
-      inset 7px 7px 20px var(--plate-in),
-      inset -5px -5px 16px var(--plate-out);
+    background: var(--folio-wash);
+    box-shadow: none;
     transform: translateY(-2px);
   }
 
