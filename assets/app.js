@@ -741,28 +741,12 @@
     setBar('Профиль');
     render(
       '<h1>Профиль</h1>' +
-      '<p class="lede">Войдите или создайте профиль. Сначала выберите способ — остальные поля появятся дальше.</p>' +
-      '<section class="auth-glass" aria-labelledby="authMethodTitle">' +
-        '<h2 class="kicker" id="authMethodTitle">Вход или регистрация<span class="cur">_</span></h2>' +
+      '<p class="lede">Войдите по номеру телефона или через Яндекс.</p>' +
+      '<section class="auth-glass" aria-labelledby="authPhoneTitle">' +
+        '<h2 class="kicker" id="authPhoneTitle">Вход по телефону<span class="cur">_</span></h2>' +
         '<p class="notice is-error" id="loginErr" role="status" aria-live="polite"' +
           (startupError ? '>' + esc(startupError) : ' hidden>') + '</p>' +
-        '<div class="auth-choice-grid" id="authChoices">' +
-          '<button class="auth-choice" id="phoneAuth" type="button" aria-controls="phoneAuthPanel" aria-expanded="false">' +
-            '<span class="auth-choice-index" aria-hidden="true">01</span>' +
-            '<span class="auth-choice-copy"><b>По телефону</b><small>Номер и пароль</small></span>' +
-            '<span class="auth-choice-arrow" aria-hidden="true">→</span>' +
-          '</button>' +
-          '<button class="auth-choice" id="yandexBtn" type="button" aria-describedby="yandexHint">' +
-            '<span class="yandex-mark" aria-hidden="true">Я</span>' +
-            '<span class="auth-choice-copy"><b>Через Яндекс</b><small>Вход или регистрация</small></span>' +
-            '<span class="auth-choice-arrow" aria-hidden="true">→</span>' +
-          '</button>' +
-        '</div>' +
-        '<p class="login-provider-hint" id="yandexHint" role="status" hidden></p>' +
-        '<p class="auth-note" id="authNote">Новый профиль можно создать через Яндекс или по номеру телефона перед первым экзаменом.</p>' +
-        '<div class="auth-phone-panel" id="phoneAuthPanel" hidden>' +
-          '<button class="auth-text-action" id="authBack" type="button">← Другой способ</button>' +
-          '<h2>Вход по телефону</h2>' +
+        '<div class="auth-phone-panel">' +
           '<form class="form auth-phone-form" id="loginForm" novalidate>' +
             '<div class="field" data-f="phone"><label for="lPhone">Телефон</label>' +
               '<input id="lPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00" maxlength="20">' +
@@ -772,17 +756,19 @@
               '<span class="err" data-msg="Введите пароль" role="alert"></span></div>' +
             '<div class="btn-row"><button class="btn btn-block" type="submit">Войти</button></div>' +
           '</form>' +
-          '<button class="auth-text-action is-centered" id="phoneRegister" type="button">Создать профиль по телефону</button>' +
+          '<button class="auth-text-action is-centered" id="phoneRegister" type="button">Создать новый профиль</button>' +
+          '<button class="auth-provider-secondary" id="yandexBtn" type="button" aria-describedby="yandexHint">' +
+            '<span class="yandex-mark" aria-hidden="true">Я</span>' +
+            '<span>Войти через Яндекс</span>' +
+            '<span class="auth-provider-arrow" aria-hidden="true">→</span>' +
+          '</button>' +
+          '<p class="login-provider-hint" id="yandexHint" role="status" hidden></p>' +
         '</div>' +
       '</section>'
     );
 
-    var choices = document.getElementById('authChoices');
-    var panel = document.getElementById('phoneAuthPanel');
-    var phoneButton = document.getElementById('phoneAuth');
     var yandexButton = document.getElementById('yandexBtn');
     var yandexHint = document.getElementById('yandexHint');
-    var authNote = document.getElementById('authNote');
 
     /* Переход доступен сразу: медленная или неудачная фоновая проверка
        больше не превращает рабочий Яндекс-вход в неактивную карточку. */
@@ -790,23 +776,6 @@
       location.href = API + '/api/auth/yandex/start';
     };
 
-    phoneButton.onclick = function () {
-      choices.hidden = true;
-      panel.hidden = false;
-      authNote.hidden = true;
-      yandexHint.hidden = true;
-      phoneButton.setAttribute('aria-expanded', 'true');
-      try { document.getElementById('lPhone').focus({ preventScroll: true }); }
-      catch (e) { document.getElementById('lPhone').focus(); }
-    };
-    document.getElementById('authBack').onclick = function () {
-      panel.hidden = true;
-      choices.hidden = false;
-      authNote.hidden = false;
-      yandexHint.hidden = !yandexButton.disabled;
-      phoneButton.setAttribute('aria-expanded', 'false');
-      phoneButton.focus();
-    };
     document.getElementById('phoneRegister').onclick = function () {
       state.phase = 'reg';
       show();
