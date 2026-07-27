@@ -1726,14 +1726,16 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 
 :root[data-theme="light"] {
   --bg: #ffffff;
-  --surface: #f7f7f7;
-  --surface-strong: #eeeeee;
+  --surface: #ffffff;
+  --surface-strong: #ffffff;
   --surface-glass: #ffffff;
-  --plate: #f7f7f7;
-  --plate-chip: #eeeeee;
-  --line: rgba(8, 8, 8, 0.14);
-  --control-line: rgba(8, 8, 8, 0.42);
-  --line-strong: rgba(8, 8, 8, 0.8);
+  --plate: #ffffff;
+  --plate-chip: #ffffff;
+  --text-soft: #3f3f3f;
+  --text-faint: #525252;
+  --line: rgba(8, 8, 8, 0.22);
+  --control-line: #080808;
+  --line-strong: #080808;
   --btn-color: #ffffff;
   --btn-bg: #080808;
   --btn-shadow: none;
@@ -1829,6 +1831,20 @@ body::before,
   }
 }
 
+:root[data-theme="light"] .sitenav {
+  border-bottom-color: #080808;
+  background: rgba(255, 255, 255, 0.98);
+}
+
+:root[data-theme="light"] .sitenav-tabs {
+  border-color: #080808;
+}
+
+:root[data-theme="light"] .sitenav-tabs .tab,
+:root[data-theme="light"] .tabbar .tab {
+  color: #080808;
+}
+
 .tab,
 .theme-toggle,
 .language-button {
@@ -1843,6 +1859,7 @@ body::before,
 
 .theme-toggle {
   border-color: var(--control-line);
+  color: var(--text);
   background: transparent;
 }
 
@@ -1862,6 +1879,21 @@ body::before,
   cursor: pointer;
   font-size: 12px;
   font-weight: 700;
+}
+
+:root[data-theme="light"] .theme-toggle,
+:root[data-theme="light"] .language-button {
+  border-color: #080808;
+  color: #080808;
+  background: #ffffff;
+}
+
+@media (hover: hover) {
+  :root[data-theme="light"] .theme-toggle:hover,
+  :root[data-theme="light"] .language-button:hover {
+    color: #ffffff;
+    background: #080808;
+  }
 }
 
 .language-menu {
@@ -1896,6 +1928,12 @@ body::before,
 .language-option:hover,
 .language-option:focus-visible {
   background: var(--surface-strong);
+}
+
+:root[data-theme="light"] .language-option:hover,
+:root[data-theme="light"] .language-option:focus-visible {
+  color: #ffffff;
+  background: #080808;
 }
 
 .language-option[aria-current="true"] {
@@ -2051,6 +2089,21 @@ html.is-exam .sitenav {
   box-shadow: none;
 }
 
+:root[data-theme="light"] .level.is-open,
+:root[data-theme="light"] .level.is-scored,
+:root[data-theme="light"] .levels-locked,
+:root[data-theme="light"] .locked-chip,
+:root[data-theme="light"] .profile-card,
+:root[data-theme="light"] .settings,
+:root[data-theme="light"] .result-item,
+:root[data-theme="light"] .score-hero,
+:root[data-theme="light"] .checks,
+:root[data-theme="light"] .read-rows,
+:root[data-theme="light"] .reading-rec,
+:root[data-theme="light"] .breakdown {
+  background: #ffffff;
+}
+
 .levels {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
@@ -2068,6 +2121,10 @@ html.is-exam .sitenav {
   border-radius: 12px;
 }
 
+:root[data-theme="light"] .level {
+  border-top: 2px solid #080808;
+}
+
 .level-button {
   display: block;
   color: var(--text);
@@ -2079,9 +2136,26 @@ html.is-exam .sitenav {
   border-color: var(--line-strong);
 }
 
+@media (hover: hover) {
+  :root[data-theme="light"] .level-button:hover {
+    background: #080808;
+    color: #ffffff;
+  }
+
+  :root[data-theme="light"] .level-button:hover .level-topic,
+  :root[data-theme="light"] .level-button:hover .level-hint,
+  :root[data-theme="light"] .level-button:hover .level-verdict {
+    color: rgba(255, 255, 255, 0.76);
+  }
+}
+
 .level.is-locked {
   border-style: dashed;
   background: transparent;
+}
+
+:root[data-theme="light"] .level.is-locked {
+  border-top-style: solid;
 }
 
 .level.is-scored {

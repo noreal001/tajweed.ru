@@ -80,6 +80,32 @@
   background: var(--surface-strong);
 }
 
+:root[data-theme="light"] .exam-sitebar {
+  border-bottom-color: #080808;
+  background: rgba(255, 255, 255, 0.98);
+}
+
+:root[data-theme="light"] .language-button,
+:root[data-theme="light"] .exam-sitebar .theme-toggle {
+  border-color: #080808;
+  color: #080808;
+  background: #ffffff;
+}
+
+@media (hover: hover) {
+  :root[data-theme="light"] .language-button:hover,
+  :root[data-theme="light"] .exam-sitebar .theme-toggle:hover {
+    color: #ffffff;
+    background: #080808;
+  }
+}
+
+:root[data-theme="light"] .language-option:hover,
+:root[data-theme="light"] .language-option:focus-visible {
+  color: #ffffff;
+  background: #080808;
+}
+
 .language-option[aria-current="true"] {
   color: var(--inverse-text);
   background: var(--inverse-bg);
@@ -252,6 +278,16 @@
   border-radius: 8px;
   color: var(--text);
   background: var(--bg);
+}
+
+:root[data-theme="light"] .term-row select,
+:root[data-theme="light"] .answer-input,
+:root[data-theme="light"] .count-input,
+:root[data-theme="light"] .answer-table-wrap,
+:root[data-theme="light"] .sifat-card,
+:root[data-theme="light"] .sifat-choice,
+:root[data-theme="light"] .recording-panel {
+  background: #ffffff;
 }
 
 .term-row select:focus,
