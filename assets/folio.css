@@ -28,6 +28,13 @@
   --folio-highlight: rgba(255, 255, 255, 0.1);
   --auth-action: #2b2b2f;
   --auth-action-hover: #343439;
+  --plaque-bg: #0a0a0b;
+  --plaque-ink: #f2f2f4;
+  --plaque-soft: rgba(255, 255, 255, 0.6);
+  --plaque-line: rgba(255, 255, 255, 0.12);
+  --plaque-hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%23ffffff' stroke-opacity='0.13' stroke-width='0.7'/></svg>");
+  --plaque-level-one-hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%2330c48d' stroke-opacity='0.24' stroke-width='0.7'/></svg>");
+  --plaque-level-two-hatch: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><path d='M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2' stroke='%23dc4f78' stroke-opacity='0.24' stroke-width='0.7'/></svg>");
   --radius: 18px;
 }
 
@@ -509,9 +516,13 @@ html.is-exam body {
   overflow: visible;
   margin-inline: var(--banner-frame);
   padding: clamp(28px, 5vw, 58px);
-  border: 1px solid var(--line);
+  border: 1px solid var(--plaque-line);
   border-radius: 0;
-  background: var(--bg);
+  color: var(--plaque-ink);
+  background: var(--plaque-bg);
+  box-shadow:
+    inset 6px 6px 18px rgba(0, 0, 0, 0.55),
+    inset -5px -5px 16px rgba(255, 255, 255, 0.03);
 }
 
 .welcome-hero {
@@ -550,6 +561,18 @@ html.is-exam body {
 .welcome-hero > *:not(.marks),
 .cta-banner > *:not(.marks) {
   max-width: 100%;
+}
+
+.welcome-hero > .blueprint-layer,
+.cta-banner > .blueprint-layer {
+  --blueprint-line: var(--plaque-line);
+  --blueprint-hatch: var(--plaque-hatch);
+}
+
+.welcome-hero .blueprint-nodes span,
+.cta-banner .blueprint-nodes span {
+  border-color: var(--plaque-line);
+  background: var(--plaque-bg);
 }
 
 .blueprint-layer {
@@ -643,27 +666,34 @@ html.is-exam body {
 
 .welcome-hero #welcomeTitle {
   max-width: 9.2ch;
+  color: var(--plaque-ink);
   font-size: clamp(48px, 6.5vw, 76px);
   line-height: 0.95;
 }
 
 .welcome-hero h1 em {
-  color: var(--text-soft);
+  color: var(--plaque-soft);
   box-shadow: none;
 }
 
-.kicker {
-  color: var(--text-soft);
+.welcome-hero .kicker,
+.cta-banner .kicker,
+.welcome-hero .hero-meta {
+  color: var(--plaque-soft);
 }
 
-.crosshair {
+.cta-banner h2 {
+  color: var(--plaque-ink);
+}
+
+.welcome-hero .crosshair {
   display: block !important;
-  border-color: var(--line-strong);
+  border-color: rgba(255, 255, 255, 0.34);
 }
 
-.crosshair::before,
-.crosshair::after {
-  background: var(--folio-node);
+.welcome-hero .crosshair::before,
+.welcome-hero .crosshair::after {
+  background: rgba(255, 255, 255, 0.34);
 }
 
 .cta-banner {
@@ -699,11 +729,14 @@ html.is-exam body {
   padding: 24px;
   overflow: visible;
   isolation: isolate;
-  border: 1px solid var(--line);
-  border-top: 1px solid var(--line);
+  border: 1px solid var(--plaque-line);
+  border-top: 1px solid var(--plaque-line);
   border-radius: 0;
-  background: var(--bg);
-  box-shadow: none;
+  color: var(--plaque-ink);
+  background: var(--plaque-bg);
+  box-shadow:
+    inset 6px 6px 18px rgba(0, 0, 0, 0.55),
+    inset -5px -5px 16px rgba(255, 255, 255, 0.03);
 }
 
 .level::before {
@@ -715,20 +748,20 @@ html.is-exam body {
 }
 
 .level.is-level-one > .blueprint-layer.is-level {
-  --blueprint-line: rgba(255, 255, 255, 0.2);
-  --blueprint-hatch: var(--level-one-grid-hatch);
+  --blueprint-line: var(--plaque-line);
+  --blueprint-hatch: var(--plaque-level-one-hatch);
 }
 
 .level.is-level-two > .blueprint-layer.is-level {
-  --blueprint-line: rgba(255, 255, 255, 0.2);
-  --blueprint-hatch: var(--level-two-grid-hatch);
+  --blueprint-line: var(--plaque-line);
+  --blueprint-hatch: var(--plaque-level-two-hatch);
 }
 
-/* Постоянная сетка нейтральная: цвет появляется только внутри клетки
-   во время автоматической анимации или наведения. На белой теме линия
-   остаётся столь же тихой, но получает тёмный контраст вместо белого. */
-:root[data-theme="light"] .level > .blueprint-layer.is-level {
-  --blueprint-line: rgba(25, 25, 27, 0.14);
+/* Постоянная сетка всегда белая и нейтральная на чёрной плашке.
+   Изумрудный и розовый появляются только внутри оживающей клетки. */
+.level .blueprint-nodes span {
+  border-color: var(--plaque-line);
+  background: var(--plaque-bg);
 }
 
 .level > .blueprint-layer.is-level .blueprint-cell:nth-child(3n) {
@@ -837,7 +870,7 @@ html.is-exam body {
 .level-outline li {
   position: relative;
   padding-left: 14px;
-  color: var(--text-soft);
+  color: var(--plaque-soft);
   font-size: 12.5px;
   line-height: 1.35;
 }
@@ -849,7 +882,7 @@ html.is-exam body {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--text-faint);
+  background: rgba(255, 255, 255, 0.34);
   content: "";
 }
 
@@ -871,15 +904,17 @@ html.is-exam body {
   display: inline-flex;
   padding: 0;
   border-radius: 0;
-  color: var(--text);
+  color: var(--plaque-ink);
   background: transparent;
 }
 
 .level.is-locked,
 :root[data-theme="light"] .level.is-locked {
   border-style: solid;
-  background: var(--bg);
-  box-shadow: none;
+  background: var(--plaque-bg);
+  box-shadow:
+    inset 6px 6px 18px rgba(0, 0, 0, 0.55),
+    inset -5px -5px 16px rgba(255, 255, 255, 0.03);
   opacity: 1;
 }
 
@@ -887,11 +922,37 @@ html.is-exam body {
 .level.is-scored,
 :root[data-theme="light"] .level.is-open,
 :root[data-theme="light"] .level.is-scored {
-  background: var(--bg);
-  box-shadow: none;
+  background: var(--plaque-bg);
+  box-shadow:
+    inset 6px 6px 18px rgba(0, 0, 0, 0.55),
+    inset -5px -5px 16px rgba(255, 255, 255, 0.03);
+}
+
+.level .level-topic,
+.level .level-hint,
+.level .level-lock,
+.level .level-points {
+  color: var(--plaque-soft);
+}
+
+.level .level-verdict,
+.level .level-percent,
+:root[data-theme="light"] .level .level-verdict,
+:root[data-theme="light"] .level .level-percent {
+  color: var(--plaque-ink);
+}
+
+.level .level-bar {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.level .level-bar span {
+  background: var(--plaque-ink);
 }
 
 .level-button {
+  color: var(--plaque-ink);
+  text-align: left;
   transition: border-color 0.18s var(--ease), background-color 0.18s var(--ease),
     transform 0.18s var(--ease);
 }
@@ -904,18 +965,47 @@ html.is-exam body {
 @media (hover: hover) {
   .level-button:hover,
   :root[data-theme="light"] .level-button:hover {
-    border-color: var(--line-strong);
-    color: var(--text);
-    background: var(--folio-wash);
-    box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.28);
+    color: var(--plaque-ink);
+    background: var(--plaque-bg);
+    box-shadow:
+      inset 7px 7px 20px rgba(0, 0, 0, 0.62),
+      inset -5px -5px 16px rgba(255, 255, 255, 0.035);
     transform: translateY(-2px);
   }
 
   :root[data-theme="light"] .level-button:hover .level-topic,
   :root[data-theme="light"] .level-button:hover .level-hint,
   :root[data-theme="light"] .level-button:hover .level-verdict {
-    color: var(--text-soft);
+    color: var(--plaque-soft);
   }
+}
+
+/* Кнопки баннеров повторяют квадратную светлую CTA-плашку эталона:
+   прямые углы, тёмная внутренняя тень сверху и мягкий свет снизу. */
+.welcome-hero .hero-actions .btn:not(.is-pill),
+.cta-banner .hero-actions .btn:not(.is-pill),
+:root[data-theme="light"] .welcome-hero .hero-actions .btn:not(.is-pill),
+:root[data-theme="light"] .cta-banner .hero-actions .btn:not(.is-pill) {
+  min-height: 42px;
+  padding: 9px 16px;
+  border: 0 !important;
+  border-radius: 0;
+  color: #0a0a0b !important;
+  background: linear-gradient(180deg, #e7e7ea, #fbfbfc) !important;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.34),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.9) !important;
+}
+
+.welcome-hero .hero-actions .btn:not(.is-pill):hover:not(:disabled),
+.cta-banner .hero-actions .btn:not(.is-pill):hover:not(:disabled),
+:root[data-theme="light"] .welcome-hero .hero-actions .btn:not(.is-pill):hover:not(:disabled),
+:root[data-theme="light"] .cta-banner .hero-actions .btn:not(.is-pill):hover:not(:disabled) {
+  background: linear-gradient(180deg, #e7e7ea, #fbfbfc) !important;
+  box-shadow:
+    inset 0 3px 6px rgba(0, 0, 0, 0.42),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.85) !important;
 }
 
 .levels-locked {
