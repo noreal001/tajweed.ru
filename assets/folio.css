@@ -1,0 +1,678 @@
+/* Folio 2026
+   Фирменная редакция: учебный манускрипт вместо типовых чёрных рамок.
+   #19191b — основной цвет; структура строится тёплыми волосяными линиями,
+   узловыми метками и локальной сеткой только в смысловых блоках. */
+
+:root {
+  --brand-ink: #19191b;
+  --bg: #19191b;
+  --surface: #202024;
+  --surface-strong: #27272c;
+  --surface-glass: rgba(25, 25, 27, 0.94);
+  --plate: #202024;
+  --plate-chip: #27272c;
+  --text: #f8f6f1;
+  --text-soft: #bbb9b4;
+  --text-faint: #9b9995;
+  --line: #35353a;
+  --control-line: #686870;
+  --line-strong: #898991;
+  --inverse-bg: #f5f1e8;
+  --inverse-text: #19191b;
+  --focus: #f5f1e8;
+  --folio-wash: #242429;
+  --folio-wash-strong: #2b2b31;
+  --folio-line: rgba(255, 255, 255, 0.09);
+  --folio-node: #77777f;
+  --folio-highlight: rgba(245, 241, 232, 0.14);
+  --radius: 18px;
+}
+
+:root[data-theme="light"] {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-strong: #faf7f0;
+  --surface-glass: rgba(255, 255, 255, 0.94);
+  --plate: #ffffff;
+  --plate-chip: #faf7f0;
+  --text: #19191b;
+  --text-soft: #57555a;
+  --text-faint: #747177;
+  --line: #e2ddd4;
+  --control-line: #938a7e;
+  --line-strong: #6f675e;
+  --inverse-bg: #19191b;
+  --inverse-text: #ffffff;
+  --focus: #19191b;
+  --folio-wash: #faf7f0;
+  --folio-wash-strong: #f3eee4;
+  --folio-line: rgba(96, 83, 64, 0.12);
+  --folio-node: #978d80;
+  --folio-highlight: #efe6d7;
+}
+
+body {
+  background: var(--bg);
+}
+
+/* Навигация — отдельная лёгкая панель, а не чёрная линия через экран. */
+.sitenav {
+  padding: 10px 0;
+  border: 0;
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px);
+}
+
+:root[data-theme="light"] .sitenav {
+  border: 0;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.sitenav-inner {
+  width: min(calc(100% - 24px), var(--sheet-w));
+  min-height: 58px;
+  padding: 6px 8px 6px 16px;
+  border: 1px solid var(--line);
+  border-radius: 19px;
+  background: var(--bg);
+}
+
+.sitenav-mark {
+  color: var(--text);
+  font-size: 21px;
+}
+
+.sitenav-tabs {
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: var(--folio-wash);
+}
+
+.tab {
+  color: var(--text-soft) !important;
+  border-radius: 11px;
+}
+
+.tab.is-on {
+  color: var(--inverse-text) !important;
+  background: var(--inverse-bg);
+}
+
+.theme-toggle,
+.language-button {
+  border-color: var(--control-line) !important;
+  color: var(--text) !important;
+  background: var(--bg) !important;
+}
+
+:root[data-theme="light"] .theme-toggle,
+:root[data-theme="light"] .language-button {
+  border-color: var(--control-line) !important;
+  color: var(--text) !important;
+  background: var(--bg) !important;
+}
+
+@media (hover: hover) {
+  .theme-toggle:hover,
+  .language-button:hover {
+    border-color: var(--line-strong) !important;
+    color: var(--text) !important;
+    background: var(--folio-wash) !important;
+  }
+}
+
+.language-menu {
+  padding: 10px;
+  border-color: var(--line);
+  border-radius: 18px;
+  background: var(--bg);
+}
+
+.language-option {
+  border-radius: 12px;
+}
+
+.language-option:hover,
+.language-option:focus-visible {
+  color: var(--text) !important;
+  background: var(--folio-wash) !important;
+}
+
+.language-option[aria-current="true"] {
+  color: var(--inverse-text) !important;
+  background: var(--inverse-bg) !important;
+}
+
+/* Первичные действия сохраняют цвет #19191b в светлой теме. */
+.btn,
+.btn:hover:not(:disabled),
+.btn:active,
+.btn.is-warning,
+.btn.is-recording {
+  border: 0;
+  border-radius: 999px;
+  color: var(--inverse-text);
+  background: var(--inverse-bg);
+}
+
+:root[data-theme="light"] .btn,
+:root[data-theme="light"] .btn:hover:not(:disabled),
+:root[data-theme="light"] .btn:active {
+  color: #ffffff;
+  background: var(--brand-ink);
+}
+
+.btn:hover:not(:disabled) {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.btn.is-pill,
+.btn.is-pill:hover:not(:disabled),
+.btn.is-ghost,
+.btn.is-ghost:hover:not(:disabled) {
+  border: 1px solid var(--control-line);
+  border-radius: 999px;
+  color: var(--text);
+  background: transparent;
+}
+
+@media (hover: hover) {
+  .btn.is-pill:hover:not(:disabled),
+  .btn.is-ghost:hover:not(:disabled) {
+    border-color: var(--line-strong);
+    background: var(--folio-wash);
+  }
+}
+
+/* Обложка: сетка и приводные метки вернулись, но стали тёплым фоном. */
+.welcome-hero,
+.cta-banner {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(36px, 7vw, 78px);
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  background-color: var(--bg);
+  background-image:
+    repeating-linear-gradient(to left, var(--folio-line) 0 1px, transparent 1px 112px),
+    repeating-linear-gradient(to bottom, var(--folio-line) 0 1px, transparent 1px 112px);
+  background-position: right top;
+}
+
+.welcome-hero {
+  min-height: min(650px, calc(100svh - 150px));
+}
+
+.welcome-hero::after,
+.cta-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: clamp(66px, 11vw, 132px);
+  border-left: 1px solid var(--line);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      transparent 0 8px,
+      var(--folio-line) 8px 9px
+    ),
+    var(--folio-wash);
+  pointer-events: none;
+}
+
+.welcome-hero > .hero-hatch,
+.cta-banner > .hero-hatch {
+  display: none !important;
+}
+
+.welcome-hero > .marks,
+.cta-banner > .marks {
+  display: block !important;
+  inset: 13px;
+  z-index: 2;
+}
+
+.welcome-hero .marks .tick,
+.cta-banner .marks .tick {
+  background: var(--folio-node);
+}
+
+.welcome-hero .marks .hatch,
+.cta-banner .marks .hatch {
+  display: none;
+}
+
+.welcome-hero > *:not(.marks),
+.cta-banner > *:not(.marks) {
+  max-width: calc(100% - clamp(54px, 10vw, 118px));
+}
+
+.welcome-hero #welcomeTitle {
+  max-width: min(9.2ch, calc(100% - clamp(54px, 10vw, 118px)));
+  font-size: clamp(52px, 9.4vw, 104px);
+  line-height: 0.95;
+}
+
+.welcome-hero h1 em {
+  color: var(--text);
+  box-shadow: inset 0 -0.13em 0 var(--folio-highlight);
+}
+
+.kicker {
+  color: var(--text-soft);
+}
+
+.crosshair {
+  display: block !important;
+  border-color: var(--line-strong);
+}
+
+.crosshair::before,
+.crosshair::after {
+  background: var(--folio-node);
+}
+
+.cta-banner {
+  margin-top: 86px;
+  border-radius: 26px;
+}
+
+/* Уровни — коллекция листов, а не стандартные серые окна. */
+.levels {
+  gap: 16px;
+}
+
+.level,
+:root[data-theme="light"] .level {
+  position: relative;
+  min-height: 184px;
+  padding: 24px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--bg);
+}
+
+.level::before {
+  content: "";
+  position: absolute;
+  top: 19px;
+  right: 19px;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--folio-node);
+  border-radius: 50%;
+  background: var(--bg);
+}
+
+.level-head {
+  padding-right: 24px;
+}
+
+.level-n,
+.level-lock,
+.level-verdict {
+  font-family: var(--font-mono);
+  font-size: var(--mono-md);
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+.level-n {
+  display: inline-flex;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--folio-wash);
+}
+
+.level.is-locked,
+:root[data-theme="light"] .level.is-locked {
+  border-style: solid;
+  background: transparent;
+  opacity: 1;
+}
+
+.level-button {
+  transition: border-color 0.18s var(--ease), background-color 0.18s var(--ease),
+    transform 0.18s var(--ease);
+}
+
+.level-button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .level-button:hover,
+  :root[data-theme="light"] .level-button:hover {
+    border-color: var(--line-strong);
+    color: var(--text);
+    background: var(--folio-wash);
+    transform: translateY(-2px);
+  }
+
+  :root[data-theme="light"] .level-button:hover .level-topic,
+  :root[data-theme="light"] .level-button:hover .level-hint,
+  :root[data-theme="light"] .level-button:hover .level-verdict {
+    color: var(--text-soft);
+  }
+}
+
+.levels-locked {
+  padding: 12px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--folio-wash);
+}
+
+.locked-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+}
+
+/* Остальные панели используют бумажный кант вместо тяжёлой рамки. */
+.profile-card,
+.settings,
+.score-hero,
+.result-item,
+.checks,
+.read-rows,
+.reading-rec,
+.breakdown,
+.day-face,
+.time-picker {
+  border-color: var(--line);
+  background: var(--bg);
+}
+
+.profile-card,
+.score-hero {
+  border-radius: 24px;
+}
+
+.settings,
+.checks,
+.read-rows,
+.breakdown {
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.field input,
+.field select,
+.field textarea,
+.stepper,
+.compose-out {
+  border-color: var(--control-line);
+  border-radius: 14px;
+  background: var(--bg);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--line-strong);
+}
+
+.setting-row:hover,
+.check:hover {
+  background: var(--folio-wash);
+}
+
+.rule,
+.result-list,
+.result-item,
+.pagefoot {
+  border-color: var(--line);
+}
+
+/* Второй экзамен продолжает тот же язык манускрипта. */
+.exam-sitebar {
+  top: 10px;
+  min-height: 60px;
+  padding: 6px 8px 6px 16px;
+  border: 1px solid var(--line);
+  border-radius: 19px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px);
+}
+
+:root[data-theme="light"] .exam-sitebar {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.level2-shell {
+  padding-top: 62px;
+}
+
+.access-state,
+.level2-done {
+  max-width: 860px;
+  padding: clamp(34px, 7vw, 68px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background:
+    repeating-linear-gradient(to left, var(--folio-line) 0 1px, transparent 1px 112px),
+    repeating-linear-gradient(to bottom, var(--folio-line) 0 1px, transparent 1px 112px),
+    var(--bg);
+}
+
+.level2-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(32px, 6vw, 62px);
+  padding-right: clamp(126px, 14vw, 170px);
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  background:
+    repeating-linear-gradient(to left, var(--folio-line) 0 1px, transparent 1px 112px),
+    repeating-linear-gradient(to bottom, var(--folio-line) 0 1px, transparent 1px 112px),
+    var(--bg);
+}
+
+.level2-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: clamp(56px, 9vw, 112px);
+  border-left: 1px solid var(--line);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      transparent 0 8px,
+      var(--folio-line) 8px 9px
+    ),
+    var(--folio-wash);
+  pointer-events: none;
+}
+
+.level2-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.level2-hero h1 em {
+  color: var(--text);
+  box-shadow: inset 0 -0.13em 0 var(--folio-highlight);
+}
+
+.level2-meta {
+  border-color: var(--line);
+}
+
+.level2-meta div,
+.exam-section,
+.answer-table th,
+.answer-table td,
+.count-grid,
+.count-card,
+.reading-list,
+.reading-row-l2,
+.exam-submit,
+.level2-footer,
+.auto-score {
+  border-color: var(--line);
+}
+
+.exam-section-number {
+  width: 42px;
+  height: 42px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--text);
+  background: var(--folio-wash);
+}
+
+.term-row select,
+.answer-input,
+.count-input {
+  border-color: var(--control-line);
+  border-radius: 14px;
+  background: var(--bg);
+}
+
+.term-row select:focus,
+.answer-input:focus,
+.count-input:focus {
+  border-color: var(--line-strong);
+}
+
+.term-row select:focus-visible,
+.answer-input:focus-visible,
+.count-input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.answer-table-wrap,
+.count-grid,
+.sifat-card,
+.recording-panel {
+  border-color: var(--line);
+  background: var(--bg);
+}
+
+.answer-table-wrap,
+.count-grid {
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.sifat-card {
+  border-radius: 20px;
+}
+
+.sifat-choice {
+  border-color: var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.sifat-choice:has(input:checked) {
+  color: var(--inverse-text);
+  border-color: var(--inverse-bg);
+  background: var(--inverse-bg);
+}
+
+.recording-panel {
+  padding: 24px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--folio-wash);
+}
+
+.auto-score {
+  border-radius: 20px;
+}
+
+/* Мобильная навигация остаётся крупной, но визуально легче. */
+.tabbar {
+  padding: 5px;
+  border-color: var(--line);
+  border-radius: 18px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(18px);
+}
+
+@media (max-width: 680px) {
+  .sitenav {
+    padding: 7px 0;
+  }
+
+  .sitenav-inner {
+    width: calc(100% - 16px);
+    min-height: 56px;
+    padding-left: 12px;
+    border-radius: 17px;
+  }
+
+  .welcome-hero,
+  .cta-banner {
+    padding: 34px 26px;
+    border-radius: 24px;
+  }
+
+  .welcome-hero {
+    min-height: calc(100svh - 150px);
+  }
+
+  .welcome-hero::after,
+  .cta-banner::after {
+    width: 54px;
+  }
+
+  .welcome-hero > *:not(.marks),
+  .cta-banner > *:not(.marks) {
+    max-width: calc(100% - 36px);
+  }
+
+  .welcome-hero h1 {
+    font-size: clamp(48px, 15vw, 72px);
+  }
+
+  .level {
+    min-height: 168px;
+  }
+
+  .exam-sitebar {
+    top: 7px;
+    width: calc(100% - 16px);
+    min-height: 56px;
+    padding: 5px 7px 5px 12px;
+    border-radius: 17px;
+  }
+
+  .level2-shell {
+    padding-top: 42px;
+  }
+
+  .access-state,
+  .level2-done {
+    padding: 30px 24px;
+    border-radius: 24px;
+  }
+
+  .level2-hero {
+    padding: 30px 70px 30px 24px;
+    border-radius: 24px;
+  }
+
+  .level2-hero::after {
+    width: 48px;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-button {
+    transition: none;
+  }
+}

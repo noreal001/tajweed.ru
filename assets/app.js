@@ -2392,7 +2392,7 @@
     document.documentElement.setAttribute('data-theme', next);
     try { localStorage.setItem('tajweed_theme', next); } catch (e) { /* приватный режим */ }
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', next === 'light' ? '#FFFFFF' : '#0A0A0B');
+    if (meta) meta.setAttribute('content', next === 'light' ? '#FFFFFF' : '#19191B');
     syncThemeToggle();
   }
 
