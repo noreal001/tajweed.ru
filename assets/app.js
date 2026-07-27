@@ -656,6 +656,23 @@
     ];
   }
 
+  /* Постоянные разделы отражаются в адресе: иначе после F5 одностраничник
+     всегда создаётся с phase=welcome. Служебные ссылки результата, кабинета
+     и Яндекс OAuth по-прежнему имеют собственные hash-маршруты ниже. */
+  function sectionHash(phase) {
+    if (phase === 'lead' || phase === 'leadDone') return '#lessons';
+    if (phase === 'profile') return '#profile';
+    if (phase === 'reg') return '#exam';
+    if (phase === 'welcome') return '';
+    return null;
+  }
+
+  function syncSectionHash() {
+    var target = sectionHash(state.phase);
+    if (target == null || location.hash === target || !history.replaceState) return;
+    history.replaceState(null, '', location.pathname + location.search + target);
+  }
+
   /* ── Профиль ───────────────────────────────────────────── */
 
   function studentToken() {
@@ -963,6 +980,7 @@
   function show() {
     hideTimer();
     screenToken();
+    syncSectionHash();
     paintNav();
     if (state.phase === 'welcome') return showWelcome();
     if (state.phase === 'lead') return showLead();
@@ -2798,6 +2816,7 @@
   var hashStudent = location.hash.match(/^#student=([0-9a-f-]{36})$/i);
   var hashYandex = location.hash.match(/^#yandex=([0-9a-f-]{36})$/i);
   var hashYandexError = location.hash.match(/^#yandex-error=/i);
+  var hashSection = location.hash.match(/^#(lessons|profile|exam)$/i);
   if (hashYandex && state.phase !== 'exam') {
     /* Вернулись с oauth.yandex.ru: токен кабинета уже выдан сервером */
     try { localStorage.setItem(STUDENT_KEY, hashYandex[1]); } catch (e) { /* ок */ }
@@ -2810,6 +2829,13 @@
     showStudentCabinet(hashStudent[1]);
   } else if (hashResult && state.phase !== 'exam') {
     showSavedResult(hashResult[1]);
+  } else if (hashSection && state.phase !== 'exam' && state.phase !== 'done') {
+    if (hashSection[1].toLowerCase() === 'lessons') state.phase = 'lead';
+    if (hashSection[1].toLowerCase() === 'profile') state.phase = 'profile';
+    if (hashSection[1].toLowerCase() === 'exam') {
+      state.phase = state.resumable && state.student ? 'exam' : 'reg';
+    }
+    show();
   } else {
     show();
   }
