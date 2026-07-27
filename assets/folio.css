@@ -89,6 +89,10 @@ body {
   background: transparent;
 }
 
+.sitenav-right {
+  gap: 8px;
+}
+
 .tab {
   color: var(--text-soft) !important;
   border-radius: 11px;
@@ -97,7 +101,7 @@ body {
 .tab.is-on {
   color: #ffffff !important;
   background: var(--brand-ink);
-  box-shadow: inset 0 0 0 1px var(--control-line);
+  box-shadow: none;
 }
 
 :root[data-theme="light"] .sitenav-tabs .tab.is-on,
@@ -109,7 +113,7 @@ body {
 
 .theme-toggle,
 .language-button {
-  border-color: var(--control-line) !important;
+  border-color: var(--line) !important;
   color: #ffffff !important;
   background: var(--brand-ink) !important;
 }
@@ -124,9 +128,10 @@ body {
 @media (hover: hover) {
   .theme-toggle:hover,
   .language-button:hover {
-    border-color: var(--line-strong) !important;
+    border-color: var(--line) !important;
     color: #ffffff !important;
     background: var(--brand-ink) !important;
+    transform: translateY(-1px);
   }
 
   :root[data-theme="light"] .theme-toggle:hover,
@@ -134,6 +139,59 @@ body {
     border-color: var(--brand-ink) !important;
     color: #ffffff !important;
     background: var(--brand-ink) !important;
+  }
+}
+
+/* На широком экране навигация читается как ряд самостоятельных кнопок.
+   В тёмной теме их кант совпадает с линией баннера, без белой обводки. */
+@media (min-width: 760px) {
+  .sitenav-tabs {
+    gap: 6px;
+  }
+
+  .sitenav-tabs .tab {
+    min-height: 44px;
+    padding: 9px 15px;
+    border: 1px solid var(--line) !important;
+    border-radius: 10px;
+    color: var(--text) !important;
+    background: var(--bg);
+    transition:
+      color 0.16s var(--ease),
+      background-color 0.16s var(--ease),
+      border-color 0.16s var(--ease),
+      transform 0.16s var(--ease);
+  }
+
+  .sitenav-tabs .tab.is-on {
+    border-color: var(--line) !important;
+    color: #ffffff !important;
+    background: var(--brand-ink);
+  }
+
+  .theme-toggle,
+  .language-button {
+    min-height: 44px;
+    border-radius: 10px;
+    transition:
+      background-color 0.16s var(--ease),
+      border-color 0.16s var(--ease),
+      transform 0.16s var(--ease);
+  }
+}
+
+@media (min-width: 760px) and (hover: hover) {
+  .sitenav-tabs .tab:not(.is-on):hover {
+    border-color: var(--line) !important;
+    color: var(--text) !important;
+    background: var(--folio-wash-strong);
+    transform: translateY(-1px);
+  }
+
+  .sitenav-tabs .tab:active,
+  .theme-toggle:active,
+  .language-button:active {
+    transform: translateY(0);
   }
 }
 
