@@ -292,6 +292,95 @@
     return html;
   }
 
+  /* В кабинете уровни читаются как компактная шестиступенчатая батарея:
+     три секции дают понятный масштаб, а штриховка показывает заполнение. */
+  function profileLevels(value) {
+    var progress = normalizedProgress(value);
+    var items = LEVELS.map(function (level) {
+      var pct = 0;
+      var status = 'закрыт';
+      var kind = 'is-future';
+      if (level.n === 1) {
+        pct = progress.level1 ? Math.round(Number(progress.level1.percent) || 0) : 0;
+        status = progress.level1 ? pct + '%' : 'не сдан';
+        kind = 'is-primary';
+      } else if (level.n === 2 && !progress.canOpen2) {
+        pct = 100;
+        status = 'закрыт';
+        kind = 'is-blocked';
+      } else if (level.n === 2 && progress.level2) {
+        if (progress.level2.gradingStatus === 'pending') {
+          pct = 100;
+          status = 'на проверке';
+          kind = 'is-blocked';
+        } else {
+          pct = Math.round(Number(progress.level2.percent) || 0);
+          status = pct + '%';
+          kind = 'is-primary';
+        }
+      } else if (level.n === 2 && progress.canOpen2) {
+        status = 'доступен';
+        kind = 'is-ready';
+      }
+      pct = Math.max(0, Math.min(100, pct));
+      return '<li class="profile-level ' + kind + '">' +
+        '<div class="profile-level-head"><span>Уровень ' + level.n + '</span>' +
+          '<strong>' + status + '</strong></div>' +
+        '<div class="profile-level-meter" style="--meter-progress:' + pct + '%" ' +
+          'role="img" aria-label="Уровень ' + level.n + ': ' + status + '">' +
+          '<span class="profile-meter-fill" aria-hidden="true"></span>' +
+          '<i aria-hidden="true"></i><i aria-hidden="true"></i>' +
+        '</div>' +
+      '</li>';
+    });
+    return '<ol class="profile-levels">' + items.join('') + '</ol>';
+  }
+
+  function profileInitials(student) {
+    var first = String(student.firstName || '').trim().charAt(0);
+    var last = String(student.lastName || '').trim().charAt(0);
+    return (first + last || 'Т').toUpperCase();
+  }
+
+  function profileAvatar(student) {
+    if (student.avatarDataUrl) {
+      return '<img src="' + esc(student.avatarDataUrl) + '" alt="">';
+    }
+    return '<span aria-hidden="true">' + esc(profileInitials(student)) + '</span>';
+  }
+
+  function prepareAvatar(file) {
+    return new Promise(function (resolve, reject) {
+      if (!file || !/^image\/(jpeg|png|webp)$/i.test(file.type || '')) {
+        return reject(new Error('Выберите JPEG, PNG или WebP.'));
+      }
+      if (file.size > 8 * 1024 * 1024) return reject(new Error('Фотография больше 8 МБ.'));
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error('Не удалось прочитать фотографию.')); };
+      reader.onload = function () {
+        var image = new Image();
+        image.onerror = function () { reject(new Error('Не удалось открыть фотографию.')); };
+        image.onload = function () {
+          var side = Math.min(image.naturalWidth, image.naturalHeight);
+          if (!side) return reject(new Error('Фотография повреждена.'));
+          var canvas = document.createElement('canvas');
+          canvas.width = 256;
+          canvas.height = 256;
+          var context = canvas.getContext('2d');
+          if (!context) return reject(new Error('Не удалось обработать фотографию.'));
+          context.drawImage(image,
+            (image.naturalWidth - side) / 2, (image.naturalHeight - side) / 2, side, side,
+            0, 0, 256, 256);
+          var dataUrl = canvas.toDataURL('image/jpeg', 0.84);
+          if (dataUrl.length > 550 * 1024) return reject(new Error('Не удалось достаточно уменьшить фотографию.'));
+          resolve(dataUrl);
+        };
+        image.src = String(reader.result || '');
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   /* ── Состояние ─────────────────────────────────────────── */
 
   var steps = buildSteps();
@@ -703,19 +792,68 @@
       var best = progress.level1;
 
       var html = '<h1>Профиль</h1>' +
-        '<section class="frame profile-card">' +
-          '<p class="kicker">Ученик<span class="cur">_</span></p>' +
-          '<p class="profile-name">' + esc(s.lastName) + ' ' + esc(s.firstName) + '</p>' +
-          '<dl class="profile-meta">' +
-            '<div><dt>Город</dt><dd>' + esc(s.city) + '</dd></div>' +
-            '<div><dt>Телефон</dt><dd>' + esc(formatPhone(s.phone)) + '</dd></div>' +
-            '<div><dt>Экзаменов сдано</dt><dd>' + results.length + '</dd></div>' +
-          '</dl>' +
-        '</section>';
+        '<section class="frame profile-card profile-summary">' +
+          '<div class="profile-avatar-pane">' +
+            '<button class="profile-avatar" id="avatarPick" type="button" aria-label="Изменить фотографию профиля">' +
+              profileAvatar(s) + '</button>' +
+            '<input class="visually-hidden" id="avatarInput" type="file" accept="image/jpeg,image/png,image/webp">' +
+            '<button class="profile-text-action" id="avatarPickText" type="button">Изменить фото</button>' +
+            (s.avatarDataUrl
+              ? '<button class="profile-text-action is-muted" id="avatarRemove" type="button">Удалить</button>'
+              : '') +
+          '</div>' +
+          '<div class="profile-summary-body">' +
+            '<p class="kicker">Ученик<span class="cur">_</span></p>' +
+            '<p class="profile-name">' + esc(s.lastName) + ' ' + esc(s.firstName) + '</p>' +
+            '<dl class="profile-meta">' +
+              '<div><dt>Город</dt><dd>' + esc(s.city) + '</dd></div>' +
+              '<div><dt>Телефон</dt><dd>' + esc(formatPhone(s.phone)) + '</dd></div>' +
+              '<div><dt>Экзаменов сдано</dt><dd>' + results.length + '</dd></div>' +
+            '</dl>' +
+            '<button class="profile-edit-action" id="editProfile" type="button">Изменить имя</button>' +
+          '</div>' +
+        '</section>' +
+        '<section class="profile-editor" id="profileEditor" hidden>' +
+          '<form class="form profile-editor-form" id="profileForm" novalidate>' +
+            '<div class="field" data-f="firstName"><label for="profileFirstName">Имя</label>' +
+              '<input id="profileFirstName" name="firstName" autocomplete="given-name" maxlength="60" value="' +
+                esc(s.firstName) + '">' +
+              '<span class="err" data-msg="Введите имя" role="alert"></span></div>' +
+            '<div class="field" data-f="lastName"><label for="profileLastName">Фамилия</label>' +
+              '<input id="profileLastName" name="lastName" autocomplete="family-name" maxlength="60" value="' +
+                esc(s.lastName) + '">' +
+              '<span class="err" data-msg="Введите фамилию" role="alert"></span></div>' +
+            '<p class="notice is-error" id="profileEditError" role="status" aria-live="polite" hidden></p>' +
+            '<div class="profile-editor-actions"><button class="btn" type="submit">Сохранить</button>' +
+              '<button class="btn is-ghost" id="cancelProfileEdit" type="button">Отмена</button></div>' +
+          '</form>' +
+        '</section>' +
+        '<p class="profile-avatar-status" id="avatarStatus" role="status" aria-live="polite" hidden></p>';
 
-      html += '<h2 class="kicker">Уровни<span class="cur">_</span></h2>' + levelLadder(progress);
+      html += '<section class="profile-section"><div class="profile-section-head">' +
+        '<h2 class="kicker">Уровни<span class="cur">_</span></h2>' +
+        '<p>Прогресс обучения</p></div>' + profileLevels(progress) + '</section>';
 
-      html += '<h2 class="kicker">Настройки<span class="cur">_</span></h2><div class="settings">' +
+      if (results.length > 1) {
+        html += '<section class="profile-section"><div class="profile-section-head">' +
+          '<h2 class="kicker">Попытки<span class="cur">_</span></h2>' +
+          '<p>' + results.length + ' сохранено</p></div><div class="result-list">';
+        results.forEach(function (r) {
+          var level = Number(r.examLevel) || 1;
+          html += '<button class="result-item" data-result-id="' + esc(r.id) + '">' +
+            '<span><b>Экзамен ' + (level === 2 ? 'второго' : 'первого') + ' уровня</b><br><span class="meta">' +
+            esc(new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(r.createdAt))) +
+            '</span></span>' +
+            (r.gradingStatus === 'pending'
+              ? '<span class="score">на проверке</span>'
+              : '<span class="score">' + Math.round(r.percent) + '%</span>') +
+            '</button>';
+        });
+        html += '</div></section>';
+      }
+
+      html += '<section class="profile-section"><div class="profile-section-head">' +
+        '<h2 class="kicker">Настройки<span class="cur">_</span></h2></div><div class="settings">' +
         (s.hasPassword
           ? '<button class="setting-row" id="changePass" type="button">' +
               '<span><b>Пароль</b><small>Вход с другого телефона</small></span>' +
@@ -726,7 +864,7 @@
         '<button class="setting-row" id="logout" type="button">' +
           '<span><b>Выйти</b><small>Данные останутся у преподавателя</small></span>' +
           '<span class="setting-value">Выйти</span></button>' +
-      '</div>';
+      '</div></section>';
 
       html += '<div class="btn-row">' +
         (best ? '<button class="btn" data-open-result="' + esc(best.id) + '">Разбор и отчёт</button>' : '') +
@@ -735,10 +873,85 @@
 
       render(html);
       wireLevelActions();
-      [].slice.call(app.querySelectorAll('[data-open-result]')).forEach(function (b) {
-        b.onclick = function () { showSavedResult(b.getAttribute('data-open-result'), token); };
+      [].slice.call(app.querySelectorAll('[data-result-id], [data-open-result]')).forEach(function (b) {
+        b.onclick = function () {
+          showSavedResult(b.getAttribute('data-result-id') || b.getAttribute('data-open-result'), token);
+        };
       });
       document.getElementById('againBtn').onclick = function () { state.phase = 'reg'; show(); };
+      var editor = document.getElementById('profileEditor');
+      var editButton = document.getElementById('editProfile');
+      editButton.onclick = function () {
+        editor.hidden = false;
+        editButton.hidden = true;
+        document.getElementById('profileFirstName').focus();
+      };
+      document.getElementById('cancelProfileEdit').onclick = function () {
+        editor.hidden = true;
+        editButton.hidden = false;
+      };
+      document.getElementById('profileForm').onsubmit = function (event) {
+        event.preventDefault();
+        var form = event.currentTarget;
+        var firstName = form.firstName.value.trim();
+        var lastName = form.lastName.value.trim();
+        markInvalid(form.querySelector('[data-f="firstName"]'), !firstName);
+        markInvalid(form.querySelector('[data-f="lastName"]'), !lastName);
+        if (!firstName || !lastName) return;
+        var submit = form.querySelector('button[type="submit"]');
+        var error = document.getElementById('profileEditError');
+        submit.disabled = true;
+        submit.textContent = 'Сохраняем…';
+        api('/api/student/profile', {
+          studentToken: token,
+          firstName: firstName,
+          lastName: lastName
+        }).then(showProfile).catch(function () {
+          submit.disabled = false;
+          submit.textContent = 'Сохранить';
+          error.hidden = false;
+          error.textContent = 'Не удалось сохранить имя. Попробуйте ещё раз.';
+        });
+      };
+      var avatarInput = document.getElementById('avatarInput');
+      var avatarPick = document.getElementById('avatarPick');
+      var avatarPickText = document.getElementById('avatarPickText');
+      var avatarStatus = document.getElementById('avatarStatus');
+      function chooseAvatar() { avatarInput.click(); }
+      function saveAvatar(dataUrl) {
+        avatarPick.disabled = true;
+        avatarPickText.disabled = true;
+        avatarStatus.hidden = false;
+        avatarStatus.classList.remove('is-error');
+        avatarStatus.textContent = 'Сохраняем фотографию…';
+        return api('/api/student/profile', {
+          studentToken: token,
+          firstName: s.firstName,
+          lastName: s.lastName,
+          avatarDataUrl: dataUrl
+        }).then(showProfile).catch(function () {
+          avatarPick.disabled = false;
+          avatarPickText.disabled = false;
+          avatarStatus.classList.add('is-error');
+          avatarStatus.textContent = 'Не удалось сохранить фотографию.';
+        });
+      }
+      avatarPick.onclick = chooseAvatar;
+      avatarPickText.onclick = chooseAvatar;
+      avatarInput.onchange = function () {
+        var file = avatarInput.files && avatarInput.files[0];
+        if (!file) return;
+        avatarStatus.hidden = false;
+        avatarStatus.classList.remove('is-error');
+        avatarStatus.textContent = 'Обрабатываем фотографию…';
+        prepareAvatar(file).then(saveAvatar).catch(function (error) {
+          avatarStatus.classList.add('is-error');
+          avatarStatus.textContent = error.message || 'Не удалось обработать фотографию.';
+          avatarInput.value = '';
+        });
+      };
+      var avatarRemove = document.getElementById('avatarRemove');
+      if (avatarRemove) avatarRemove.onclick = function () { saveAvatar(''); };
       var pass = document.getElementById('setPass') || document.getElementById('changePass');
       if (pass) pass.onclick = function () { showSetPassword(token, s.hasPassword); };
       document.getElementById('logout').onclick = function () {
@@ -1123,64 +1336,10 @@
   }
 
   function showStudentCabinet(token) {
-    setBar('Личный кабинет');
-    loadingScreen('Личный кабинет', 'Загружаем историю экзаменов…');
-    var seq = screenToken();
-    apiGet('/api/student/' + encodeURIComponent(token)).then(function (d) {
-      if (isStale(seq)) return; // пользователь уже ушёл на другой экран
-      if (!d.ok) throw new Error('нет данных');
-      try { localStorage.setItem(STUDENT_KEY, token); } catch (e) { /* ок */ }
-      if (history.replaceState) history.replaceState(null, '', '#student=' + token);
-      var s = d.student;
-      var results = d.results || [];
-      var progress = progressFromResults(results);
-      var best = progress.level1;
-
-      var html = '<h1>Личный кабинет</h1>' +
-        '<p class="lede">' + esc(s.lastName) + ' ' + esc(s.firstName) + ' · ' + esc(s.city) + '</p>';
-
-      html += levelLadder(progress);
-
-      if (results.length > 1) {
-        html += '<hr class="rule"><h2 class="kicker">Все попытки</h2><div class="result-list">';
-        results.forEach(function (r) {
-          var level = Number(r.examLevel) || 1;
-          html += '<button class="result-item" data-result-id="' + esc(r.id) + '">' +
-            '<span><b>Экзамен ' + (level === 2 ? 'второго' : 'первого') + ' уровня</b><br><span class="meta">' +
-            esc(new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(r.createdAt))) +
-            ' · ' + (r.hasAudio ? 'чтение записано' : 'без аудиозаписи') + '</span></span>' +
-            (r.gradingStatus === 'pending'
-              ? '<span class="score">на проверке</span>'
-              : '<span class="score" style="color: ' + scoreColor(r.percent, 62) + '">' + Math.round(r.percent) + '%</span>') +
-            '</button>';
-        });
-        html += '</div>';
-      }
-
-      html += '<div class="btn-row">' +
-        (best ? '<button class="btn" data-open-result="' + esc(best.id) + '">Разбор и отчёт</button>' : '') +
-        '<button class="btn' + (best ? ' is-ghost' : '') + '" id="newExamBtn">' +
-          (best ? 'Пройти ещё раз' : 'Сдать экзамен первого уровня') + '</button>' +
-        '<button class="btn is-ghost" id="homeBtn">На главную</button></div>';
-      render(html);
-      wireLevelActions();
-      [].slice.call(app.querySelectorAll('[data-result-id], [data-open-result]')).forEach(function (b) {
-        b.onclick = function () {
-          showSavedResult(b.getAttribute('data-result-id') || b.getAttribute('data-open-result'), token);
-        };
-      });
-      document.getElementById('newExamBtn').onclick = function () { state.phase = 'reg'; show(); };
-      document.getElementById('homeBtn').onclick = function () {
-        if (history.replaceState) history.replaceState(null, '', location.pathname);
-        state.phase = 'welcome';
-        show();
-      };
-    }).catch(function () {
-      if (isStale(seq)) return;
-      errorScreen('Кабинет недоступен',
-        'Не удалось загрузить историю. Проверьте интернет и попробуйте ещё раз.',
-        function () { showStudentCabinet(token); });
-    });
+    try { localStorage.setItem(STUDENT_KEY, token); } catch (e) { /* ок */ }
+    if (history.replaceState) history.replaceState(null, '', '#profile');
+    state.phase = 'profile';
+    showProfile();
   }
 
   function showSavedResult(id, cabinetToken) {
