@@ -2548,8 +2548,8 @@
     show();
   };
 
-  /* Плавающее меню прячется при прокрутке вниз и возвращается при прокрутке
-     вверх — иначе непрозрачная пилюля закрывает контент на каждом экране. */
+  /* Нижнее мобильное меню прячется при прокрутке вниз; верхняя веб-навигация
+     остаётся закреплённой и получает непрозрачное состояние nav-scrolled. */
   (function watchScroll() {
     var last = 0;
     var ticking = false;
@@ -2565,6 +2565,24 @@
         ticking = false;
       });
     }, { passive: true });
+  })();
+
+  /* Как в эталонной plaque: кроме hover, свободные ячейки по очереди
+     на секунду заполняются штриховкой. Скрытые responsive-слои пропускаем. */
+  (function animateBlueprintCells() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    window.setInterval(function () {
+      var cells = [].slice.call(document.querySelectorAll(
+        '.blueprint-layer .blueprint-cell:not(.is-hatched)'
+      )).filter(function (cell) {
+        return cell.offsetParent !== null && !cell.matches(':hover') &&
+          !cell.classList.contains('is-lit');
+      });
+      var cell = cells[Math.floor(Math.random() * cells.length)];
+      if (!cell) return;
+      cell.classList.add('is-lit');
+      window.setTimeout(function () { cell.classList.remove('is-lit'); }, 1000);
+    }, 760);
   })();
 
   watchIntegrity();
