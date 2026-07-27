@@ -1199,6 +1199,19 @@
         '<span class="day-face"><span class="day-short" aria-hidden="true">' + day.short + '</span>' +
         '<span class="day-full">' + day.full + '</span></span></label>';
     }).join('');
+    var hours = '';
+    for (var hour = 6; hour <= 23; hour++) {
+      var hourText = String(hour).padStart(2, '0');
+      hours += '<div class="time-wheel-option' + (hour === 10 ? ' is-selected' : '') + '"' +
+        ' id="wheelHour' + hour + '" role="option" data-value="' + hour + '"' +
+        ' aria-selected="' + (hour === 10 ? 'true' : 'false') + '">' + hourText + '</div>';
+    }
+    var minutes = [0, 30].map(function (minute) {
+      var minuteText = String(minute).padStart(2, '0');
+      return '<div class="time-wheel-option' + (minute === 0 ? ' is-selected' : '') + '"' +
+        ' id="wheelMinute' + minute + '" role="option" data-value="' + minute + '"' +
+        ' aria-selected="' + (minute === 0 ? 'true' : 'false') + '">' + minuteText + '</div>';
+    }).join('');
     return '<fieldset class="schedule-picker" data-schedule aria-describedby="daysHint errScheduleDays">' +
       '<legend>Когда удобно заниматься?</legend>' +
       '<p class="field-hint" id="daysHint">Выберите один или несколько дней.</p>' +
@@ -1211,16 +1224,25 @@
           '<div class="time-heading"><span>Время</span>' +
             '<strong id="scheduleSummary"><span class="schedule-days-summary" id="scheduleDaysSummary"></span>' +
               '<span id="scheduleTimeSummary">10:00—20:00</span></strong></div>' +
-          '<div class="time-slider"><label for="timeFrom">Не раньше</label>' +
-            '<output id="timeFromOutput" for="timeFrom">10:00</output>' +
-            '<input id="timeFrom" name="timeFromMinutes" type="range" min="360" max="1380" step="30" value="600" autocomplete="off"></div>' +
-          '<div class="time-slider"><label for="timeTo">Не позже</label>' +
-            '<output id="timeToOutput" for="timeTo">20:00</output>' +
-            '<input id="timeTo" name="timeToMinutes" type="range" min="360" max="1380" step="30" value="1200" autocomplete="off"></div>' +
-          '<div class="time-scale" aria-hidden="true"><span>06:00</span><span>день</span><span>23:00</span></div>' +
+          '<div class="time-boundaries" role="group" aria-label="Границы удобного времени">' +
+            '<button class="time-boundary is-active" type="button" data-time-boundary="from" aria-pressed="true">' +
+              '<span>С</span><output id="timeFromOutput" for="timeFrom">10:00</output></button>' +
+            '<button class="time-boundary" type="button" data-time-boundary="to" aria-pressed="false">' +
+              '<span>До</span><output id="timeToOutput" for="timeTo">20:00</output></button>' +
+          '</div>' +
+          '<div class="time-wheel" role="group" aria-label="Выбор времени">' +
+            '<span class="time-wheel-focus" aria-hidden="true"></span>' +
+            '<div class="time-wheel-column is-hours" role="listbox" tabindex="0" aria-label="Часы, не раньше" aria-activedescendant="wheelHour10" data-time-unit="hour">' +
+              hours + '</div>' +
+            '<span class="time-wheel-colon" aria-hidden="true">:</span>' +
+            '<div class="time-wheel-column is-minutes" role="listbox" tabindex="0" aria-label="Минуты, не раньше" aria-activedescendant="wheelMinute0" data-time-unit="minute">' +
+              minutes + '</div>' +
+          '</div>' +
+          '<input id="timeFrom" name="timeFromMinutes" type="hidden" value="600">' +
+          '<input id="timeTo" name="timeToMinutes" type="hidden" value="1200">' +
           '<input id="timeZone" name="timeZone" type="hidden" value="Europe/Moscow">' +
           '<button class="sound-toggle" id="scheduleSound" type="button" aria-pressed="false">' +
-            '<span><b>Звук ползунка</b><small>Тихий отклик при смене времени</small></span>' +
+            '<span><b>Звук барабана</b><small>Тихий щелчок при смене времени</small></span>' +
             '<span class="sound-switch" aria-hidden="true"><span></span></span>' +
           '</button>' +
         '</div>' +
@@ -1395,7 +1417,7 @@
         markInvalid(schedule, true);
         var slot = schedule.querySelector('.err');
         if (slot) slot.textContent = 'Время «не раньше» должно быть меньше, чем «не позже»';
-        if (!firstInvalid) firstInvalid = form.timeFromMinutes;
+        if (!firstInvalid) firstInvalid = schedule.querySelector('[data-time-boundary="from"]');
       }
       data.requestId = form.requestId.value || form.getAttribute('data-request-id') || uuid();
       data.availability = {
@@ -1420,15 +1442,15 @@
       var now = scheduleAudioContext.currentTime;
       var oscillator = scheduleAudioContext.createOscillator();
       var gain = scheduleAudioContext.createGain();
-      oscillator.type = 'sine';
-      oscillator.frequency.value = 520 + ((Math.round(Number(value) / 30) % 8) * 12);
+      oscillator.type = 'triangle';
+      oscillator.frequency.value = 720 + ((Math.round(Number(value) / 30) % 6) * 18);
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.004);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+      gain.gain.exponentialRampToValueAtTime(0.008, now + 0.002);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.022);
       oscillator.connect(gain);
       gain.connect(scheduleAudioContext.destination);
       oscillator.start(now);
-      oscillator.stop(now + 0.04);
+      oscillator.stop(now + 0.024);
     } catch (e) { /* звук — необязательное улучшение */ }
   }
 
@@ -1442,13 +1464,86 @@
     var daysSummary = document.getElementById('scheduleDaysSummary');
     var timeSummary = document.getElementById('scheduleTimeSummary');
     var soundButton = document.getElementById('scheduleSound');
-    var soundEnabled = false;
+    var boundaryButtons = [].slice.call(picker.querySelectorAll('[data-time-boundary]'));
+    var wheelColumns = [].slice.call(picker.querySelectorAll('[data-time-unit]'));
+    var hourColumn = picker.querySelector('[data-time-unit="hour"]');
+    var minuteColumn = picker.querySelector('[data-time-unit="minute"]');
+    var activeBoundary = 'from';
+    var soundEnabled = true;
     var lastTickAt = 0;
-    try { soundEnabled = localStorage.getItem('tajweed_schedule_sound') === 'on'; } catch (e) { /* ок */ }
+    var wheelFrame = 0;
+    var ignoreWheelUntil = 0;
+    try { soundEnabled = localStorage.getItem('tajweed_schedule_sound') !== 'off'; } catch (e) { /* ок */ }
     try { form.timeZone.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Moscow'; } catch (e) { /* ок */ }
 
     function updateSoundButton() {
       soundButton.setAttribute('aria-pressed', soundEnabled ? 'true' : 'false');
+    }
+
+    function primeScheduleSound() {
+      if (!soundEnabled) return;
+      var AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtor) return;
+      try {
+        if (!scheduleAudioContext) scheduleAudioContext = new AudioCtor();
+        if (scheduleAudioContext.state === 'suspended') scheduleAudioContext.resume();
+      } catch (e) { /* барабан остаётся рабочим и без звука */ }
+    }
+
+    function selectedOption(column) {
+      return column.querySelector('.time-wheel-option.is-selected');
+    }
+
+    function markWheelOption(column, option) {
+      var options = [].slice.call(column.querySelectorAll('.time-wheel-option'));
+      var selectedIndex = options.indexOf(option);
+      options.forEach(function (item, index) {
+        var distance = Math.abs(index - selectedIndex);
+        var selected = item === option;
+        item.classList.toggle('is-selected', selected);
+        item.classList.toggle('is-near', distance === 1);
+        item.classList.toggle('is-far', distance > 1);
+        item.setAttribute('aria-selected', selected ? 'true' : 'false');
+      });
+      if (option) column.setAttribute('aria-activedescendant', option.id);
+    }
+
+    function nearestWheelOption(column) {
+      var options = [].slice.call(column.querySelectorAll('.time-wheel-option'));
+      var center = column.scrollTop + column.clientHeight / 2;
+      return options.reduce(function (best, option) {
+        var optionCenter = option.offsetTop + option.offsetHeight / 2;
+        var distance = Math.abs(optionCenter - center);
+        return !best || distance < best.distance ? { option: option, distance: distance } : best;
+      }, null).option;
+    }
+
+    function scrollWheelTo(column, value, smooth) {
+      var option = column.querySelector('[data-value="' + value + '"]');
+      if (!option) return;
+      if (!smooth) markWheelOption(column, option);
+      ignoreWheelUntil = Date.now() + (smooth ? 0 : 80);
+      column.scrollTo({
+        top: option.offsetTop - (column.clientHeight - option.offsetHeight) / 2,
+        behavior: smooth ? 'smooth' : 'auto'
+      });
+    }
+
+    function syncWheel(minutesValue, smooth) {
+      var safeValue = Math.max(360, Math.min(1380, Number(minutesValue)));
+      scrollWheelTo(hourColumn, Math.floor(safeValue / 60), smooth);
+      scrollWheelTo(minuteColumn, safeValue % 60, smooth);
+    }
+
+    function updateBoundaryButtons() {
+      boundaryButtons.forEach(function (button) {
+        var active = button.getAttribute('data-time-boundary') === activeBoundary;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      var suffix = activeBoundary === 'from' ? 'не раньше' : 'не позже';
+      hourColumn.setAttribute('aria-label', 'Часы, ' + suffix);
+      minuteColumn.setAttribute('aria-label', 'Минуты, ' + suffix);
     }
 
     function updateSummary() {
@@ -1466,26 +1561,83 @@
       if (labels.length) markInvalid(picker, false);
     }
 
-    function onRangeInput(changed) {
-      if (changed === from && Number(from.value) > Number(to.value) - 60) {
-        from.value = Math.max(Number(from.min), Number(to.value) - 60);
+    function commitWheel(playTick) {
+      var hourOption = selectedOption(hourColumn);
+      var minuteOption = selectedOption(minuteColumn);
+      if (!hourOption || !minuteOption) return;
+      var next = Number(hourOption.getAttribute('data-value')) * 60 +
+        Number(minuteOption.getAttribute('data-value'));
+
+      if (activeBoundary === 'from') {
+        next = Math.min(next, 1320);
+        from.value = next;
+        if (Number(to.value) < next + 60) to.value = next + 60;
+      } else {
+        next = Math.max(next, 420);
+        to.value = next;
+        if (Number(from.value) > next - 60) from.value = next - 60;
       }
-      if (changed === to && Number(to.value) < Number(from.value) + 60) {
-        to.value = Math.min(Number(to.max), Number(from.value) + 60);
-      }
+
       updateSummary();
       var now = Date.now();
-      if (now - lastTickAt >= 45) {
+      if (playTick && now - lastTickAt >= 45) {
         lastTickAt = now;
-        playScheduleTick(soundEnabled, changed.value);
+        playScheduleTick(soundEnabled, next);
       }
+      if (next !== Number(hourOption.getAttribute('data-value')) * 60 +
+          Number(minuteOption.getAttribute('data-value'))) {
+        syncWheel(next, false);
+      }
+    }
+
+    function onWheelScroll(column) {
+      if (Date.now() < ignoreWheelUntil) return;
+      if (wheelFrame) cancelAnimationFrame(wheelFrame);
+      wheelFrame = requestAnimationFrame(function () {
+        wheelFrame = 0;
+        var option = nearestWheelOption(column);
+        var before = selectedOption(column);
+        markWheelOption(column, option);
+        commitWheel(before !== option);
+      });
     }
 
     [].slice.call(form.querySelectorAll('[name="scheduleDays"]')).forEach(function (input) {
       input.addEventListener('change', updateSummary);
     });
-    from.addEventListener('input', function () { onRangeInput(from); });
-    to.addEventListener('input', function () { onRangeInput(to); });
+    boundaryButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        activeBoundary = button.getAttribute('data-time-boundary');
+        updateBoundaryButtons();
+        syncWheel(activeBoundary === 'from' ? from.value : to.value, false);
+      });
+    });
+    wheelColumns.forEach(function (column) {
+      column.addEventListener('pointerdown', primeScheduleSound, { passive: true });
+      column.addEventListener('scroll', function () { onWheelScroll(column); }, { passive: true });
+      column.addEventListener('keydown', function (event) {
+        if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown' &&
+            event.key !== 'PageUp' && event.key !== 'PageDown' &&
+            event.key !== 'Home' && event.key !== 'End') return;
+        event.preventDefault();
+        var options = [].slice.call(column.querySelectorAll('.time-wheel-option'));
+        var current = selectedOption(column);
+        var index = Math.max(0, options.indexOf(current));
+        if (event.key === 'ArrowUp') index -= 1;
+        if (event.key === 'ArrowDown') index += 1;
+        if (event.key === 'PageUp') index -= 3;
+        if (event.key === 'PageDown') index += 3;
+        if (event.key === 'Home') index = 0;
+        if (event.key === 'End') index = options.length - 1;
+        index = Math.max(0, Math.min(options.length - 1, index));
+        scrollWheelTo(column, options[index].getAttribute('data-value'), true);
+      });
+      [].slice.call(column.querySelectorAll('.time-wheel-option')).forEach(function (option) {
+        option.addEventListener('click', function () {
+          scrollWheelTo(column, option.getAttribute('data-value'), true);
+        });
+      });
+    });
     soundButton.addEventListener('click', function () {
       soundEnabled = !soundEnabled;
       try { localStorage.setItem('tajweed_schedule_sound', soundEnabled ? 'on' : 'off'); } catch (e) { /* ок */ }
@@ -1494,6 +1646,10 @@
     });
     updateSoundButton();
     updateSummary();
+    updateBoundaryButtons();
+    requestAnimationFrame(function () {
+      syncWheel(from.value, false);
+    });
   }
 
   function showLead() {

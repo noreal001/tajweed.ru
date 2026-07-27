@@ -1854,3 +1854,256 @@ html.has-tabbar body {
     justify-content: space-between;
   }
 }
+
+/* Барабан времени: один iPhone-подобный выбор часов и минут обслуживает
+   обе границы диапазона «С / До» и не раздувает мобильную анкету. */
+.time-window {
+  border-color: var(--line);
+  border-radius: 18px;
+  background: var(--bg);
+}
+
+.time-boundaries {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.time-boundary {
+  min-width: 0;
+  min-height: 50px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text-soft);
+  background: transparent;
+  cursor: pointer;
+  font: 600 12px/1.2 var(--font-ui);
+}
+
+.time-boundary output {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-boundary.is-active {
+  border-color: var(--auth-action);
+  color: #ffffff;
+  background: var(--auth-action);
+}
+
+.time-boundary.is-active output {
+  color: #ffffff;
+}
+
+.time-boundary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.time-wheel {
+  --wheel-row: 52px;
+  position: relative;
+  height: calc(var(--wheel-row) * 3);
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr);
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  isolation: isolate;
+}
+
+.time-wheel-focus {
+  position: absolute;
+  top: var(--wheel-row);
+  right: 0;
+  left: 0;
+  z-index: 0;
+  height: var(--wheel-row);
+  border-top: 1px solid var(--control-line);
+  border-bottom: 1px solid var(--control-line);
+  background: var(--folio-wash);
+  pointer-events: none;
+}
+
+.time-wheel-column {
+  position: relative;
+  z-index: 1;
+  height: calc(var(--wheel-row) * 3);
+  padding-block: var(--wheel-row);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  touch-action: pan-y;
+}
+
+.time-wheel-column::-webkit-scrollbar {
+  display: none;
+}
+
+.time-wheel-column:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -3px;
+}
+
+.time-wheel-option {
+  height: var(--wheel-row);
+  display: flex;
+  align-items: center;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  color: var(--text-soft);
+  cursor: ns-resize;
+  font-family: var(--font-ui);
+  font-size: 27px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  opacity: 0.55;
+  transform: scale(0.94);
+  transition: color 0.12s var(--ease), opacity 0.12s var(--ease), transform 0.12s var(--ease);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.time-wheel-column.is-hours .time-wheel-option {
+  justify-content: flex-end;
+  padding-right: 10px;
+}
+
+.time-wheel-column.is-minutes .time-wheel-option {
+  justify-content: flex-start;
+  padding-left: 10px;
+}
+
+.time-wheel-option.is-selected {
+  color: var(--text);
+  font-size: 31px;
+  font-weight: 600;
+  opacity: 1;
+  transform: none;
+}
+
+.time-wheel-option.is-near {
+  opacity: 0.52;
+}
+
+.time-wheel-option.is-far {
+  opacity: 0.22;
+  transform: scale(0.88);
+}
+
+.time-wheel-colon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.time-window .sound-toggle {
+  min-height: 52px;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.time-window .sound-switch {
+  border-color: var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+}
+
+.time-window .sound-switch span {
+  border-radius: 50%;
+}
+
+@media (max-width: 759px) {
+  .time-window {
+    border-radius: 14px;
+  }
+
+  .time-boundaries {
+    margin-top: 12px;
+    gap: 5px;
+  }
+
+  .time-boundary {
+    min-height: 44px;
+    padding: 7px 8px;
+    display: grid;
+    justify-content: stretch;
+    gap: 2px;
+  }
+
+  .time-boundary output {
+    font-size: 12px;
+  }
+
+  .time-wheel {
+    --wheel-row: 44px;
+    grid-template-columns: minmax(0, 1fr) 10px minmax(0, 1fr);
+  }
+
+  .time-wheel-option {
+    font-size: 22px;
+  }
+
+  .time-wheel-option.is-selected {
+    font-size: 25px;
+  }
+
+  .time-wheel-column.is-hours .time-wheel-option {
+    padding-right: 5px;
+  }
+
+  .time-wheel-column.is-minutes .time-wheel-option {
+    padding-left: 5px;
+  }
+
+  .time-wheel-colon {
+    font-size: 22px;
+  }
+
+  .time-window .sound-toggle {
+    min-height: 44px;
+    display: flex;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .time-window .sound-toggle small {
+    display: none;
+  }
+
+  .time-window .sound-switch {
+    flex-basis: 40px;
+    height: 24px;
+    padding: 3px;
+  }
+
+  .time-window .sound-switch span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .time-window .sound-toggle[aria-pressed="true"] .sound-switch span {
+    transform: translateX(16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .time-wheel-option {
+    transition: none;
+  }
+}
