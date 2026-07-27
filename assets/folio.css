@@ -212,6 +212,10 @@ html.is-exam body {
     background: var(--brand-ink);
   }
 
+  :root[data-theme="dark"] .sitenav-tabs .tab.is-on {
+    background: #141416;
+  }
+
   .theme-toggle,
   .language-button {
     min-height: 44px;
