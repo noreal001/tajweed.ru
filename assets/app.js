@@ -117,6 +117,36 @@
     '</div>';
   }
 
+  /* Сетка обложки повторяет plaque из wiki: 6×3 на широком экране,
+     4×2 на планшете и 3×2 на телефоне. Узлы стоят на всех пересечениях. */
+  function blueprintLayer(cols, rows, hatchIndexes, extra) {
+    var cells = '';
+    var nodes = '';
+    var i;
+    var row;
+    var col;
+    for (i = 0; i < cols * rows; i++) {
+      cells += '<span class="blueprint-cell' +
+        (hatchIndexes.indexOf(i) !== -1 ? ' is-hatched' : '') + '"></span>';
+    }
+    for (row = 0; row <= rows; row++) {
+      for (col = 0; col <= cols; col++) {
+        nodes += '<span style="left:' + (col / cols * 100) +
+          '%;top:' + (row / rows * 100) + '%"></span>';
+      }
+    }
+    return '<div class="blueprint-layer ' + extra +
+      '" style="--blueprint-cols:' + cols + ';--blueprint-rows:' + rows +
+      '" aria-hidden="true"><div class="blueprint-cells">' + cells +
+      '</div><div class="blueprint-nodes">' + nodes + '</div></div>';
+  }
+
+  function blueprintLayers() {
+    return blueprintLayer(6, 3, [2, 9, 13, 16], 'is-desktop') +
+      blueprintLayer(4, 2, [2, 5], 'is-tablet') +
+      blueprintLayer(3, 2, [1, 4], 'is-mobile');
+  }
+
   /* Цвет уровня по проценту: от тревожного красного к неоновой зелени. */
   function scoreColor(percent, lightness) {
     var p = Math.max(0, Math.min(100, Number(percent) || 0));
@@ -914,6 +944,7 @@
       '<section class="welcome-hero" aria-labelledby="welcomeTitle">' +
         '<span class="hero-hatch" aria-hidden="true"></span>' +
         marks('is-out') +
+        blueprintLayers() +
         '<h1 id="welcomeTitle">Экзамен по <em>таджвиду</em></h1>' +
         '<p class="kicker is-under">' +
           (draft ? 'Экзамен начат · шаг ' + doneCount + ' из ' + steps.length
@@ -938,6 +969,7 @@
       '<section class="cta-banner" aria-labelledby="ctaTitle">' +
         '<span class="hero-hatch" aria-hidden="true"></span>' +
         marks('is-out') +
+        blueprintLayers() +
         '<h2 id="ctaTitle">' + (draft ? 'Вернуться к экзамену' : 'Проверьте себя') + '</h2>' +
         '<p class="kicker is-under">' +
           (draft ? 'Ответы сохранены на этом устройстве'

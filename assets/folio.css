@@ -95,15 +95,23 @@ body {
 }
 
 .tab.is-on {
-  color: var(--inverse-text) !important;
-  background: var(--inverse-bg);
+  color: #ffffff !important;
+  background: var(--brand-ink);
+  box-shadow: inset 0 0 0 1px var(--control-line);
+}
+
+:root[data-theme="light"] .sitenav-tabs .tab.is-on,
+:root[data-theme="light"] .tabbar .tab.is-on {
+  color: #ffffff !important;
+  background: var(--brand-ink) !important;
+  box-shadow: none !important;
 }
 
 .theme-toggle,
 .language-button {
   border-color: var(--control-line) !important;
-  color: var(--text) !important;
-  background: var(--bg) !important;
+  color: #ffffff !important;
+  background: var(--brand-ink) !important;
 }
 
 :root[data-theme="light"] .theme-toggle,
@@ -117,8 +125,8 @@ body {
   .theme-toggle:hover,
   .language-button:hover {
     border-color: var(--line-strong) !important;
-    color: var(--text) !important;
-    background: var(--folio-wash) !important;
+    color: #ffffff !important;
+    background: #2c2c2f !important;
   }
 
   :root[data-theme="light"] .theme-toggle:hover,
@@ -147,8 +155,8 @@ body {
 }
 
 .language-option[aria-current="true"] {
-  color: var(--inverse-text) !important;
-  background: var(--inverse-bg) !important;
+  color: #ffffff !important;
+  background: var(--brand-ink) !important;
 }
 
 /* Первичные действия сохраняют цвет #19191b в светлой теме. */
@@ -196,16 +204,20 @@ body {
 /* Обложка: чистая plaque внутри внешней frame, как у эталона. */
 .welcome-hero,
 .cta-banner {
+  --banner-frame: 26px;
   position: relative;
   overflow: visible;
-  padding: clamp(36px, 7vw, 78px);
+  margin-inline: var(--banner-frame);
+  padding: clamp(28px, 5vw, 58px);
   border: 1px solid var(--line);
   border-radius: 0;
   background: var(--bg);
 }
 
 .welcome-hero {
-  min-height: min(650px, calc(100svh - 150px));
+  min-height: 0;
+  aspect-ratio: 16 / 7;
+  justify-content: center;
 }
 
 .welcome-hero::after,
@@ -221,7 +233,7 @@ body {
 .welcome-hero > .marks,
 .cta-banner > .marks {
   display: block !important;
-  inset: calc(-1 * var(--mark-out));
+  inset: calc(-1 * var(--banner-frame));
   z-index: 0;
 }
 
@@ -240,9 +252,70 @@ body {
   max-width: 100%;
 }
 
+.blueprint-layer {
+  position: absolute !important;
+  inset: 0;
+  z-index: 0 !important;
+  display: none;
+  max-width: none !important;
+  pointer-events: none;
+}
+
+.blueprint-cells {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--blueprint-cols), 1fr);
+  grid-template-rows: repeat(var(--blueprint-rows), 1fr);
+}
+
+.blueprint-cell {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.blueprint-cell.is-hatched {
+  background-image: var(--hatch);
+  background-size: 4px 4px;
+}
+
+.blueprint-nodes {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.blueprint-nodes span {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--bg);
+  transform: translate(-50%, -50%);
+}
+
+.welcome-hero > *:not(.marks):not(.blueprint-layer),
+.cta-banner > *:not(.marks):not(.blueprint-layer) {
+  position: relative;
+  z-index: 2;
+}
+
+@media (min-width: 1025px) {
+  .blueprint-layer.is-desktop {
+    display: block;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .blueprint-layer.is-tablet {
+    display: block;
+  }
+}
+
 .welcome-hero #welcomeTitle {
   max-width: 9.2ch;
-  font-size: clamp(52px, 9.4vw, 104px);
+  font-size: clamp(48px, 6.5vw, 76px);
   line-height: 0.95;
 }
 
@@ -267,6 +340,8 @@ body {
 
 .cta-banner {
   margin-top: 86px;
+  aspect-ratio: 16 / 7;
+  justify-content: center;
   border-radius: 0;
 }
 
@@ -283,16 +358,28 @@ body {
   overflow: hidden;
   border: 1px solid var(--line);
   border-top: 1px solid var(--line);
-  border-radius: 22px;
+  border-radius: 0;
   background: var(--bg);
 }
 
 .level::before {
-  display: none;
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: block;
+  width: 54px;
+  height: 54px;
+  opacity: 0.42;
+  background-image: var(--hatch);
+  background-size: 4px 4px;
+  pointer-events: none;
 }
 
 .level-head {
-  padding-right: 0;
+  position: relative;
+  z-index: 1;
+  padding-right: 54px;
 }
 
 .level-n,
@@ -306,17 +393,24 @@ body {
 
 .level-n {
   display: inline-flex;
-  padding: 5px 8px;
-  border-radius: 999px;
+  padding: 0;
+  border-radius: 0;
   color: var(--text);
-  background: var(--folio-wash);
+  background: transparent;
 }
 
 .level.is-locked,
 :root[data-theme="light"] .level.is-locked {
   border-style: solid;
-  background: transparent;
+  background: var(--bg);
   opacity: 1;
+}
+
+.level.is-open,
+.level.is-scored,
+:root[data-theme="light"] .level.is-open,
+:root[data-theme="light"] .level.is-scored {
+  background: var(--bg);
 }
 
 .level-button {
@@ -334,7 +428,7 @@ body {
   :root[data-theme="light"] .level-button:hover {
     border-color: var(--line-strong);
     color: var(--text);
-    background: var(--folio-wash);
+    background: var(--bg);
     transform: translateY(-2px);
   }
 
@@ -348,8 +442,8 @@ body {
 .levels-locked {
   padding: 12px;
   border: 0;
-  border-radius: 18px;
-  background: var(--folio-wash);
+  border-radius: 0;
+  background: transparent;
 }
 
 .locked-chip {
@@ -650,7 +744,7 @@ body {
   backdrop-filter: blur(18px);
 }
 
-@media (max-width: 680px) {
+@media (max-width: 640px) {
   .sitenav {
     padding: 6px 0;
   }
@@ -664,12 +758,15 @@ body {
 
   .welcome-hero,
   .cta-banner {
-    padding: 34px 26px;
+    --banner-frame: 24px;
+    margin-inline: 12px;
+    padding: 18px;
+    aspect-ratio: 4 / 3;
     border-radius: 0;
   }
 
   .welcome-hero {
-    min-height: calc(100svh - 150px);
+    min-height: 0;
   }
 
   .welcome-hero > *:not(.marks),
@@ -678,7 +775,85 @@ body {
   }
 
   .welcome-hero h1 {
-    font-size: clamp(48px, 15vw, 72px);
+    font-size: clamp(30px, 9vw, 42px);
+  }
+
+  .welcome-hero .hero-meta {
+    display: none;
+  }
+
+  .welcome-hero .hero-actions,
+  .cta-banner .hero-actions {
+    margin-top: 14px;
+  }
+
+  .blueprint-layer.is-mobile {
+    display: block;
+  }
+
+  .blueprint-nodes span {
+    width: 5px;
+    height: 5px;
+  }
+
+  .welcome-hero .marks .tick.tl-v,
+  .cta-banner .marks .tick.tl-v {
+    top: 0;
+    left: 24px;
+  }
+
+  .welcome-hero .marks .tick.tl-h,
+  .cta-banner .marks .tick.tl-h {
+    top: 24px;
+    left: 0;
+  }
+
+  .welcome-hero .marks .tick.tr-v,
+  .cta-banner .marks .tick.tr-v {
+    top: 0;
+    right: 24px;
+  }
+
+  .welcome-hero .marks .tick.tr-h,
+  .cta-banner .marks .tick.tr-h {
+    top: 24px;
+    right: 0;
+  }
+
+  .welcome-hero .marks .tick.bl-v,
+  .cta-banner .marks .tick.bl-v {
+    bottom: 0;
+    left: 24px;
+  }
+
+  .welcome-hero .marks .tick.bl-h,
+  .cta-banner .marks .tick.bl-h {
+    bottom: 24px;
+    left: 0;
+  }
+
+  .welcome-hero .marks .tick.br-v,
+  .cta-banner .marks .tick.br-v {
+    right: 24px;
+    bottom: 0;
+  }
+
+  .welcome-hero .marks .tick.br-h,
+  .cta-banner .marks .tick.br-h {
+    right: 0;
+    bottom: 24px;
+  }
+
+  .welcome-hero .marks .hatch.tr,
+  .cta-banner .marks .hatch.tr {
+    top: 0;
+    right: 0;
+  }
+
+  .welcome-hero .marks .hatch.bl,
+  .cta-banner .marks .hatch.bl {
+    bottom: 0;
+    left: 0;
   }
 
   .level {
