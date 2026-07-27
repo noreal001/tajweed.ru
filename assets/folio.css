@@ -1304,13 +1304,156 @@ html.is-exam body {
   border-radius: 20px;
 }
 
-/* Мобильная навигация остаётся крупной, но визуально легче. */
+/* Мобильная навигация: чуть уже экрана, выше прежней и всегда на месте.
+   Иконки построены линиями CSS, поэтому остаются чёткими на любом DPI. */
 .tabbar {
-  padding: 5px;
+  left: 50%;
+  right: auto;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  width: min(calc(100% - 32px), 420px);
+  min-height: 70px;
+  padding: 5px 6px;
+  transform: translateX(-50%);
   border-color: var(--line);
   border-radius: 18px;
   background: var(--surface-glass);
   backdrop-filter: blur(18px);
+}
+
+.tabbar .tab {
+  min-width: 0;
+  min-height: 58px;
+  padding: 5px 3px;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 3px;
+  border-radius: 13px;
+  font-size: 10.5px;
+  line-height: 1.1;
+}
+
+.tabbar .tab-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sitenav-tabs .tab-icon {
+  display: none;
+}
+
+.tab-icon {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  display: block;
+  flex: 0 0 22px;
+  color: currentColor;
+  transition: transform 0.16s var(--ease);
+}
+
+.tab-icon::before,
+.tab-icon::after {
+  position: absolute;
+  box-sizing: border-box;
+  content: "";
+}
+
+.tab-icon.is-home::before {
+  left: 4px;
+  top: 8px;
+  width: 14px;
+  height: 12px;
+  border: 1.5px solid currentColor;
+  border-top: 0;
+  border-radius: 0 0 3px 3px;
+}
+
+.tab-icon.is-home::after {
+  left: 5px;
+  top: 3px;
+  width: 12px;
+  height: 12px;
+  border-top: 1.5px solid currentColor;
+  border-left: 1.5px solid currentColor;
+  border-radius: 2px 0 0;
+  transform: rotate(45deg);
+}
+
+.tab-icon.is-exam::before {
+  left: 5px;
+  top: 2px;
+  width: 12px;
+  height: 18px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+}
+
+.tab-icon.is-exam::after {
+  left: 8px;
+  top: 7px;
+  width: 6px;
+  height: 1.5px;
+  background: currentColor;
+  box-shadow: 0 4px 0 currentColor, 0 8px 0 currentColor;
+}
+
+.tab-icon.is-lead::before,
+.tab-icon.is-lead::after {
+  top: 4px;
+  width: 10px;
+  height: 15px;
+  border: 1.5px solid currentColor;
+  background: transparent;
+}
+
+.tab-icon.is-lead::before {
+  left: 2px;
+  border-radius: 4px 1px 1px 3px;
+}
+
+.tab-icon.is-lead::after {
+  right: 2px;
+  border-radius: 1px 4px 3px 1px;
+}
+
+.tab-icon.is-profile::before {
+  left: 7px;
+  top: 2px;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+
+.tab-icon.is-profile::after {
+  left: 3px;
+  bottom: 1px;
+  width: 16px;
+  height: 9px;
+  border: 1.5px solid currentColor;
+  border-radius: 10px 10px 3px 3px;
+}
+
+.tabbar .tab:active .tab-icon {
+  transform: scale(0.9);
+}
+
+html.nav-hidden .tabbar {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%);
+}
+
+html.has-tabbar body {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 760px) {
+  html.has-tabbar body {
+    padding-bottom: 0;
+  }
 }
 
 @media (max-width: 820px) {

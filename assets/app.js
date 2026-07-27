@@ -920,8 +920,15 @@
       items.forEach(function (item) {
         var b = document.createElement('button');
         b.type = 'button';
-        b.className = 'tab' + (item.on() ? ' is-on' : '');
-        b.textContent = item.label;
+        b.className = 'tab tab-' + item.id + (item.on() ? ' is-on' : '');
+        var icon = document.createElement('span');
+        icon.className = 'tab-icon is-' + item.id;
+        icon.setAttribute('aria-hidden', 'true');
+        var label = document.createElement('span');
+        label.className = 'tab-label';
+        label.textContent = item.label;
+        b.appendChild(icon);
+        b.appendChild(label);
         if (item.on()) b.setAttribute('aria-current', 'page');
         b.onclick = function () {
           if (state.phase === 'exam') return;
@@ -2568,20 +2575,18 @@
     show();
   };
 
-  /* Нижнее мобильное меню прячется при прокрутке вниз; верхняя веб-навигация
-     остаётся закреплённой и получает непрозрачное состояние nav-scrolled. */
+  /* Нижнее мобильное меню всегда остаётся доступным. При прокрутке меняется
+     только состояние закреплённой верхней веб-навигации. */
   (function watchScroll() {
-    var last = 0;
     var ticking = false;
+    document.documentElement.classList.remove('nav-hidden');
     window.addEventListener('scroll', function () {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(function () {
         var y = window.scrollY;
-        var hide = y > last && y > 120;
-        document.documentElement.classList.toggle('nav-hidden', hide);
         document.documentElement.classList.toggle('nav-scrolled', y > 16);
-        last = y;
+        document.documentElement.classList.remove('nav-hidden');
         ticking = false;
       });
     }, { passive: true });
