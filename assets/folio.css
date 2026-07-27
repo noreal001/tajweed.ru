@@ -1,16 +1,16 @@
 /* Folio 2026
    Монохромная редакция по мотивам wiki.bahur.store/prays/.
-   #19191b — основной цвет; монтажные метки живут снаружи баннеров,
-   внутреннее поле остаётся чистым. */
+   #19191b применяется к тёмным кнопкам светлой темы. Фон тёмной темы
+   остаётся эталонным #0a0a0b. */
 
 :root {
   --brand-ink: #19191b;
-  --bg: #19191b;
-  --surface: #202024;
-  --surface-strong: #27272c;
-  --surface-glass: rgba(25, 25, 27, 0.94);
-  --plate: #202024;
-  --plate-chip: #27272c;
+  --bg: #0a0a0b;
+  --surface: #141416;
+  --surface-strong: #1b1b1e;
+  --surface-glass: rgba(10, 10, 11, 0.94);
+  --plate: #141416;
+  --plate-chip: #1b1b1e;
   --text: #f2f2f4;
   --text-soft: rgba(255, 255, 255, 0.66);
   --text-faint: rgba(255, 255, 255, 0.58);
@@ -18,10 +18,10 @@
   --control-line: #686870;
   --line-strong: #898991;
   --inverse-bg: #f2f2f4;
-  --inverse-text: #19191b;
+  --inverse-text: #0a0a0b;
   --focus: #f2f2f4;
-  --folio-wash: #242429;
-  --folio-wash-strong: #2b2b31;
+  --folio-wash: rgba(255, 255, 255, 0.035);
+  --folio-wash-strong: rgba(255, 255, 255, 0.06);
   --folio-line: rgba(255, 255, 255, 0.09);
   --folio-node: #77777f;
   --folio-highlight: rgba(255, 255, 255, 0.1);

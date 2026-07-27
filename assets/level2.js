@@ -480,7 +480,7 @@
     var next = currentTheme() === 'light' ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', next);
     try { localStorage.setItem('tajweed_theme', next); } catch (error) {}
-    document.querySelector('meta[name="theme-color"]').setAttribute('content', next === 'light' ? '#ffffff' : '#19191b');
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', next === 'light' ? '#ffffff' : '#0a0a0b');
     syncTheme();
   };
   syncTheme();
