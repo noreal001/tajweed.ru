@@ -147,6 +147,10 @@
       blueprintLayer(3, 2, [1, 4], 'is-mobile');
   }
 
+  function levelDecor() {
+    return marks('is-level') + blueprintLayer(3, 2, [1, 4], 'is-level');
+  }
+
   /* Цвет уровня по проценту: от тревожного красного к неоновой зелени. */
   function scoreColor(percent, lightness) {
     var p = Math.max(0, Math.min(100, Number(percent) || 0));
@@ -196,6 +200,7 @@
     var first = LEVELS[0];
     if (!best) {
       html += '<li class="level is-open is-empty">' +
+        levelDecor() +
         '<div class="level-head"><span class="level-n">Уровень 1</span>' +
         '<span class="level-lock is-ready">доступен</span></div>' +
         '<p class="level-topic">' + esc(first.topic) + '</p>' +
@@ -204,6 +209,7 @@
     } else {
       var pct = Math.round(best.percent);
       html += '<li class="level is-open is-scored" style="--score-color: ' + scoreColor(pct) + '">' +
+        levelDecor() +
         '<div class="level-head"><span class="level-n">Уровень 1</span>' +
         '<span class="level-verdict">' + scoreVerdict(pct) + '</span></div>' +
         '<p class="level-topic">' + esc(first.topic) + '</p>' +
@@ -218,6 +224,7 @@
       var level2 = progress.level2;
       html += '<li><button class="level level-button is-open' + (level2 ? ' is-submitted' : ' is-empty') +
         '" type="button" data-open-level="2">' +
+        levelDecor() +
         '<div class="level-head"><span class="level-n">Уровень 2</span>' +
           '<span class="level-lock is-ready">' + (level2 ? 'отправлен' : 'открыт') + '</span></div>' +
         '<p class="level-topic">' + esc(second.topic) + '</p>' +
@@ -227,6 +234,7 @@
       '</button></li>';
     } else {
       html += '<li class="level is-locked">' +
+        levelDecor() +
         '<div class="level-head"><span class="level-n">Уровень 2</span><span class="level-lock">🔒 закрыт</span></div>' +
         '<p class="level-topic">' + esc(second.topic) + '</p>' +
         '<p class="level-hint">Откроется после результата 100% за первый уровень</p>' +
@@ -2552,6 +2560,7 @@
         var y = window.scrollY;
         var hide = y > last && y > 120;
         document.documentElement.classList.toggle('nav-hidden', hide);
+        document.documentElement.classList.toggle('nav-scrolled', y > 16);
         last = y;
         ticking = false;
       });

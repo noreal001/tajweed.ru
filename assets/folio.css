@@ -55,22 +55,40 @@ body {
   background: var(--bg);
 }
 
-/* Навигация — одна плоская строка без серой панели-контейнера. */
+/* Верхняя навигация остаётся закреплённой и получает собственную иерархию:
+   главное меню — единый сегментированный блок, тема и язык — отдельные действия. */
 .sitenav {
-  padding: 8px 0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 10px 0;
   border: 0;
+  border-bottom: 1px solid transparent;
   background: var(--bg);
-  backdrop-filter: none;
+  backdrop-filter: blur(20px);
+  transition:
+    background-color 0.2s var(--ease),
+    border-color 0.2s var(--ease);
 }
 
 :root[data-theme="light"] .sitenav {
-  border: 0;
+  border-bottom-color: transparent;
+  background: #ffffff;
+}
+
+html.nav-scrolled .sitenav {
+  border-bottom-color: var(--line);
+  background: var(--bg);
+}
+
+:root[data-theme="light"].nav-scrolled .sitenav {
+  border-bottom-color: var(--line);
   background: #ffffff;
 }
 
 .sitenav-inner {
   width: min(calc(100% - 24px), var(--sheet-w));
-  min-height: 58px;
+  min-height: 60px;
   padding: 0;
   justify-content: flex-end;
   border: 0;
@@ -84,13 +102,13 @@ body {
 }
 
 .sitenav-tabs {
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+  background: var(--surface);
 }
 
 .sitenav-right {
-  gap: 8px;
+  gap: 10px;
 }
 
 .tab {
@@ -142,20 +160,35 @@ body {
   }
 }
 
-/* На широком экране навигация читается как ряд самостоятельных кнопок.
-   В тёмной теме их кант совпадает с линией баннера, без белой обводки. */
+/* Визуальная подпись отделяет основную навигацию от настроек и делает
+   назначение блока очевидным даже при первом открытии сайта. */
 @media (min-width: 760px) {
   .sitenav-tabs {
-    gap: 6px;
+    gap: 3px;
+    padding: 5px !important;
+  }
+
+  .sitenav-tabs::before {
+    content: "Меню";
+    min-height: 34px;
+    padding: 0 11px 0 7px;
+    display: inline-flex;
+    align-items: center;
+    border-right: 1px solid var(--line);
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
   }
 
   .sitenav-tabs .tab {
     min-height: 44px;
-    padding: 9px 15px;
-    border: 2px solid var(--line) !important;
+    padding: 9px 14px;
+    border: 1px solid transparent !important;
     border-radius: 10px;
-    color: var(--text) !important;
-    background: var(--bg);
+    color: var(--text-soft) !important;
+    background: transparent;
     transition:
       color 0.16s var(--ease),
       background-color 0.16s var(--ease),
@@ -172,7 +205,7 @@ body {
   .theme-toggle,
   .language-button {
     min-height: 44px;
-    border-width: 2px !important;
+    border-width: 1px !important;
     border-style: solid !important;
     border-radius: 10px;
     transition:
@@ -184,10 +217,10 @@ body {
 
 @media (min-width: 760px) and (hover: hover) {
   .sitenav-tabs .tab:not(.is-on):hover {
-    border-color: var(--line) !important;
+    border-color: transparent !important;
     color: var(--text) !important;
     background: var(--folio-wash-strong);
-    transform: translateY(-1px);
+    transform: none;
   }
 
   .sitenav-tabs .tab:active,
@@ -341,7 +374,7 @@ body {
   z-index: 0 !important;
   display: none;
   max-width: none !important;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .blueprint-cells {
@@ -353,13 +386,25 @@ body {
 }
 
 .blueprint-cell {
+  position: relative;
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 
-.blueprint-cell.is-hatched {
+.blueprint-cell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
   background-image: var(--hatch);
   background-size: 4px 4px;
+  opacity: 0;
+  transition: opacity 0.55s ease;
+  pointer-events: none;
+}
+
+.blueprint-cell.is-hatched::after,
+.blueprint-cell:hover::after {
+  opacity: 1;
 }
 
 .blueprint-nodes {
@@ -382,6 +427,21 @@ body {
 .cta-banner > *:not(.marks):not(.blueprint-layer) {
   position: relative;
   z-index: 2;
+}
+
+.welcome-hero > h1,
+.welcome-hero > .kicker,
+.welcome-hero > .hero-meta,
+.cta-banner > h2,
+.cta-banner > .kicker,
+.welcome-hero > .hero-actions,
+.cta-banner > .hero-actions {
+  pointer-events: none;
+}
+
+.welcome-hero .hero-actions .btn,
+.cta-banner .hero-actions .btn {
+  pointer-events: auto;
 }
 
 @media (min-width: 1025px) {
@@ -430,15 +490,30 @@ body {
 
 /* Уровни — коллекция листов, а не стандартные серые окна. */
 .levels {
-  gap: 16px;
+  width: 100%;
+  max-width: 940px;
+  margin-inline: auto;
+  padding: 20px;
+  grid-template-columns: repeat(2, minmax(0, 420px));
+  justify-content: center;
+  gap: 36px;
+}
+
+.levels > li {
+  width: 100%;
+  min-width: 0;
 }
 
 .level,
 :root[data-theme="light"] .level {
+  --level-frame: 18px;
   position: relative;
-  min-height: 184px;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 3 / 2;
   padding: 24px;
-  overflow: hidden;
+  overflow: visible;
+  isolation: isolate;
   border: 1px solid var(--line);
   border-top: 1px solid var(--line);
   border-radius: 0;
@@ -446,23 +521,98 @@ body {
 }
 
 .level::before {
-  content: "";
-  position: absolute;
+  display: none;
+}
+
+.level > .blueprint-layer.is-level {
+  display: block;
+}
+
+.level > .marks {
+  display: block !important;
+  inset: calc(-1 * var(--level-frame));
+  z-index: 0;
+}
+
+.level .marks .tick {
+  background: var(--folio-node);
+}
+
+.level .marks .hatch {
+  display: block;
+  width: 14px;
+  height: 14px;
+  background-size: 4px 4px;
+}
+
+.level .marks .tick.tl-v {
+  top: 0;
+  left: var(--level-frame);
+  height: var(--level-frame);
+}
+
+.level .marks .tick.tl-h {
+  top: var(--level-frame);
+  left: 0;
+  width: var(--level-frame);
+}
+
+.level .marks .tick.tr-v {
+  top: 0;
+  right: var(--level-frame);
+  height: var(--level-frame);
+}
+
+.level .marks .tick.tr-h {
+  top: var(--level-frame);
+  right: 0;
+  width: var(--level-frame);
+}
+
+.level .marks .tick.bl-v {
+  bottom: 0;
+  left: var(--level-frame);
+  height: var(--level-frame);
+}
+
+.level .marks .tick.bl-h {
+  bottom: var(--level-frame);
+  left: 0;
+  width: var(--level-frame);
+}
+
+.level .marks .tick.br-v {
+  right: var(--level-frame);
+  bottom: 0;
+  height: var(--level-frame);
+}
+
+.level .marks .tick.br-h {
+  right: 0;
+  bottom: var(--level-frame);
+  width: var(--level-frame);
+}
+
+.level .marks .hatch.tr {
   top: 0;
   right: 0;
-  display: block;
-  width: 54px;
-  height: 54px;
-  opacity: 0.42;
-  background-image: var(--hatch);
-  background-size: 4px 4px;
+}
+
+.level .marks .hatch.bl {
+  bottom: 0;
+  left: 0;
+}
+
+.level > *:not(.marks):not(.blueprint-layer) {
+  position: relative;
+  z-index: 2;
   pointer-events: none;
 }
 
 .level-head {
   position: relative;
   z-index: 1;
-  padding-right: 54px;
+  padding-right: 0;
 }
 
 .level-n,
@@ -523,6 +673,8 @@ body {
 }
 
 .levels-locked {
+  width: min(100%, 900px);
+  margin-inline: auto;
   padding: 12px;
   border: 0;
   border-radius: 0;
@@ -827,6 +979,14 @@ body {
   backdrop-filter: blur(18px);
 }
 
+@media (max-width: 820px) {
+  .levels {
+    max-width: 460px;
+    grid-template-columns: minmax(0, 420px);
+    gap: 34px;
+  }
+}
+
 @media (max-width: 640px) {
   .sitenav {
     padding: 6px 0;
@@ -940,7 +1100,19 @@ body {
   }
 
   .level {
-    min-height: 168px;
+    --level-frame: 14px;
+    min-height: 0;
+    padding: 20px;
+  }
+
+  .levels {
+    padding: 14px;
+    gap: 28px;
+  }
+
+  .level .marks .hatch {
+    width: 12px;
+    height: 12px;
   }
 
   .exam-sitebar {
@@ -969,7 +1141,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .level-button {
+  .level-button,
+  .blueprint-cell::after {
     transition: none;
   }
 }
