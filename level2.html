@@ -9,9 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=20260727-2">
+  <link rel="stylesheet" href="assets/style.css?v=20260727-4">
   <link rel="stylesheet" href="assets/level2.css?v=20260727-2">
-  <link rel="stylesheet" href="assets/folio.css?v=20260727-11">
+  <link rel="stylesheet" href="assets/folio.css?v=20260727-17">
   <script>
     (function () {
       var theme = 'light';
@@ -31,10 +31,11 @@
   <header class="exam-sitebar">
     <a class="exam-brand" href="./">← К уровням</a>
     <div class="exam-sitebar-actions">
-      <button class="language-button" id="languageButton" type="button" aria-haspopup="menu" aria-expanded="false">
-        <span aria-hidden="true">🇷🇺</span><span>RU</span>
+      <button class="language-button" id="languageButton" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Язык: Русский. Выбрать другой">
+        <span class="language-flag" aria-hidden="true"><span>🇷🇺</span></span>
+        <span class="visually-hidden">Русский</span>
       </button>
-      <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">
+      <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="Переключить тему">
         <span class="theme-dial" aria-hidden="true"></span>
         <span class="theme-label" id="themeLabel">Светлая</span>
       </button>
@@ -52,6 +53,6 @@
 
   <script src="assets/config.js"></script>
   <script src="assets/level2-data.js"></script>
-  <script src="assets/level2.js?v=20260727-3"></script>
+  <script src="assets/level2.js?v=20260727-4"></script>
 </body>
 </html>

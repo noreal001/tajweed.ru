@@ -229,7 +229,7 @@
     var html = '<ol class="levels">';
     var first = LEVELS[0];
     if (!best) {
-      html += '<li class="level is-open is-empty">' +
+      html += '<li class="level is-level-one is-open is-empty">' +
         levelDecor() +
         '<div class="level-head"><span class="level-n">Уровень 1</span>' +
         '<span class="level-lock is-ready">доступен</span></div>' +
@@ -239,7 +239,7 @@
       '</li>';
     } else {
       var pct = Math.round(best.percent);
-      html += '<li class="level is-open is-scored" style="--score-color: ' + scoreColor(pct) + '">' +
+      html += '<li class="level is-level-one is-open is-scored" style="--score-color: ' + scoreColor(pct) + '">' +
         levelDecor() +
         '<div class="level-head"><span class="level-n">Уровень 1</span>' +
         '<span class="level-verdict">' + scoreVerdict(pct) + '</span></div>' +
@@ -254,7 +254,7 @@
     var second = LEVELS[1];
     if (progress.canOpen2) {
       var level2 = progress.level2;
-      html += '<li><button class="level level-button is-open' + (level2 ? ' is-submitted' : ' is-empty') +
+      html += '<li><button class="level level-button is-level-two is-open' + (level2 ? ' is-submitted' : ' is-empty') +
         '" type="button" data-open-level="2">' +
         levelDecor() +
         '<div class="level-head"><span class="level-n">Уровень 2</span>' +
@@ -266,7 +266,7 @@
           : 'Результат 100% подтверждён. Начать экзамен →') + '</p>' +
       '</button></li>';
     } else {
-      html += '<li class="level is-locked">' +
+      html += '<li class="level is-level-two is-locked">' +
         levelDecor() +
         '<div class="level-head"><span class="level-n">Уровень 2</span><span class="level-lock">🔒 закрыт</span></div>' +
         '<p class="level-topic">' + esc(second.topic) + '</p>' +
@@ -2536,12 +2536,17 @@
     var match = document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
     var current = match ? decodeURIComponent(match[1]).split('/').pop() : 'ru';
     var selected = languages.filter(function (item) { return item[0] === current; })[0] || languages[0];
-    button.innerHTML = '<span aria-hidden="true">' + selected[1] + '</span><span>' +
-      selected[0].toUpperCase() + '</span>';
+    function languageFlag(emoji, small) {
+      return '<span class="language-flag' + (small ? ' is-small' : '') +
+        '" aria-hidden="true"><span>' + emoji + '</span></span>';
+    }
+    button.innerHTML = languageFlag(selected[1], false) +
+      '<span class="visually-hidden">' + selected[2] + '</span>';
+    button.setAttribute('aria-label', 'Язык: ' + selected[2] + '. Выбрать другой');
     menu.innerHTML = languages.map(function (item) {
       return '<button class="language-option" type="button" role="menuitem" data-language="' + item[0] +
-        '" aria-current="' + (item[0] === current ? 'true' : 'false') + '"><span aria-hidden="true">' +
-        item[1] + '</span><span>' + item[2] + '</span></button>';
+        '" aria-current="' + (item[0] === current ? 'true' : 'false') + '">' +
+        languageFlag(item[1], true) + '<span>' + item[2] + '</span></button>';
     }).join('');
     button.onclick = function (event) {
       event.stopPropagation();

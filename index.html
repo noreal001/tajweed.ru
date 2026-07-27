@@ -17,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=20260727-3">
-  <link rel="stylesheet" href="assets/folio.css?v=20260727-16">
+  <link rel="stylesheet" href="assets/style.css?v=20260727-4">
+  <link rel="stylesheet" href="assets/folio.css?v=20260727-17">
   <script>
     /* Тема ставится до отрисовки, иначе моргает при загрузке.
        По умолчанию — белый бланк; тёмная включается только явно. */
@@ -47,13 +47,14 @@
     <div class="sitenav-inner">
       <div class="sitenav-right">
         <nav class="sitenav-tabs" id="sitenavTabs" aria-label="Разделы сайта"></nav>
-        <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">
+        <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="Переключить тему">
           <span class="theme-dial" aria-hidden="true"></span>
           <span class="theme-label" id="themeLabel">Тёмная</span>
         </button>
         <div class="language-switcher">
-          <button class="language-button" id="languageButton" type="button" aria-haspopup="menu" aria-expanded="false">
-            <span aria-hidden="true">🇷🇺</span><span>RU</span>
+          <button class="language-button" id="languageButton" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Язык: Русский. Выбрать другой">
+            <span class="language-flag" aria-hidden="true"><span>🇷🇺</span></span>
+            <span class="visually-hidden">Русский</span>
           </button>
           <div class="language-menu" id="languageMenu" role="menu" hidden></div>
         </div>
@@ -90,6 +91,6 @@
 
   <script src="assets/config.js"></script>
   <script src="assets/data.js"></script>
-  <script src="assets/app.js?v=20260727-11"></script>
+  <script src="assets/app.js?v=20260727-12"></script>
 </body>
 </html>

@@ -139,49 +139,58 @@ html.is-exam body {
 
 .theme-toggle,
 .language-button {
-  border-color: var(--line) !important;
-  color: #ffffff !important;
-  background: var(--brand-ink) !important;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 !important;
+  justify-content: center;
+  gap: 0;
+  border: 1px solid var(--line) !important;
+  border-radius: 50%;
+  color: var(--text) !important;
+  background: var(--surface-strong) !important;
 }
 
 :root[data-theme="light"] .theme-toggle,
 :root[data-theme="light"] .language-button {
-  border-color: var(--brand-ink) !important;
-  color: #ffffff !important;
-  background: var(--brand-ink) !important;
+  border-color: var(--line) !important;
+  color: var(--brand-ink) !important;
+  background: var(--surface-strong) !important;
 }
 
 @media (hover: hover) {
   .theme-toggle:hover,
   .language-button:hover {
-    border-color: var(--line) !important;
-    color: #ffffff !important;
-    background: var(--brand-ink) !important;
-    transform: translateY(-1px);
+    border-color: var(--line-strong) !important;
+    color: var(--text) !important;
+    background: var(--folio-wash-strong) !important;
+    transform: none;
   }
 
   :root[data-theme="light"] .theme-toggle:hover,
   :root[data-theme="light"] .language-button:hover {
-    border-color: var(--brand-ink) !important;
-    color: #ffffff !important;
-    background: var(--brand-ink) !important;
+    border-color: var(--line-strong) !important;
+    color: var(--brand-ink) !important;
+    background: var(--surface-strong) !important;
   }
 }
 
-/* На вебе навигация и настройки собраны в один цельный сегментированный блок. */
+/* Основные разделы образуют единый сегментированный блок, а тема и язык —
+   отдельные круглые служебные действия, как на wiki-странице. */
 @media (min-width: 760px) {
   .sitenav-right {
-    gap: 0;
-    border: 1px solid var(--line);
-    border-radius: 14px;
+    gap: 8px;
+    border: 0;
+    border-radius: 0;
     background: transparent;
   }
 
   .sitenav-tabs {
     gap: 0;
     padding: 0 !important;
-    border: 0 !important;
-    border-radius: 13px 0 0 13px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 14px !important;
     background: transparent;
   }
 
@@ -209,6 +218,10 @@ html.is-exam body {
     border-radius: 12px 0 0 12px;
   }
 
+  .sitenav-tabs .tab:last-child {
+    border-radius: 0 12px 12px 0;
+  }
+
   .sitenav-tabs .tab + .tab {
     border-left: 1px solid var(--line) !important;
   }
@@ -224,10 +237,12 @@ html.is-exam body {
 
   .theme-toggle,
   .language-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
     min-height: 44px;
-    border: 0 !important;
-    border-left: 1px solid var(--line) !important;
-    border-radius: 0;
+    border: 1px solid var(--line) !important;
+    border-radius: 50%;
     transform: none;
     transition:
       background-color 0.16s var(--ease),
@@ -235,14 +250,10 @@ html.is-exam body {
       transform 0.16s var(--ease);
   }
 
-  .language-button {
-    border-radius: 0 13px 13px 0;
-  }
-
   :root[data-theme="dark"] .theme-toggle,
   :root[data-theme="dark"] .language-button {
     color: var(--text) !important;
-    background: transparent !important;
+    background: var(--surface-strong) !important;
   }
 }
 
@@ -255,7 +266,7 @@ html.is-exam body {
 
   :root[data-theme="dark"] .theme-toggle:hover,
   :root[data-theme="dark"] .language-button:hover {
-    border-left-color: var(--line) !important;
+    border-color: var(--line-strong) !important;
     color: var(--text) !important;
     background: var(--folio-wash-strong) !important;
     transform: none;
@@ -286,8 +297,64 @@ html.is-exam body {
 }
 
 .language-option[aria-current="true"] {
-  color: #ffffff !important;
-  background: var(--brand-ink) !important;
+  color: var(--text) !important;
+  background: var(--surface-strong) !important;
+}
+
+.theme-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.theme-dial {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  overflow: hidden;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.theme-dial::after {
+  position: absolute;
+  inset: 0 50% 0 0;
+  background: currentColor;
+  content: "";
+}
+
+.language-flag {
+  width: 26px;
+  height: 26px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--bg);
+}
+
+.language-flag > span {
+  display: block;
+  font-size: 24px;
+  line-height: 1;
+  transform: scale(1.12);
+}
+
+.language-flag.is-small {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+.language-flag.is-small > span {
+  font-size: 22px;
 }
 
 /* Первичные действия сохраняют цвет #19191b в светлой теме. */
@@ -312,17 +379,6 @@ html.is-exam body {
    Никакой смены оттенка при hover/active/focus и никаких старых #080808. */
 :root[data-theme="light"] .sitenav-tabs .tab.is-on,
 :root[data-theme="light"] .tabbar .tab.is-on,
-:root[data-theme="light"] .theme-toggle,
-:root[data-theme="light"] .theme-toggle:hover,
-:root[data-theme="light"] .theme-toggle:active,
-:root[data-theme="light"] .theme-toggle:focus-visible,
-:root[data-theme="light"] .language-button,
-:root[data-theme="light"] .language-button:hover,
-:root[data-theme="light"] .language-button:active,
-:root[data-theme="light"] .language-button:focus-visible,
-:root[data-theme="light"] .language-option[aria-current="true"],
-:root[data-theme="light"] .language-option:hover,
-:root[data-theme="light"] .language-option:focus-visible,
 :root[data-theme="light"] .btn:not(:disabled):not(.is-pill):not(.is-ghost):not(.is-quiet):not(.is-recording),
 :root[data-theme="light"] .btn:not(:disabled):not(.is-pill):not(.is-ghost):not(.is-quiet):not(.is-recording):hover,
 :root[data-theme="light"] .btn:not(:disabled):not(.is-pill):not(.is-ghost):not(.is-quiet):not(.is-recording):active,
@@ -716,6 +772,18 @@ html.is-exam body {
 :root[data-theme="light"] .level.is-open,
 :root[data-theme="light"] .level.is-scored {
   background: var(--bg);
+}
+
+.level.is-level-one,
+:root[data-theme="light"] .level.is-level-one {
+  border-color: var(--level-one-line);
+  background: var(--level-one-bg);
+}
+
+.level.is-level-two.is-locked,
+:root[data-theme="light"] .level.is-level-two.is-locked {
+  border-color: var(--level-two-line);
+  background: var(--level-two-bg);
 }
 
 .level-button {

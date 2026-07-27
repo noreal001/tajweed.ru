@@ -497,11 +497,17 @@
     var button = document.getElementById('languageButton');
     var menu = document.getElementById('languageMenu');
     var currentLanguage = languages.filter(function (item) { return item[0] === current; })[0] || languages[0];
-    button.innerHTML = '<span aria-hidden="true">' + currentLanguage[1] + '</span><span>' + currentLanguage[0].toUpperCase() + '</span>';
+    function languageFlag(emoji, small) {
+      return '<span class="language-flag' + (small ? ' is-small' : '') +
+        '" aria-hidden="true"><span>' + emoji + '</span></span>';
+    }
+    button.innerHTML = languageFlag(currentLanguage[1], false) +
+      '<span class="visually-hidden">' + currentLanguage[2] + '</span>';
+    button.setAttribute('aria-label', 'Язык: ' + currentLanguage[2] + '. Выбрать другой');
     menu.innerHTML = languages.map(function (item) {
       return '<button class="language-option" type="button" role="menuitem" data-language="' + item[0] +
-        '" aria-current="' + (item[0] === current ? 'true' : 'false') + '"><span aria-hidden="true">' +
-        item[1] + '</span><span>' + item[2] + '</span></button>';
+        '" aria-current="' + (item[0] === current ? 'true' : 'false') + '">' +
+        languageFlag(item[1], true) + '<span>' + item[2] + '</span></button>';
     }).join('');
     button.onclick = function (event) {
       event.stopPropagation();
