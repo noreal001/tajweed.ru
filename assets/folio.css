@@ -57,6 +57,34 @@ body {
   background: var(--bg);
 }
 
+/* Google Translate нужен только как механизм перевода за нашим языковым меню.
+   Его служебная панель, подсказка исходного текста и сдвиг страницы не являются
+   частью интерфейса сайта и остаются скрытыми во всех браузерах. */
+html {
+  margin-top: 0 !important;
+}
+
+html body {
+  top: 0 !important;
+}
+
+iframe.goog-te-banner-frame,
+.goog-te-banner-frame,
+.VIpgJd-ZVi9od-ORHb-OEVmcd,
+body > .skiptranslate:not(#google_translate_element),
+#goog-gt-tt,
+.goog-te-balloon-frame {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+  visibility: hidden !important;
+}
+
+.goog-text-highlight {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 /* Верхняя навигация остаётся закреплённой и получает собственную иерархию:
    главное меню — единый сегментированный блок, тема и язык — отдельные действия. */
 .sitenav {
