@@ -548,7 +548,28 @@ html.is-exam body {
 
 :root[data-theme="light"] .welcome-hero,
 :root[data-theme="light"] .cta-banner {
+  color: #0a0a0b !important;
   box-shadow: none;
+}
+
+:root[data-theme="light"] .welcome-hero #welcomeTitle,
+:root[data-theme="light"] .welcome-hero #welcomeTitle span,
+:root[data-theme="light"] .cta-banner h2 {
+  color: #0a0a0b !important;
+  -webkit-text-fill-color: #0a0a0b;
+  opacity: 1;
+  visibility: visible;
+}
+
+:root[data-theme="light"] .welcome-hero #welcomeTitle em,
+:root[data-theme="light"] .welcome-hero #welcomeTitle em span,
+:root[data-theme="light"] .welcome-hero .kicker,
+:root[data-theme="light"] .welcome-hero .hero-meta,
+:root[data-theme="light"] .cta-banner .kicker {
+  color: #4f4d52 !important;
+  -webkit-text-fill-color: #4f4d52;
+  opacity: 1;
+  visibility: visible;
 }
 
 .welcome-hero {
