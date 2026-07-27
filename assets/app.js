@@ -267,7 +267,12 @@
     } else {
       html += '<li class="level is-level-two is-locked">' +
         levelDecor() +
-        '<div class="level-head"><span class="level-n">Уровень 2</span><span class="level-lock">🔒 закрыт</span></div>' +
+        '<div class="level-head"><span class="level-n">Уровень 2</span>' +
+          '<span class="level-lock"><svg class="level-lock-icon" viewBox="0 0 24 24" fill="none" ' +
+            'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" ' +
+            'focusable="false" aria-hidden="true"><circle cx="12" cy="16" r="1"></circle>' +
+            '<rect x="3" y="10" width="18" height="12" rx="2"></rect>' +
+            '<path d="M7 10V7a5 5 0 0 1 10 0v3"></path></svg>закрыт</span></div>' +
         '<p class="level-topic">' + esc(second.topic) + '</p>' +
         levelOutline(second) +
         '<p class="level-hint">Откроется после результата 100% за первый уровень</p>' +
@@ -929,6 +934,24 @@
     };
   }
 
+  /* Единый набор навигационных пиктограмм на сетке 24×24.
+     Контуры взяты из Lucide (ISC), но чуть утолщены для небольших экранов. */
+  function navIcon(id) {
+    var paths = {
+      home: '<path class="icon-bolt" d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path>',
+      exam: '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>' +
+        '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>' +
+        '<path d="m9 14 2 2 4-4"></path>',
+      lead: '<path d="M12 7v14"></path>' +
+        '<path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>',
+      profile: '<circle cx="12" cy="8" r="5"></circle>' +
+        '<path d="M20 21a8 8 0 0 0-16 0"></path>'
+    };
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+      'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" ' +
+      'focusable="false" aria-hidden="true">' + (paths[id] || paths.home) + '</svg>';
+  }
+
   function paintNav() {
     var isExam = state.phase === 'exam';
     var exit = document.getElementById('examExit');
@@ -961,6 +984,7 @@
         var icon = document.createElement('span');
         icon.className = 'tab-icon is-' + item.id;
         icon.setAttribute('aria-hidden', 'true');
+        icon.innerHTML = navIcon(item.id);
         var label = document.createElement('span');
         label.className = 'tab-label';
         label.textContent = item.label;
@@ -1029,7 +1053,14 @@
           '<span class="hero-meta-lines">' +
             '<span class="hero-meta-site">ТАДЖВИД.РФ // 2026</span>' +
             '<span class="hero-meta-teacher">ПРЕПОДАВАТЕЛЬ ДЕАБ АНАС Т. ' +
-              '<span class="teacher-flag" role="img" aria-label="Палестина"></span>' +
+              '<span class="teacher-flag" role="img" aria-label="Палестина">' +
+                '<svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true">' +
+                  '<rect width="60" height="14" fill="#101012"></rect>' +
+                  '<rect y="14" width="60" height="13" fill="#fff"></rect>' +
+                  '<rect y="27" width="60" height="13" fill="#149954"></rect>' +
+                  '<path d="M0 0 25 20 0 40Z" fill="#e4312b"></path>' +
+                '</svg>' +
+              '</span>' +
             '</span>' +
           '</span>' +
         '</div>' +

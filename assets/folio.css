@@ -385,41 +385,24 @@ html.is-exam body {
   background: transparent;
 }
 
-.theme-dial::before {
-  width: 25px;
-  height: 25px;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-  color: currentColor;
-  content: "";
-}
-
-.theme-dial::after {
-  position: absolute;
-  top: 0;
-  right: -1px;
-  width: 21px;
-  height: 21px;
+.theme-icon {
+  width: 29px;
+  height: 29px;
   display: block;
-  border-radius: 50%;
-  background: var(--bg);
-  content: "";
+  overflow: visible;
+  shape-rendering: geometricPrecision;
 }
 
-:root[data-theme="dark"] .theme-dial::before {
-  width: auto;
-  height: auto;
-  border: 0;
-  border-radius: 0;
-  content: "\2600\FE0E";
-  font-family: "Apple Symbols", "Segoe UI Symbol", sans-serif;
-  font-size: 34px;
-  font-weight: 400;
-  line-height: 1;
-}
-
-:root[data-theme="dark"] .theme-dial::after {
+.theme-icon-sun {
   display: none;
+}
+
+:root[data-theme="dark"] .theme-icon-moon {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-icon-sun {
+  display: block;
 }
 
 .theme-toggle,
@@ -712,7 +695,6 @@ html.is-exam body {
 }
 
 .teacher-flag {
-  position: relative;
   width: 30px;
   height: 30px;
   margin-left: 7px;
@@ -720,25 +702,15 @@ html.is-exam body {
   display: inline-block;
   border: 1px solid var(--plaque-line);
   border-radius: 50%;
-  background:
-    linear-gradient(
-      to bottom,
-      #0a0a0b 0 33.333%,
-      #ffffff 33.333% 66.666%,
-      #149954 66.666% 100%
-    );
+  background: transparent;
   vertical-align: middle;
 }
 
-.teacher-flag::after {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 58%;
+.teacher-flag > svg {
+  width: 100%;
   height: 100%;
-  background: #e4312b;
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
-  content: "";
+  display: block;
+  shape-rendering: geometricPrecision;
 }
 
 .cta-banner h2 {
@@ -965,6 +937,20 @@ html.is-exam body {
   border-radius: 0;
   color: var(--plaque-ink);
   background: transparent;
+}
+
+.level-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.level-lock-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  flex: 0 0 16px;
+  shape-rendering: geometricPrecision;
 }
 
 .level.is-locked,
@@ -1564,7 +1550,7 @@ html.is-auth .sheet {
 }
 
 /* Мобильная навигация: чуть уже экрана, выше прежней и всегда на месте.
-   Иконки построены линиями CSS, поэтому остаются чёткими на любом DPI. */
+   Все пиктограммы — настоящие SVG на общей сетке 24×24. */
 .tabbar {
   left: 50%;
   right: auto;
@@ -1598,41 +1584,35 @@ html.is-auth .sheet {
   text-overflow: ellipsis;
 }
 
-.sitenav-tabs .tab-icon {
-  display: none;
-}
-
 .tab-icon {
   position: relative;
-  width: 22px;
-  height: 22px;
-  display: block;
-  flex: 0 0 22px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 26px;
   color: currentColor;
-  transition: transform 0.16s var(--ease);
+  opacity: 0.88;
+  transition: transform 0.16s var(--ease), opacity 0.16s var(--ease);
 }
 
-.tab-icon::before,
-.tab-icon::after {
-  position: absolute;
-  box-sizing: border-box;
-  content: "";
-}
-
-.tab-icon.is-home::before {
-  inset: 1px;
-  background: currentColor;
-  clip-path: polygon(56% 5%, 16% 57%, 42% 57%, 34% 95%, 82% 39%, 55% 39%);
-}
-
-.tab-icon.is-home::after {
-  display: none;
+.tab-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  shape-rendering: geometricPrecision;
 }
 
 .tabbar .tab-home .tab-icon {
-  width: 28px;
-  height: 28px;
-  flex-basis: 28px;
+  width: 30px;
+  height: 30px;
+  flex-basis: 30px;
+}
+
+.tab-icon.is-home .icon-bolt {
+  fill: currentColor;
+  stroke-width: 1.7;
 }
 
 .tabbar .tab-home .tab-label {
@@ -1644,63 +1624,29 @@ html.is-auth .sheet {
   white-space: nowrap;
 }
 
-.tab-icon.is-exam::before {
-  left: 5px;
-  top: 2px;
-  width: 12px;
-  height: 18px;
-  border: 1.5px solid currentColor;
-  border-radius: 3px;
-}
-
-.tab-icon.is-exam::after {
-  left: 8px;
-  top: 7px;
-  width: 6px;
-  height: 1.5px;
-  background: currentColor;
-  box-shadow: 0 4px 0 currentColor, 0 8px 0 currentColor;
-}
-
-.tab-icon.is-lead::before,
-.tab-icon.is-lead::after {
-  top: 4px;
-  width: 10px;
-  height: 15px;
-  border: 1.5px solid currentColor;
-  background: transparent;
-}
-
-.tab-icon.is-lead::before {
-  left: 2px;
-  border-radius: 4px 1px 1px 3px;
-}
-
-.tab-icon.is-lead::after {
-  right: 2px;
-  border-radius: 1px 4px 3px 1px;
-}
-
-.tab-icon.is-profile::before {
-  left: 7px;
-  top: 2px;
-  width: 8px;
-  height: 8px;
-  border: 1.5px solid currentColor;
-  border-radius: 50%;
-}
-
-.tab-icon.is-profile::after {
-  left: 3px;
-  bottom: 1px;
-  width: 16px;
-  height: 9px;
-  border: 1.5px solid currentColor;
-  border-radius: 10px 10px 3px 3px;
+.tab.is-on .tab-icon {
+  opacity: 1;
 }
 
 .tabbar .tab:active .tab-icon {
   transform: scale(0.9);
+}
+
+@media (min-width: 760px) {
+  .sitenav-tabs .tab {
+    gap: 7px;
+  }
+
+  .sitenav-tabs .tab-icon {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+    opacity: 0.78;
+  }
+
+  .sitenav-tabs .tab.is-on .tab-icon {
+    opacity: 1;
+  }
 }
 
 html.nav-hidden .tabbar {
