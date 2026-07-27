@@ -1214,20 +1214,27 @@ html.is-auth body {
   padding-top: var(--site-nav-space);
 }
 
+html.is-auth .sitenav {
+  visibility: visible;
+  opacity: 1;
+}
+
 html.is-auth .sheet-nodes {
   display: none;
 }
 
 html.is-auth .sheet {
+  padding-top: 0;
+  padding-bottom: 0;
   border-right: 0;
   border-left: 0;
 }
 
 .auth-glass {
-  width: min(100%, 440px);
-  min-height: min(660px, calc(100svh - 190px));
+  width: min(100%, 600px);
+  min-height: calc(100svh - var(--site-nav-space));
   margin: 0 auto;
-  padding: clamp(18px, 4vw, 36px) 0 28px;
+  padding: clamp(32px, 5vw, 64px) clamp(20px, 4vw, 48px);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1245,8 +1252,8 @@ html.is-auth .sheet {
 }
 
 .auth-brand-mark {
-  width: 54px;
-  height: 54px;
+  width: clamp(58px, 5.2vw, 70px);
+  height: clamp(58px, 5.2vw, 70px);
   display: grid;
   place-items: center;
   border: 1px solid var(--line);
@@ -1254,24 +1261,24 @@ html.is-auth .sheet {
   color: var(--text);
   background: var(--bg);
   font-family: var(--font-ar);
-  font-size: 34px;
+  font-size: clamp(36px, 3.6vw, 44px);
   line-height: 1;
 }
 
 .auth-heading {
-  margin-top: 22px;
+  margin-top: clamp(24px, 3vw, 34px);
   text-align: center;
 }
 
 .auth-heading h1 {
-  font-size: clamp(32px, 6vw, 40px);
+  font-size: clamp(38px, 4.2vw, 52px);
 }
 
 .auth-heading p {
-  max-width: 34ch;
-  margin: 8px auto 0;
+  max-width: 40ch;
+  margin: 10px auto 0;
   color: var(--text-soft);
-  font-size: 15px;
+  font-size: clamp(15px, 1.5vw, 17px);
   line-height: 1.5;
 }
 
@@ -1337,13 +1344,13 @@ html.is-auth .sheet {
 }
 
 .auth-phone-panel {
-  width: 100%;
+  width: min(100%, 520px);
   margin-inline: auto;
 }
 
 .auth-phone-form {
-  margin-top: 28px;
-  gap: 16px;
+  margin-top: clamp(28px, 3.6vw, 40px);
+  gap: 19px;
 }
 
 .auth-phone-form .field label {
@@ -1354,9 +1361,9 @@ html.is-auth .sheet {
 }
 
 .auth-phone-form .field input {
-  min-height: 52px;
-  margin-top: 7px;
-  padding: 13px 15px;
+  min-height: 60px;
+  margin-top: 8px;
+  padding: 15px 17px;
   border-color: var(--line);
   border-radius: 14px;
   background: var(--bg);
@@ -1393,7 +1400,7 @@ html.is-auth .sheet {
 }
 
 .auth-submit {
-  min-height: 52px;
+  min-height: 60px;
   margin-top: 4px;
   border-radius: 0 !important;
   color: #ffffff !important;
@@ -1471,8 +1478,9 @@ html.is-auth .sheet {
 
 @media (max-width: 680px) {
   .auth-glass {
-    min-height: calc(100svh - 178px);
-    padding: 10px 4px 28px;
+    width: 100%;
+    min-height: calc(100svh - var(--site-nav-space) - 92px);
+    padding: 18px 4px 30px;
   }
 
   .auth-heading {
@@ -1481,6 +1489,26 @@ html.is-auth .sheet {
 
   .auth-heading h1 {
     font-size: 32px;
+  }
+
+  .auth-phone-form .field input,
+  .auth-submit {
+    min-height: 52px;
+  }
+}
+
+@media (max-width: 759px) {
+  html.is-auth .tabbar {
+    display: flex !important;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (min-width: 760px) {
+  html.is-auth .sitenav {
+    display: block !important;
   }
 }
 
