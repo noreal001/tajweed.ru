@@ -630,7 +630,7 @@
 
   function themeRow() {
     var isLight = document.documentElement.getAttribute('data-theme') === 'light';
-    return '<button class="setting-row" id="profileTheme" type="button" aria-pressed="' + (isLight ? 'true' : 'false') + '">' +
+    return '<button class="setting-row profile-theme-setting" id="profileTheme" type="button" aria-pressed="' + (isLight ? 'true' : 'false') + '">' +
       '<span><b>Оформление</b><small>Тёмное или светлое</small></span>' +
       '<span class="setting-value"><span class="theme-dial" aria-hidden="true"></span>' +
         (isLight ? 'Светлое' : 'Тёмное') + '</span></button>';
@@ -739,8 +739,6 @@
       '</form>' +
       '<section class="login-actions" aria-labelledby="registrationTitle">' +
         '<h2 class="kicker" id="registrationTitle">Нет профиля<span class="cur">_</span></h2>' +
-        '<div class="btn-row"><button class="btn is-ghost btn-block" id="toExam">Сдать экзамен и завести профиль</button></div>' +
-        '<div class="login-divider" aria-hidden="true"><span>или</span></div>' +
         '<div class="btn-row login-yandex-row" id="yandexRow">' +
           '<button class="btn is-ghost btn-block yandex-button" id="yandexBtn" type="button" ' +
             'aria-describedby="yandexHint" disabled>' +
@@ -755,7 +753,6 @@
       '</section>'
     );
     wireThemeRow();
-    document.getElementById('toExam').onclick = function () { state.phase = 'reg'; show(); };
 
     if (startupError) {
       var startErr = document.getElementById('loginErr');
@@ -812,7 +809,7 @@
         err.textContent = e2 && e2.status === 429
           ? 'Слишком много попыток. Попробуйте через 15 минут.'
           : e2 && (e2.status === 401 || e2.status === 404)
-            ? 'Неверный номер или пароль. Кабинет появляется после первого экзамена — если вы ещё не сдавали, нажмите «Сдать экзамен и завести профиль» ниже.'
+            ? 'Неверный номер или пароль. Если вы ещё не сдавали экзамен, откройте раздел «Экзамен» в главном меню.'
           : 'Не получилось войти. Проверьте интернет и попробуйте ещё раз.';
       });
     };

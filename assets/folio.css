@@ -778,7 +778,7 @@ html.is-exam body {
   justify-content: flex-end;
 }
 
-/* Экран входа: действия, провайдер и настройки — три отдельные зоны. */
+/* Экран входа: пароль и Яндекс — два ясных способа авторизации. */
 .login-actions {
   margin-top: 40px;
   padding-top: 0;
@@ -792,19 +792,6 @@ html.is-exam body {
 
 .login-actions .btn-row {
   margin-top: 0;
-}
-
-.login-divider {
-  margin: 18px 0;
-  display: block;
-  color: var(--text-faint);
-  font-size: 12px;
-  text-transform: uppercase;
-}
-
-.login-divider::before,
-.login-divider::after {
-  content: none;
 }
 
 .login-yandex-row {
@@ -855,6 +842,15 @@ html.is-exam body {
 .login-yandex-row .btn:disabled .yandex-mark {
   filter: grayscale(1);
   opacity: 0.62;
+}
+
+/* На вебе тема уже находится в постоянно видимом верхнем меню.
+   На телефоне верхнее меню скрыто, поэтому строка оформления остаётся. */
+@media (min-width: 760px) {
+  .profile-theme-setting,
+  .login-settings {
+    display: none;
+  }
 }
 
 /* Второй экзамен продолжает тот же язык манускрипта. */
