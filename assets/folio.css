@@ -203,6 +203,12 @@ html.is-exam body {
       transform 0.16s var(--ease);
   }
 
+  /* Первый активный сегмент повторяет внутренний радиус общей рамки.
+     Иначе прямоугольный фон «Главной» визуально залезает на левый контур. */
+  .sitenav-tabs .tab:first-child {
+    border-radius: 12px 0 0 12px;
+  }
+
   .sitenav-tabs .tab + .tab {
     border-left: 1px solid var(--line) !important;
   }
