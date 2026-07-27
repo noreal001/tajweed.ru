@@ -23,3 +23,68 @@ window.TAJWEED_LANGUAGES = [
   ['tk', '<svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="32" height="32" fill="#28ae66"/><rect x="4" width="5.5" height="32" fill="#b02b2c"/><rect x="5" y="3.5" width="3.5" height="10" rx="0.6" fill="#fff" fill-opacity="0.45"/></svg>', 'Türkmençe'],
   ['hy', '<svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="32" height="10.7" fill="#d90012"/><rect y="10.7" width="32" height="10.6" fill="#0033a0"/><rect y="21.3" width="32" height="10.7" fill="#f2a800"/></svg>', 'Հայերեն']
 ];
+
+/* Выбор языка хранится отдельно от служебной cookie Google Translate.
+   Так флаг и выбранный язык не сбрасываются, даже если браузер очистил cookie. */
+window.TAJWEED_I18N = (function () {
+  var STORAGE_KEY = 'tajweed_language';
+
+  function isAllowed(code) {
+    return (window.TAJWEED_LANGUAGES || []).some(function (item) {
+      return item[0] === code;
+    });
+  }
+
+  function cookieLanguage() {
+    var match = document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
+    if (!match) return '';
+    try {
+      return decodeURIComponent(match[1]).split('/').pop();
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function current() {
+    var stored = '';
+    try { stored = localStorage.getItem(STORAGE_KEY) || ''; } catch (error) {}
+    if (isAllowed(stored)) return stored;
+    var cookie = cookieLanguage();
+    return isAllowed(cookie) ? cookie : 'ru';
+  }
+
+  function clearTranslateCookies() {
+    var domains = ['', location.hostname, '.' + location.hostname];
+    domains.filter(function (domain, index) {
+      return domains.indexOf(domain) === index;
+    }).forEach(function (domain) {
+      document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/' +
+        (domain ? '; domain=' + domain : '') + '; SameSite=Lax';
+    });
+  }
+
+  function writeTranslateCookie(code) {
+    clearTranslateCookies();
+    if (code === 'ru') return;
+    document.cookie = 'googtrans=/ru/' + code +
+      '; path=/; max-age=31536000; SameSite=Lax' +
+      (location.protocol === 'https:' ? '; Secure' : '');
+  }
+
+  function set(code) {
+    var next = isAllowed(code) ? code : 'ru';
+    try { localStorage.setItem(STORAGE_KEY, next); } catch (error) {}
+    writeTranslateCookie(next);
+    return next;
+  }
+
+  function ensureTranslateCookie(code) {
+    if (code !== 'ru' && cookieLanguage() !== code) writeTranslateCookie(code);
+  }
+
+  return {
+    current: current,
+    set: set,
+    ensureTranslateCookie: ensureTranslateCookie
+  };
+})();

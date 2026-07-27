@@ -487,8 +487,8 @@
 
   (function wireLanguages() {
     var languages = window.TAJWEED_LANGUAGES || [];
-    var cookie = document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
-    var current = cookie ? decodeURIComponent(cookie[1]).split('/').pop() : 'ru';
+    var i18n = window.TAJWEED_I18N;
+    var current = i18n ? i18n.current() : 'ru';
     var button = document.getElementById('languageButton');
     var menu = document.getElementById('languageMenu');
     var currentLanguage = languages.filter(function (item) { return item[0] === current; })[0] || languages[0];
@@ -513,20 +513,19 @@
       var option = event.target.closest('[data-language]');
       if (!option) return;
       var code = option.getAttribute('data-language');
-      document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-      document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.' + location.hostname;
-      if (code !== 'ru') {
-        document.cookie = 'googtrans=/ru/' + code + '; path=/';
-        document.cookie = 'googtrans=/ru/' + code + '; path=/; domain=.' + location.hostname;
-      }
+      if (i18n) code = i18n.set(code);
+      document.documentElement.setAttribute('lang', code);
+      document.documentElement.setAttribute('dir', code === 'ar' ? 'rtl' : 'ltr');
       location.reload();
     };
     document.addEventListener('click', function () {
       menu.hidden = true;
       button.setAttribute('aria-expanded', 'false');
     });
-    if (current === 'ar') document.documentElement.setAttribute('dir', 'rtl');
+    document.documentElement.setAttribute('lang', current);
+    document.documentElement.setAttribute('dir', current === 'ar' ? 'rtl' : 'ltr');
     if (current !== 'ru') {
+      if (i18n) i18n.ensureTranslateCookie(current);
       var target = document.createElement('div');
       target.id = 'google_translate_element';
       target.hidden = true;
