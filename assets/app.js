@@ -139,15 +139,14 @@
 
   /* Сетка обложки повторяет plaque из wiki: 6×3 на широком экране,
      4×2 на планшете и 3×2 на телефоне. Узлы стоят на всех пересечениях. */
-  function blueprintLayer(cols, rows, hatchIndexes, extra) {
+  function blueprintLayer(cols, rows, extra) {
     var cells = '';
     var nodes = '';
     var i;
     var row;
     var col;
     for (i = 0; i < cols * rows; i++) {
-      cells += '<span class="blueprint-cell' +
-        (hatchIndexes.indexOf(i) !== -1 ? ' is-hatched' : '') + '"></span>';
+      cells += '<span class="blueprint-cell"></span>';
     }
     for (row = 0; row <= rows; row++) {
       for (col = 0; col <= cols; col++) {
@@ -162,13 +161,13 @@
   }
 
   function blueprintLayers() {
-    return blueprintLayer(6, 3, [2, 9, 13, 16], 'is-desktop') +
-      blueprintLayer(4, 2, [2, 5], 'is-tablet') +
-      blueprintLayer(3, 2, [1, 4], 'is-mobile');
+    return blueprintLayer(6, 3, 'is-desktop') +
+      blueprintLayer(4, 2, 'is-tablet') +
+      blueprintLayer(3, 2, 'is-mobile');
   }
 
   function levelDecor() {
-    return marks('is-level') + blueprintLayer(3, 2, [1, 4], 'is-level');
+    return marks('is-level') + blueprintLayer(3, 2, 'is-level');
   }
 
   /* Цвет уровня по проценту: от тревожного красного к неоновой зелени. */
@@ -2623,13 +2622,13 @@
     }, { passive: true });
   })();
 
-  /* Как в эталонной plaque: кроме hover, свободные ячейки по очереди
-     на секунду заполняются штриховкой. Скрытые responsive-слои пропускаем. */
+  /* Как в эталонной plaque: ни одна ячейка не закрашена постоянно.
+     Кроме hover, видимые клетки по очереди появляются и снова исчезают. */
   (function animateBlueprintCells() {
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     window.setInterval(function () {
       var cells = [].slice.call(document.querySelectorAll(
-        '.blueprint-layer .blueprint-cell:not(.is-hatched)'
+        '.blueprint-layer .blueprint-cell'
       )).filter(function (cell) {
         return cell.offsetParent !== null && !cell.matches(':hover') &&
           !cell.classList.contains('is-lit');

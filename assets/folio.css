@@ -520,7 +520,6 @@ html.is-exam body {
   pointer-events: none;
 }
 
-.blueprint-cell.is-hatched::after,
 .blueprint-cell.is-lit::after,
 .blueprint-cell:hover::after {
   opacity: 1;
