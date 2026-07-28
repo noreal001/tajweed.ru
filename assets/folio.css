@@ -880,11 +880,16 @@ html.is-exam body {
   background: var(--plaque-bg);
 }
 
-.level > .blueprint-layer.is-level .blueprint-cell:nth-child(3n) {
+/* Гасим только границы ПО КРАЮ карточки — там уже есть её собственная
+   рамка. Номера завязаны на сетку 2×2 (levelDecor в app.js и генератор
+   статичных страниц): последний столбец — каждая 2-я клетка, последний
+   ряд — начиная с 3-й. При прежних 3×2 эти правила стирали внутреннюю
+   вертикаль снизу, и вместо четырёх клеток получалось три. */
+.level > .blueprint-layer.is-level .blueprint-cell:nth-child(2n) {
   border-right-color: transparent;
 }
 
-.level > .blueprint-layer.is-level .blueprint-cell:nth-child(n + 4) {
+.level > .blueprint-layer.is-level .blueprint-cell:nth-child(n + 3) {
   border-bottom-color: transparent;
 }
 
