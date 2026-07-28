@@ -492,11 +492,28 @@ html.is-exam body {
   background: var(--inverse-bg);
 }
 
-:root[data-theme="light"] .btn:not(.is-recording),
-:root[data-theme="light"] .btn:not(.is-recording):hover:not(:disabled),
-:root[data-theme="light"] .btn:not(.is-recording):active {
+/* Тихие и контурные кнопки исключены: без этого правило красило в
+   графит ВСЕ кнопки светлой темы, и второстепенное действие выглядело
+   такой же чёрной плашкой, как главное. */
+:root[data-theme="light"] .btn:not(.is-recording):not(.is-quiet):not(.is-ghost),
+:root[data-theme="light"] .btn:not(.is-recording):not(.is-quiet):not(.is-ghost):hover:not(:disabled),
+:root[data-theme="light"] .btn:not(.is-recording):not(.is-quiet):not(.is-ghost):active {
   color: #ffffff;
   background: var(--brand-ink);
+}
+
+/* Контурная кнопка светлой темы: белая с графитовым кантом. */
+:root[data-theme="light"] .btn.is-ghost,
+:root[data-theme="light"] .btn.is-ghost:hover:not(:disabled) {
+  border: 1px solid var(--control-line);
+  color: var(--brand-ink);
+  background: transparent;
+}
+
+:root[data-theme="light"] .btn.is-quiet,
+:root[data-theme="light"] .btn.is-quiet:hover:not(:disabled) {
+  color: var(--text-soft);
+  background: transparent;
 }
 
 /* В светлой теме тёмная кнопка сохраняет один графитовый оттенок. */
@@ -745,9 +762,9 @@ html.is-exam body {
 }
 
 .teacher-flag {
-  width: 11px;
-  height: 11px;
-  margin-left: 4px;
+  width: 16px;
+  height: 16px;
+  margin-left: 5px;
   display: inline-block;
   overflow: hidden;
   border: 1px solid var(--plaque-line);
@@ -810,12 +827,15 @@ html.is-exam body {
   min-width: 0;
 }
 
+/* Пропорция 3:2 — это ПОЖЕЛАНИЕ формы, а не жёсткий размер: при
+   `min-height: 0` карточка не росла под свой текст, и в светлой теме
+   процент с итоговой шкалой вываливались за нижний кант. */
 .level,
 :root[data-theme="light"] .level {
   --level-frame: 18px;
   position: relative;
   width: 100%;
-  min-height: 0;
+  min-height: auto;
   aspect-ratio: 3 / 2;
   padding: 24px;
   overflow: visible;
@@ -2085,10 +2105,10 @@ html.has-tabbar body {
   }
 
   .welcome-hero .teacher-flag {
-    width: 10px;
-    height: 10px;
+    width: 15px;
+    height: 15px;
     margin-left: 0;
-    flex: 0 0 10px;
+    flex: 0 0 15px;
   }
 
   .profile-summary {
@@ -2113,22 +2133,31 @@ html.has-tabbar body {
     gap: 10px;
   }
 
+  /* Шесть уровней встают в три колонки: в два ряда вкладка «Результаты»
+     помещается в экран вместе со списком попыток. */
   .profile-levels {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .profile-level {
-    padding: 12px;
+    padding: 9px 8px;
   }
 
   .profile-level-head {
+    margin-bottom: 8px;
     display: grid;
-    gap: 4px;
+    gap: 3px;
+    font-size: 9.5px;
+    letter-spacing: 0.04em;
+  }
+
+  .profile-level-head strong {
+    font-size: 9.5px;
   }
 
   .profile-level-meter {
-    height: 30px;
+    height: 22px;
   }
 
   .welcome-hero .crosshair {
@@ -2211,7 +2240,11 @@ html.has-tabbar body {
     left: 0;
   }
 
-  .level {
+  /* Светлая тема тоже перечислена: без неё правило `:root[data-theme=
+     "light"] .level` перевешивает мобильное по специфичности, карточка
+     остаётся жёстко пропорциональной и обрезает процент. */
+  .level,
+  :root[data-theme="light"] .level {
     --level-frame: 14px;
     min-height: 238px;
     aspect-ratio: auto;
@@ -2414,14 +2447,20 @@ html.has-tabbar body {
   content: "";
 }
 
+/* Шторки лишь намекают на край барабана. Раньше они гасили соседние
+   строки почти в ноль, и колесо казалось нелистающимся. */
 .schedule-wheel::before {
   top: 0;
-  background: linear-gradient(to bottom, var(--bg), color-mix(in srgb, var(--bg) 72%, transparent));
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--bg) 78%, transparent),
+    color-mix(in srgb, var(--bg) 12%, transparent));
 }
 
 .schedule-wheel::after {
   bottom: 0;
-  background: linear-gradient(to top, var(--bg), color-mix(in srgb, var(--bg) 72%, transparent));
+  background: linear-gradient(to top,
+    color-mix(in srgb, var(--bg) 78%, transparent),
+    color-mix(in srgb, var(--bg) 12%, transparent));
 }
 
 .schedule-wheel-focus {
@@ -2488,13 +2527,15 @@ html.has-tabbar body {
   transform: none;
 }
 
+/* Соседние значения обязаны читаться: при прежних 0.5 и 0.18 барабан
+   выглядел как одна строка, и было непонятно, что его листают. */
 .schedule-wheel-option.is-near {
-  opacity: 0.5;
+  opacity: 0.78;
 }
 
 .schedule-wheel-option.is-far {
-  opacity: 0.18;
-  transform: scale(0.88);
+  opacity: 0.42;
+  transform: scale(0.92);
 }
 
 .schedule-selection {
@@ -2524,5 +2565,250 @@ html.has-tabbar body {
 @media (prefers-reduced-motion: reduce) {
   .schedule-wheel-option {
     transition: none;
+  }
+}
+
+/* ── Кабинет: три вкладки-пилюльки ──────────────────────────
+   Форма капсулы и заливка активного пункта — те же, что у нижней
+   навигации: у сайта должен быть один язык управления. Раньше кабинет
+   был одной длинной простынёй; теперь каждая вкладка влезает в экран. */
+.profile-tabs {
+  margin: 16px 0 20px;
+  padding: 5px;
+  display: flex;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-glass);
+}
+
+.profile-tab {
+  min-height: 44px;
+  padding: 0 8px;
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  color: var(--text-soft);
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  transition: color 0.16s var(--ease), background-color 0.16s var(--ease);
+}
+
+.profile-tab:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.profile-tab.is-on {
+  color: #ffffff;
+  background: var(--nav-active-bg);
+}
+
+:root[data-theme="light"] .profile-tab.is-on {
+  color: #ffffff;
+  background: var(--brand-ink);
+}
+
+:root[data-theme="light"] .profile-tab:not(.is-on) {
+  color: #19191b;
+}
+
+.profile-pane:focus {
+  outline: none;
+}
+
+/* Короткая сводка по экзамену на первой вкладке: уровень, процент,
+   вердикт. Большие карточки уровней живут во вкладке «Результаты». */
+.profile-standing {
+  margin-top: 18px;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.profile-standing-head {
+  margin-top: 10px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 15px;
+}
+
+.profile-standing-head b {
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.profile-standing .level-bar {
+  margin-top: 12px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--folio-highlight);
+}
+
+.profile-standing .level-bar span {
+  height: 100%;
+  display: block;
+  background: var(--text);
+}
+
+.profile-standing-note {
+  margin-top: 10px;
+  color: var(--text-soft);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+
+/* Кнопка-попытка — блочный элемент: без явной ширины браузер сжимает её
+   по содержимому, и колонка с процентом уезжает под текст. */
+.result-item {
+  width: 100%;
+}
+
+@media (max-width: 759px) {
+  /* В кабинете разделы стоят ближе друг к другу: вкладка должна
+     помещаться в экран телефона вместе с нижним меню. */
+  .profile-pane .profile-section {
+    margin-top: 26px;
+  }
+
+  .profile-pane .result-list {
+    margin-top: 14px;
+  }
+
+  .profile-pane .result-item {
+    padding: 12px 0;
+  }
+
+  .profile-pane .result-item .score {
+    font-size: 17px;
+  }
+}
+
+.result-item-body {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+
+@media (max-width: 759px) {
+  /* На телефоне заголовок кабинета скромнее: вкладки уже называют раздел,
+     а высота нужна содержимому — экран должен закончиться над меню. */
+  .profile-title {
+    margin-bottom: 4px;
+    font-size: 30px;
+    line-height: 1.05;
+  }
+
+  .profile-tabs {
+    margin: 12px 0 14px;
+  }
+}
+
+@media (max-width: 759px) {
+  /* Две кнопки кабинета встают в один ряд: столбиком они уезжали под
+     нижнее меню. */
+  .profile-pane .btn-row {
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+
+  .profile-pane .btn-row .btn {
+    min-width: 0;
+    flex: 1 1 0;
+    padding-inline: 12px;
+    font-size: 14px;
+  }
+}
+
+/* ── Баннеры: кнопки в ряд, без слипания ────────────────────
+   Кнопки шли подряд без зазора и читались как один сплошной блок. */
+.welcome-hero .hero-actions,
+.cta-banner .hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Заполнение кнопки продолжения = доля пройденного экзамена. Цвет берём
+   от текста кнопки, поэтому индикатор одинаково читается и на чёрной
+   кнопке светлой темы, и на светлой плашке тёмной. */
+.btn.is-progress {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.btn.is-progress .btn-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  width: var(--progress, 0%);
+  background: currentColor;
+  opacity: 0.24;
+  pointer-events: none;
+}
+
+.btn.is-progress .btn-text {
+  position: relative;
+  z-index: 1;
+}
+
+/* «Начать заново» — вспомогательное действие: контур вместо второй
+   сплошной плашки, иначе рядом стоят два одинаковых чёрных кирпича. */
+.welcome-hero .hero-actions .btn.is-ghost,
+.cta-banner .hero-actions .btn.is-ghost,
+:root[data-theme="light"] .welcome-hero .hero-actions .btn.is-ghost,
+:root[data-theme="light"] .cta-banner .hero-actions .btn.is-ghost {
+  min-height: 42px;
+  padding: 9px 16px;
+  border: 1px solid var(--plaque-line) !important;
+  border-radius: 0;
+  color: var(--plaque-ink) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 420px) {
+  /* На узком экране кнопки встают в столбик — каждая на всю ширину. */
+  .welcome-hero .hero-actions .btn,
+  .cta-banner .hero-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 759px) {
+  /* Шаг выбора времени обязан помещаться в экран целиком. */
+  .wizard-schedule-form {
+    margin-top: 18px;
+    gap: 14px;
+  }
+
+  .wizard-schedule-form .notice {
+    font-size: 12.5px;
+  }
+
+  .wizard-schedule-form .schedule-selection {
+    margin-top: 10px;
   }
 }

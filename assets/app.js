@@ -755,7 +755,9 @@
      и Яндекс OAuth по-прежнему имеют собственные hash-маршруты ниже. */
   function sectionHash(phase) {
     if (phase === 'lead' || phase === 'leadDone') return '#lessons';
-    if (phase === 'profile') return '#profile';
+    /* У кабинета три вкладки, и каждая имеет свой адрес: после F5 ученик
+       возвращается ровно туда, где был, а не на первую вкладку. */
+    if (phase === 'profile') return profileTabInfo(profileTab).hash;
     if (phase === 'reg') return '#exam';
     if (phase === 'welcome') return '';
     return null;
@@ -773,12 +775,44 @@
     try { return localStorage.getItem(STUDENT_KEY) || ''; } catch (e) { return ''; }
   }
 
+  /* Кабинет разложен на три вкладки-пилюльки: «Профиль», «Настройки»,
+     «Результаты». Так каждый раздел влезает в экран телефона целиком —
+     раньше это была одна длинная простыня, которую приходилось листать. */
+  var PROFILE_TABS = [
+    { id: 'me', label: 'Профиль', hash: '#profile' },
+    { id: 'settings', label: 'Настройки', hash: '#profile/settings' },
+    { id: 'results', label: 'Результаты', hash: '#profile/results' }
+  ];
+  var profileTab = 'me';
+
+  function profileTabInfo(id) {
+    for (var i = 0; i < PROFILE_TABS.length; i++) {
+      if (PROFILE_TABS[i].id === id) return PROFILE_TABS[i];
+    }
+    return PROFILE_TABS[0];
+  }
+
+  function profileTabsHtml(active) {
+    return '<div class="profile-tabs" role="tablist" aria-label="Разделы кабинета">' +
+      PROFILE_TABS.map(function (tab) {
+        var on = tab.id === active;
+        return '<button class="profile-tab' + (on ? ' is-on' : '') + '" type="button" role="tab"' +
+          ' id="ptab-' + tab.id + '" aria-selected="' + (on ? 'true' : 'false') + '"' +
+          ' aria-controls="profilePane" data-profile-tab="' + tab.id + '">' +
+          esc(tab.label) + '</button>';
+      }).join('') +
+    '</div>';
+  }
+
   function showProfile() {
     if (state.phase === 'exam') return;
     state.phase = 'profile';
     paintNav();
     var token = studentToken();
-    setBar('Профиль');
+    /* Полоса экрана не нужна: заголовок «Профиль» и так стоит первой
+       строкой, а лишний ярус съедает высоту, которой на телефоне нет. */
+    setBar(null);
+    document.title = 'Профиль · таджвид.рф';
     if (!token) return showLogin();
 
     loadingScreen('Профиль', 'Загружаем ваши данные…');
@@ -791,8 +825,10 @@
       var progress = progressFromResults(results);
       var best = progress.level1;
 
-      var html = '<h1>Профиль</h1>' +
-        '<section class="frame profile-card profile-summary">' +
+      /* ── Вкладка «Профиль»: кто я и как сдал ── */
+      function paneMe() {
+        var pct = best ? Math.round(Number(best.percent) || 0) : 0;
+        return '<section class="frame profile-card profile-summary">' +
           '<div class="profile-avatar-pane">' +
             '<button class="profile-avatar" id="avatarPick" type="button" aria-label="Изменить фотографию профиля">' +
               profileAvatar(s) + '</button>' +
@@ -808,7 +844,6 @@
             '<dl class="profile-meta">' +
               '<div><dt>Город</dt><dd>' + esc(s.city) + '</dd></div>' +
               '<div><dt>Телефон</dt><dd>' + esc(formatPhone(s.phone)) + '</dd></div>' +
-              '<div><dt>Экзаменов сдано</dt><dd>' + results.length + '</dd></div>' +
             '</dl>' +
             '<button class="profile-edit-action" id="editProfile" type="button">Изменить имя</button>' +
           '</div>' +
@@ -828,69 +863,115 @@
               '<button class="btn is-ghost" id="cancelProfileEdit" type="button">Отмена</button></div>' +
           '</form>' +
         '</section>' +
-        '<p class="profile-avatar-status" id="avatarStatus" role="status" aria-live="polite" hidden></p>';
-
-      html += '<section class="profile-section"><div class="profile-section-head">' +
-        '<h2 class="kicker">Уровни<span class="cur">_</span></h2>' +
-        '<p>Прогресс обучения</p></div>' + profileLevels(progress) + '</section>';
-
-      if (results.length > 1) {
-        html += '<section class="profile-section"><div class="profile-section-head">' +
-          '<h2 class="kicker">Попытки<span class="cur">_</span></h2>' +
-          '<p>' + results.length + ' сохранено</p></div><div class="result-list">';
-        results.forEach(function (r) {
-          var level = Number(r.examLevel) || 1;
-          html += '<button class="result-item" data-result-id="' + esc(r.id) + '">' +
-            '<span><b>Экзамен ' + (level === 2 ? 'второго' : 'первого') + ' уровня</b><br><span class="meta">' +
-            esc(new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(r.createdAt))) +
-            '</span></span>' +
-            (r.gradingStatus === 'pending'
-              ? '<span class="score">на проверке</span>'
-              : '<span class="score">' + Math.round(r.percent) + '%</span>') +
-            '</button>';
-        });
-        html += '</div></section>';
+        '<p class="profile-avatar-status" id="avatarStatus" role="status" aria-live="polite" hidden></p>' +
+        '<section class="profile-standing"' +
+          (best ? ' style="--score-color: ' + scoreColor(pct) + '"' : '') + '>' +
+          '<p class="kicker">Мой экзамен<span class="cur">_</span></p>' +
+          (best
+            ? '<p class="profile-standing-head"><span>Уровень 1</span><b>' + pct + '%</b></p>' +
+              '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
+              '<p class="profile-standing-note">' + esc(scoreVerdict(pct)) + '</p>'
+            : '<p class="profile-standing-note">Экзамен первого уровня ещё не сдан.</p>' +
+              '<div class="btn-row"><button class="btn" id="againBtn">Сдать экзамен</button></div>') +
+        '</section>';
       }
 
-      html += '<section class="profile-section"><div class="profile-section-head">' +
-        '<h2 class="kicker">Настройки<span class="cur">_</span></h2></div><div class="settings">' +
-        (s.hasPassword
-          ? '<button class="setting-row" id="changePass" type="button">' +
-              '<span><b>Пароль</b><small>Вход с другого телефона</small></span>' +
-              '<span class="setting-value">Изменить</span></button>'
-          : '<button class="setting-row" id="setPass" type="button">' +
-              '<span><b>Пароль не задан</b><small>Задайте, чтобы войти с другого устройства</small></span>' +
-              '<span class="setting-value">Задать</span></button>') +
-        '<button class="setting-row" id="logout" type="button">' +
-          '<span><b>Выйти</b><small>Данные останутся у преподавателя</small></span>' +
-          '<span class="setting-value">Выйти</span></button>' +
-      '</div></section>';
+      /* ── Вкладка «Настройки»: пароль и выход ── */
+      function paneSettings() {
+        return '<div class="settings">' +
+          '<button class="setting-row" id="' + (s.hasPassword ? 'changePass' : 'setPass') + '" type="button">' +
+            '<span><b>Пароль</b><small>Вход с другого телефона</small></span>' +
+            '<span class="setting-value">' + (s.hasPassword ? 'Изменить' : 'Задать') + '</span></button>' +
+          '<button class="setting-row" id="logout" type="button">' +
+            '<span><b>Выйти</b><small>Данные останутся у преподавателя</small></span>' +
+            '<span class="setting-value">Выйти</span></button>' +
+        '</div>';
+      }
 
-      html += '<div class="btn-row">' +
-        (best ? '<button class="btn" data-open-result="' + esc(best.id) + '">Разбор и отчёт</button>' : '') +
-        '<button class="btn' + (best ? ' is-ghost' : '') + '" id="againBtn">' +
-          (best ? 'Пройти ещё раз' : 'Сдать экзамен') + '</button></div>';
+      /* ── Вкладка «Результаты»: уровни и все попытки ── */
+      function paneResults() {
+        var html = '<section class="profile-section"><div class="profile-section-head">' +
+          '<h2 class="kicker">Уровни<span class="cur">_</span></h2>' +
+          '<p>Прогресс обучения</p></div>' + profileLevels(progress) + '</section>';
 
-      render(html);
+        if (results.length) {
+          html += '<section class="profile-section"><div class="profile-section-head">' +
+            '<h2 class="kicker">Попытки<span class="cur">_</span></h2>' +
+            '<p>' + results.length + ' сохранено</p></div><div class="result-list">';
+          results.forEach(function (r) {
+            var level = Number(r.examLevel) || 1;
+            /* Содержимое лежит в обёртке: сама кнопка не может быть
+               grid-контейнером — браузер заворачивает её содержимое
+               в анонимный блок, и колонка с процентом уезжает под текст. */
+            html += '<button class="result-item" data-result-id="' + esc(r.id) + '">' +
+              '<span class="result-item-body">' +
+                '<span><b>Экзамен ' + (level === 2 ? 'второго' : 'первого') + ' уровня</b><br><span class="meta">' +
+                esc(new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(r.createdAt))) +
+                '</span></span>' +
+                (r.gradingStatus === 'pending'
+                  ? '<span class="score">на проверке</span>'
+                  : '<span class="score">' + Math.round(r.percent) + '%</span>') +
+              '</span>' +
+              '</button>';
+          });
+          html += '</div></section>';
+        }
+
+        return html + '<div class="btn-row">' +
+          (best ? '<button class="btn" data-open-result="' + esc(best.id) + '">Разбор и отчёт</button>' : '') +
+          '<button class="btn' + (best ? ' is-ghost' : '') + '" id="againBtn">' +
+            (best ? 'Пройти ещё раз' : 'Сдать экзамен') + '</button></div>';
+      }
+
+      /* Переключение вкладок не ходит на сервер: данные уже загружены,
+         меняется только содержимое панели. */
+      function paintPane() {
+        var pane = document.getElementById('profilePane');
+        if (!pane) return;
+        pane.innerHTML = profileTab === 'settings' ? paneSettings()
+          : profileTab === 'results' ? paneResults()
+          : paneMe();
+        pane.setAttribute('aria-labelledby', 'ptab-' + profileTab);
+        [].slice.call(app.querySelectorAll('[data-profile-tab]')).forEach(function (button) {
+          var on = button.getAttribute('data-profile-tab') === profileTab;
+          button.classList.toggle('is-on', on);
+          button.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        syncSectionHash();
+        wirePane();
+      }
+
+      render('<h1 class="profile-title">Профиль</h1>' + profileTabsHtml(profileTab) +
+        '<div class="profile-pane" id="profilePane" role="tabpanel" tabindex="-1"></div>');
+
+      [].slice.call(app.querySelectorAll('[data-profile-tab]')).forEach(function (button) {
+        button.onclick = function () {
+          profileTab = button.getAttribute('data-profile-tab');
+          paintPane();
+        };
+      });
+
+      function wirePane() {
       wireLevelActions();
       [].slice.call(app.querySelectorAll('[data-result-id], [data-open-result]')).forEach(function (b) {
         b.onclick = function () {
           showSavedResult(b.getAttribute('data-result-id') || b.getAttribute('data-open-result'), token);
         };
       });
-      document.getElementById('againBtn').onclick = function () { state.phase = 'reg'; show(); };
+      var again = document.getElementById('againBtn');
+      if (again) again.onclick = function () { state.phase = 'reg'; show(); };
       var editor = document.getElementById('profileEditor');
       var editButton = document.getElementById('editProfile');
-      editButton.onclick = function () {
+      if (editButton) editButton.onclick = function () {
         editor.hidden = false;
         editButton.hidden = true;
         document.getElementById('profileFirstName').focus();
       };
-      document.getElementById('cancelProfileEdit').onclick = function () {
+      if (editor) document.getElementById('cancelProfileEdit').onclick = function () {
         editor.hidden = true;
         editButton.hidden = false;
       };
-      document.getElementById('profileForm').onsubmit = function (event) {
+      if (editor) document.getElementById('profileForm').onsubmit = function (event) {
         event.preventDefault();
         var form = event.currentTarget;
         var firstName = form.firstName.value.trim();
@@ -917,7 +998,7 @@
       var avatarPick = document.getElementById('avatarPick');
       var avatarPickText = document.getElementById('avatarPickText');
       var avatarStatus = document.getElementById('avatarStatus');
-      function chooseAvatar() { avatarInput.click(); }
+      function chooseAvatar() { if (avatarInput) avatarInput.click(); }
       function saveAvatar(dataUrl) {
         avatarPick.disabled = true;
         avatarPickText.disabled = true;
@@ -936,9 +1017,9 @@
           avatarStatus.textContent = 'Не удалось сохранить фотографию.';
         });
       }
-      avatarPick.onclick = chooseAvatar;
-      avatarPickText.onclick = chooseAvatar;
-      avatarInput.onchange = function () {
+      if (avatarPick) avatarPick.onclick = chooseAvatar;
+      if (avatarPickText) avatarPickText.onclick = chooseAvatar;
+      if (avatarInput) avatarInput.onchange = function () {
         var file = avatarInput.files && avatarInput.files[0];
         if (!file) return;
         avatarStatus.hidden = false;
@@ -954,12 +1035,16 @@
       if (avatarRemove) avatarRemove.onclick = function () { saveAvatar(''); };
       var pass = document.getElementById('setPass') || document.getElementById('changePass');
       if (pass) pass.onclick = function () { showSetPassword(token, s.hasPassword); };
-      document.getElementById('logout').onclick = function () {
+      var logout = document.getElementById('logout');
+      if (logout) logout.onclick = function () {
         if (!window.confirm('Выйти из профиля на этом устройстве?')) return;
         try { localStorage.removeItem(STUDENT_KEY); localStorage.removeItem('tajweed_last_result'); } catch (e) { /* ок */ }
         state.phase = 'welcome';
         show();
       };
+      }
+
+      paintPane();
     }).catch(function () {
       if (isStale(seq)) return;
       errorScreen('Профиль недоступен',
@@ -1243,6 +1328,20 @@
        ровно с того вопроса, а не гнать анкету по второму кругу. */
     var draft = state.resumable === true && !!state.student;
     var doneCount = draft ? Math.min(state.stepIdx + 1, steps.length) : 0;
+    var donePct = draft ? Math.round((doneCount / steps.length) * 100) : 0;
+
+    /* Продолжение экзамена — одна и та же кнопка на обоих баннерах, и она
+       же показывает, сколько пройдено: заливка идёт слоем ПОД текстом,
+       поэтому надпись остаётся читаемой в любой теме. */
+    function examButton(id) {
+      if (!draft) return '<button class="btn" id="' + id + '">Сдать экзамен →</button>';
+      return '<button class="btn is-progress" id="' + id + '" ' +
+        'style="--progress: ' + donePct + '%" ' +
+        'aria-label="Продолжить экзамен, пройдено ' + donePct + ' процентов">' +
+        '<span class="btn-fill" aria-hidden="true"></span>' +
+        '<span class="btn-text">Продолжить экзамен · ' + donePct + '%</span>' +
+      '</button>';
+    }
 
     /* Главная — как баннер прайса: сетка одинаковых квадратов,
        штриховка сверху, заголовок, кикер, одна вдавленная кнопка.
@@ -1259,8 +1358,7 @@
           (draft ? 'Экзамен начат · шаг ' + doneCount + ' из ' + steps.length
                  : 'Наука чтения Корана · Первый уровень') +
           '<span class="cur">_</span></p>' +
-        '<div class="hero-actions"><button class="btn" id="heroExam">' +
-          (draft ? 'Продолжить экзамен →' : 'Сдать экзамен →') + '</button></div>' +
+        '<div class="hero-actions">' + examButton('heroExam') + '</div>' +
         '<div class="hero-meta">' +
           '<span class="crosshair" aria-hidden="true"></span>' +
           '<span class="hero-meta-lines">' +
@@ -1296,9 +1394,8 @@
           (draft ? 'Ответы сохранены на этом устройстве'
                  : '51 вопрос и чтение вслух · до 3 минут на вопрос') +
           '<span class="cur">_</span></p>' +
-        '<div class="hero-actions"><button class="btn" id="ctaExam">' +
-          (draft ? 'Продолжить →' : 'Сдать экзамен →') + '</button>' +
-          (draft ? '<button class="btn is-pill" id="startOver">Начать заново</button>' : '') +
+        '<div class="hero-actions">' + examButton('ctaExam') +
+          (draft ? '<button class="btn is-ghost" id="startOver">Начать заново</button>' : '') +
         '</div>' +
       '</section>'
     );
@@ -1418,8 +1515,10 @@
         ' aria-selected="' + (hour === 18 ? 'true' : 'false') + '">' + hourText + '</div>';
     }
     return '<fieldset class="schedule-picker" data-schedule aria-describedby="daysHint errScheduleDays">' +
-      '<legend>Когда удобно заниматься?</legend>' +
-      '<p class="field-hint" id="daysHint">Прокрутите два столбика и выберите один день и одно время.</p>' +
+      /* Заголовок вопроса стоит рядом в <h1>: легенда нужна только
+         для программ чтения с экрана, глазами её видеть незачем. */
+      '<legend class="visually-hidden">Когда удобно заниматься?</legend>' +
+      '<p class="field-hint" id="daysHint">Прокрутите столбики: день и время.</p>' +
       '<div class="schedule-dual-wheel">' +
         '<section class="schedule-wheel-field" aria-labelledby="scheduleDayLabel">' +
           '<span class="schedule-wheel-label" id="scheduleDayLabel">День</span>' +
@@ -1505,9 +1604,12 @@
             '<button class="btn btn-block" id="wNext">' +
               (idx === total - 1 ? esc(opts.finishLabel) : 'Далее') + '</button>' +
           '</div>' +
-          '<div class="btn-row wizard-back">' +
-            '<button class="btn is-quiet" id="wBack">' + (idx === 0 ? '← Назад на главную' : '← Предыдущий шаг') + '</button>' +
-          '</div>' +
+          /* На первом шаге кнопки возврата нет: уйти с экрана можно
+             нижним меню, а лишняя строка съедала высоту экрана. */
+          (idx === 0 ? '' :
+            '<div class="btn-row wizard-back">' +
+              '<button class="btn is-quiet" id="wBack">← Предыдущий шаг</button>' +
+            '</div>') +
         '</section>'
       );
 
@@ -1545,8 +1647,8 @@
       };
       input.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); forward(); } };
       document.getElementById('wNext').onclick = forward;
-      document.getElementById('wBack').onclick = function () {
-        if (idx === 0) { state.phase = 'welcome'; return show(); }
+      var back = document.getElementById('wBack');
+      if (back) back.onclick = function () {
         data[st.f] = input.value.trim();
         idx -= 1;
         draw();
@@ -1559,64 +1661,6 @@
     }
 
     draw();
-  }
-
-  function personForm(submitLabel, includeSchedule) {
-    return '<form class="form" id="personForm" method="post" action="' + (includeSchedule ? esc(API + '/apply') : '') + '" novalidate>' +
-      '<div class="field" data-f="firstName"><label for="fFirst">Имя</label>' +
-        '<input id="fFirst" name="firstName" autocomplete="given-name" maxlength="60" aria-describedby="errFirst" required>' +
-        '<span class="err" id="errFirst" data-msg="Укажите имя" role="alert"></span></div>' +
-      '<div class="field" data-f="lastName"><label for="fLast">Фамилия</label>' +
-        '<input id="fLast" name="lastName" autocomplete="family-name" maxlength="60" aria-describedby="errLast" required>' +
-        '<span class="err" id="errLast" data-msg="Укажите фамилию" role="alert"></span></div>' +
-      '<div class="field" data-f="city"><label for="fCity">Город</label>' +
-        '<input id="fCity" name="city" autocomplete="address-level2" maxlength="60" aria-describedby="errCity" required>' +
-        '<span class="err" id="errCity" data-msg="Укажите город" role="alert"></span></div>' +
-      '<div class="field" data-f="phone"><label for="fPhone">Телефон</label>' +
-        '<input id="fPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00…" maxlength="20" aria-describedby="errPhone" required>' +
-        '<span class="err" id="errPhone" data-msg="Укажите телефон полностью" role="alert"></span></div>' +
-      (includeSchedule ? '<input name="requestId" type="hidden" value="">' + scheduleFields() : '') +
-      '<div class="btn-row"><button type="submit" class="btn btn-block">' + submitLabel + '</button></div>' +
-    '</form>';
-  }
-
-  function readPersonForm(form) {
-    var data = {
-      firstName: form.firstName.value.trim(),
-      lastName: form.lastName.value.trim(),
-      city: form.city.value.trim(),
-      phone: form.phone.value.trim()
-    };
-    var ok = true;
-    var firstInvalid = null;
-    ['firstName', 'lastName', 'city', 'phone'].forEach(function (f) {
-      var field = form.querySelector('[data-f="' + f + '"]');
-      var bad = !data[f] || (f === 'phone' && data[f].replace(/\D/g, '').length < 10);
-      markInvalid(field, bad);
-      field.querySelector('input').setAttribute('aria-invalid', bad ? 'true' : 'false');
-      if (bad) { ok = false; if (!firstInvalid) firstInvalid = field.querySelector('input'); }
-    });
-    var schedule = form.querySelector('[data-schedule]');
-    if (schedule) {
-      var selectedDay = form.scheduleDay ? form.scheduleDay.value : '';
-      var timeMinute = form.scheduleTimeMinutes ? Number(form.scheduleTimeMinutes.value) : NaN;
-      var scheduleBad = !selectedDay || !Number.isInteger(timeMinute) ||
-        timeMinute < 300 || timeMinute > 1380 || timeMinute % 60 !== 0;
-      markInvalid(schedule, scheduleBad);
-      if (scheduleBad) {
-        ok = false;
-        if (!firstInvalid) firstInvalid = schedule.querySelector('[data-schedule-unit="day"]');
-      }
-      data.requestId = form.requestId.value || form.getAttribute('data-request-id') || uuid();
-      data.availability = {
-        version: 2,
-        days: selectedDay ? [selectedDay] : [],
-        timeMinute: timeMinute,
-        timeZone: form.timeZone.value || 'Europe/Moscow'
-      };
-    }
-    if (firstInvalid) firstInvalid.focus();
-    return ok ? data : null;
   }
 
   function playScheduleTick(value) {
@@ -1770,58 +1814,104 @@
     });
   }
 
+  /* Запись на урок идёт по одному вопросу, как анкета перед экзаменом:
+     сразу четыре поля и барабан на одном экране в телефон не помещались
+     и пугали объёмом. Последним шагом — выбор дня и времени. */
   function showLead() {
-    setBar('Запись на уроки');
-    render(
-      '<h1>Запись на уроки</h1>' +
-      '<p class="lede">Оставьте контакты и отметьте удобное время — преподаватель свяжется с вами и подберёт группу.</p>' +
-      '<p class="notice">Имя, город, телефон и выбранное время получит преподаватель Деаб Анас Т. Больше никуда данные не уходят.</p>' +
-      personForm('Отправить заявку', true) +
-      '<p class="notice" id="leadErr" role="status" aria-live="polite" hidden></p>' +
-      '<div class="btn-row"><button class="btn is-ghost" id="backBtn">← Назад</button></div>'
-    );
-    document.getElementById('backBtn').onclick = function () { state.phase = 'welcome'; show(); };
-    var form = document.getElementById('personForm');
+    setBar(null);
+    document.title = 'Запись на уроки · таджвид.рф';
     var requestId = '';
     try {
       requestId = localStorage.getItem('tajweed_lead_request_id') || uuid();
       localStorage.setItem('tajweed_lead_request_id', requestId);
     } catch (e) { requestId = uuid(); }
-    form.setAttribute('data-request-id', requestId);
-    form.requestId.value = requestId;
-    initSchedule(form);
-    form.onsubmit = function (e) {
-      e.preventDefault();
-      var previousError = document.getElementById('leadErr');
-      previousError.hidden = true;
-      previousError.textContent = '';
-      var data = readPersonForm(form);
-      if (!data) return;
-      var btn = form.querySelector('button[type="submit"]');
-      btn.disabled = true;
-      btn.textContent = 'Отправляем…';
-      api('/api/lead', data).then(function () {
-        try { localStorage.removeItem('tajweed_lead_request_id'); } catch (e) { /* ок */ }
-        state.phase = 'leadDone';
-        show();
-      }).catch(function (error) {
-        btn.disabled = false;
-        var err = document.getElementById('leadErr');
-        err.hidden = false;
-        err.classList.add('is-error');
-        if (error && error.status === 409) {
-          var nextRequestId = uuid();
-          form.requestId.value = nextRequestId;
-          form.setAttribute('data-request-id', nextRequestId);
-          try { localStorage.setItem('tajweed_lead_request_id', nextRequestId); } catch (e) { /* ок */ }
-          btn.textContent = 'Отправить обновлённую заявку';
-          err.textContent = 'Первая версия заявки уже сохранена. Вы изменили данные после отправки; проверьте их и нажмите кнопку ещё раз, чтобы отправить обновлённую заявку отдельно.';
-        } else {
-          btn.textContent = 'Отправить заявку';
-          err.textContent = 'Не получилось отправить заявку. Проверьте интернет и попробуйте ещё раз, либо напишите преподавателю напрямую.';
-        }
-      });
-    };
+
+    personWizard({
+      finishLabel: 'Дальше →',
+      onDone: function () { /* последний шаг — выбор времени ниже */ },
+      extraStep: function (data, scaleHtml, goBack) {
+        render(
+          '<section class="wizard">' +
+            scaleHtml +
+            '<p class="kicker">Последний шаг<span class="cur">_</span></p>' +
+            '<h1 class="wizard-q">Когда удобно заниматься?</h1>' +
+            '<form class="form wizard-schedule-form" id="leadForm" novalidate>' +
+              '<input name="requestId" type="hidden" value="' + esc(requestId) + '">' +
+              scheduleFields() +
+              '<p class="notice">Данные получит преподаватель Деаб Анас Т. Больше никуда они не уходят.</p>' +
+              '<p class="notice is-error" id="leadErr" role="status" aria-live="polite" hidden></p>' +
+              '<div class="btn-row"><button type="submit" class="btn btn-block">Отправить заявку</button></div>' +
+            '</form>' +
+            '<div class="btn-row wizard-back">' +
+              '<button class="btn is-quiet" id="wBack">← Предыдущий шаг</button>' +
+            '</div>' +
+          '</section>'
+        );
+        window.scrollTo(0, 0);
+        var form = document.getElementById('leadForm');
+        form.setAttribute('data-request-id', requestId);
+        initSchedule(form);
+        document.getElementById('wBack').onclick = goBack;
+
+        form.onsubmit = function (event) {
+          event.preventDefault();
+          var err = document.getElementById('leadErr');
+          err.hidden = true;
+          err.textContent = '';
+
+          var picker = form.querySelector('[data-schedule]');
+          var selectedDay = form.scheduleDay.value;
+          var timeMinute = Number(form.scheduleTimeMinutes.value);
+          var scheduleBad = !selectedDay || !Number.isInteger(timeMinute) ||
+            timeMinute < 300 || timeMinute > 1380 || timeMinute % 60 !== 0;
+          markInvalid(picker, scheduleBad);
+          if (scheduleBad) return;
+
+          var payload = {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            city: data.city,
+            phone: data.phone,
+            requestId: form.requestId.value,
+            availability: {
+              version: 2,
+              days: [selectedDay],
+              timeMinute: timeMinute,
+              timeZone: form.timeZone.value || 'Europe/Moscow'
+            }
+          };
+
+          var btn = form.querySelector('button[type="submit"]');
+          btn.disabled = true;
+          btn.textContent = 'Отправляем…';
+          api('/api/lead', payload).then(function () {
+            try { localStorage.removeItem('tajweed_lead_request_id'); } catch (e) { /* ок */ }
+            state.phase = 'leadDone';
+            show();
+          }).catch(function (error) {
+            btn.disabled = false;
+            err.hidden = false;
+            err.classList.add('is-error');
+            /* 409 — заявка с этим requestId уже сохранена, а данные с тех пор
+               изменились: берём новый идентификатор, иначе повтор молча
+               пропадёт. */
+            if (error && error.status === 409) {
+              requestId = uuid();
+              form.requestId.value = requestId;
+              form.setAttribute('data-request-id', requestId);
+              try { localStorage.setItem('tajweed_lead_request_id', requestId); } catch (e) { /* ок */ }
+              btn.textContent = 'Отправить обновлённую заявку';
+              err.textContent = 'Первая версия заявки уже сохранена. Вы изменили данные после отправки; ' +
+                'проверьте их и нажмите кнопку ещё раз, чтобы отправить обновлённую заявку отдельно.';
+            } else {
+              btn.textContent = 'Отправить заявку';
+              err.textContent = 'Не получилось отправить заявку. Проверьте интернет и попробуйте ещё раз, ' +
+                'либо напишите преподавателю напрямую.';
+            }
+          });
+        };
+      }
+    });
   }
 
   function showLeadDone() {
@@ -2912,7 +3002,7 @@
   var hashStudent = location.hash.match(/^#student=([0-9a-f-]{36})$/i);
   var hashYandex = location.hash.match(/^#yandex=([0-9a-f-]{36})$/i);
   var hashYandexError = location.hash.match(/^#yandex-error=/i);
-  var hashSection = location.hash.match(/^#(lessons|profile|exam)$/i);
+  var hashSection = location.hash.match(/^#(lessons|profile|exam)(?:\/(me|settings|results))?$/i);
   if (hashYandex && state.phase !== 'exam') {
     /* Вернулись с oauth.yandex.ru: токен кабинета уже выдан сервером */
     try { localStorage.setItem(STUDENT_KEY, hashYandex[1]); } catch (e) { /* ок */ }
@@ -2927,7 +3017,10 @@
     showSavedResult(hashResult[1]);
   } else if (hashSection && state.phase !== 'exam' && state.phase !== 'done') {
     if (hashSection[1].toLowerCase() === 'lessons') state.phase = 'lead';
-    if (hashSection[1].toLowerCase() === 'profile') state.phase = 'profile';
+    if (hashSection[1].toLowerCase() === 'profile') {
+      state.phase = 'profile';
+      if (hashSection[2]) profileTab = hashSection[2].toLowerCase();
+    }
     if (hashSection[1].toLowerCase() === 'exam') {
       state.phase = state.resumable && state.student ? 'exam' : 'reg';
     }
