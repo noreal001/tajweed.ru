@@ -612,12 +612,16 @@ h1, h2 {
 
 h1 { font-size: clamp(32px, 6.4vw, 48px); }
 h2 { font-size: clamp(24px, 5vw, 33px); }
-.screen h1[tabindex="-1"]:focus-visible, .screen h2[tabindex="-1"]:focus-visible {
+/* Заголовок получает фокус ПРОГРАММНО при смене экрана — чтобы экранный
+   диктор прочитал новый экран. Видимой отметки тут быть не должно:
+   пальцем по заголовку не «ходят», а на части устройств это правило
+   рисовало подчёркивание под «Экзамен по таджвиду» на ровном месте. */
+.screen h1[tabindex="-1"]:focus,
+.screen h1[tabindex="-1"]:focus-visible,
+.screen h2[tabindex="-1"]:focus,
+.screen h2[tabindex="-1"]:focus-visible {
   outline: none;
-  text-decoration: underline;
-  text-decoration-color: var(--line);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
+  text-decoration: none;
 }
 
 .lede {

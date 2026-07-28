@@ -16,9 +16,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../assets/style.css?v=20260728-2">
-  <link rel="stylesheet" href="../../assets/folio.css?v=20260728-3">
-  <link rel="stylesheet" href="../stati.css?v=20260728-1">
+  <link rel="stylesheet" href="../../assets/style.css?v=20260728-4">
+  <link rel="stylesheet" href="../../assets/folio.css?v=20260728-4">
+  <link rel="stylesheet" href="../stati.css?v=20260728-4">
   <script>
     /* Тема ставится до отрисовки, как на всём сайте. */
     (function () {
@@ -56,22 +56,37 @@
   <header class="kb-topbar">
     <div class="kb-topbar-inner">
       <a class="kb-brand" href="../../">таджвид.рф</a>
-      <button class="kb-theme" id="kbTheme" type="button" aria-label="Переключить тему">
+      <div class="kb-actions">
+        <button class="kb-theme" id="kbTheme" type="button" aria-label="Переключить тему">
         <svg class="kb-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path></svg>
         <svg class="kb-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
       </button>
+        <div class="language-switcher kb-language">
+          <button class="language-button" id="kbLanguageButton" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Выбрать язык"></button>
+          <div class="language-menu" id="kbLanguageMenu" role="menu" hidden></div>
+        </div>
+      </div>
     </div>
   </header>
 
   <main class="kb-wrap">
 
-    <section class="kb-hero">
-      <span class="kb-hero-glyph" aria-hidden="true">و</span>
-      <p class="kb-kicker">База знаний · Практика</p>
-      <h1>Чтение Корана с таджвидом: как научиться</h1>
-      <p class="kb-lede">Что отличает правильное чтение на слух и четыре упражнения, из которых складывается практика.</p>
-      <div class="kb-hero-meta"><span>Преподаватель Деаб Анас Т.</span></div>
+    <section class="welcome-hero" aria-labelledby="pageTitle">
+      <span class="hero-hatch" aria-hidden="true"></span>
+      <div class="marks is-out" aria-hidden="true"><span class="tick tl-v"></span><span class="tick tl-h"></span><span class="tick tr-v"></span><span class="tick tr-h"></span><span class="tick bl-v"></span><span class="tick bl-h"></span><span class="tick br-v"></span><span class="tick br-h"></span><span class="hatch tr"></span><span class="hatch bl"></span></div>
+      <div class="blueprint-layer is-desktop" style="--blueprint-cols:6;--blueprint-rows:3" aria-hidden="true"><div class="blueprint-cells"><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span></div><div class="blueprint-nodes"><span style="left:0.0%;top:0.0%"></span><span style="left:16.666666666666664%;top:0.0%"></span><span style="left:33.33333333333333%;top:0.0%"></span><span style="left:50.0%;top:0.0%"></span><span style="left:66.66666666666666%;top:0.0%"></span><span style="left:83.33333333333334%;top:0.0%"></span><span style="left:100.0%;top:0.0%"></span><span style="left:0.0%;top:33.33333333333333%"></span><span style="left:16.666666666666664%;top:33.33333333333333%"></span><span style="left:33.33333333333333%;top:33.33333333333333%"></span><span style="left:50.0%;top:33.33333333333333%"></span><span style="left:66.66666666666666%;top:33.33333333333333%"></span><span style="left:83.33333333333334%;top:33.33333333333333%"></span><span style="left:100.0%;top:33.33333333333333%"></span><span style="left:0.0%;top:66.66666666666666%"></span><span style="left:16.666666666666664%;top:66.66666666666666%"></span><span style="left:33.33333333333333%;top:66.66666666666666%"></span><span style="left:50.0%;top:66.66666666666666%"></span><span style="left:66.66666666666666%;top:66.66666666666666%"></span><span style="left:83.33333333333334%;top:66.66666666666666%"></span><span style="left:100.0%;top:66.66666666666666%"></span><span style="left:0.0%;top:100.0%"></span><span style="left:16.666666666666664%;top:100.0%"></span><span style="left:33.33333333333333%;top:100.0%"></span><span style="left:50.0%;top:100.0%"></span><span style="left:66.66666666666666%;top:100.0%"></span><span style="left:83.33333333333334%;top:100.0%"></span><span style="left:100.0%;top:100.0%"></span></div></div><div class="blueprint-layer is-tablet" style="--blueprint-cols:4;--blueprint-rows:2" aria-hidden="true"><div class="blueprint-cells"><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span></div><div class="blueprint-nodes"><span style="left:0.0%;top:0.0%"></span><span style="left:25.0%;top:0.0%"></span><span style="left:50.0%;top:0.0%"></span><span style="left:75.0%;top:0.0%"></span><span style="left:100.0%;top:0.0%"></span><span style="left:0.0%;top:50.0%"></span><span style="left:25.0%;top:50.0%"></span><span style="left:50.0%;top:50.0%"></span><span style="left:75.0%;top:50.0%"></span><span style="left:100.0%;top:50.0%"></span><span style="left:0.0%;top:100.0%"></span><span style="left:25.0%;top:100.0%"></span><span style="left:50.0%;top:100.0%"></span><span style="left:75.0%;top:100.0%"></span><span style="left:100.0%;top:100.0%"></span></div></div><div class="blueprint-layer is-mobile" style="--blueprint-cols:3;--blueprint-rows:2" aria-hidden="true"><div class="blueprint-cells"><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span></div><div class="blueprint-nodes"><span style="left:0.0%;top:0.0%"></span><span style="left:33.33333333333333%;top:0.0%"></span><span style="left:66.66666666666666%;top:0.0%"></span><span style="left:100.0%;top:0.0%"></span><span style="left:0.0%;top:50.0%"></span><span style="left:33.33333333333333%;top:50.0%"></span><span style="left:66.66666666666666%;top:50.0%"></span><span style="left:100.0%;top:50.0%"></span><span style="left:0.0%;top:100.0%"></span><span style="left:33.33333333333333%;top:100.0%"></span><span style="left:66.66666666666666%;top:100.0%"></span><span style="left:100.0%;top:100.0%"></span></div></div>
+      <h1 id="pageTitle">Чтение Корана с <em>таджвидом</em></h1>
+      <p class="kicker is-under">База знаний · Практика<span class="cur">_</span></p>
+      <div class="hero-meta">
+        <span class="crosshair" aria-hidden="true"></span>
+        <span class="hero-meta-lines">
+          <span class="hero-meta-site">ТАДЖВИД.РФ // БАЗА ЗНАНИЙ</span>
+          <span class="hero-meta-teacher">ПРЕПОДАВАТЕЛЬ ДЕАБ АНАС Т. <span class="teacher-flag" role="img" aria-label="Палестина"><svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true"><rect width="60" height="14" fill="#101012"></rect><rect y="14" width="60" height="13" fill="#ffffff"></rect><rect y="27" width="60" height="13" fill="#149954"></rect><path d="M0 0 25 20 0 40Z" fill="#e4312b"></path></svg></span></span>
+        </span>
+      </div>
     </section>
+
+    <p class="kb-intro">Что отличает правильное чтение на слух и четыре упражнения, из которых складывается практика.</p>
 
     <article class="kb-body">
 
@@ -83,7 +98,7 @@
       <h2>Тартиль: чтение без спешки</h2>
 
       <p>Коран сам называет нужную манеру чтения:
-        <span class="kb-ar">وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا</span> — «и читай
+        <span class="kb-ar notranslate" translate="no">وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا</span> — «и читай
         Коран размеренным чтением» (73:4). Тартиль — это неторопливое чтение,
         в котором у каждой буквы есть время прозвучать. Скорость в чтении
         Корана не достоинство: опытные чтецы читают медленнее новичков,
@@ -95,14 +110,14 @@
         <li><b>Ровный счёт удлинений.</b> Где положено тянуть два счёта —
           ровно два, где шесть — шесть. Не «примерно».</li>
         <li><b>Носовой призвук на месте.</b> Удвоенные
-          <span class="kb-ar">نّ</span> и <span class="kb-ar">مّ</span>
+          <span class="kb-ar notranslate" translate="no">نّ</span> и <span class="kb-ar notranslate" translate="no">مّ</span>
           звучат через нос положенные два счёта.</li>
         <li><b>Каждая буква из своей точки.</b>
-          <span class="kb-ar">ح</span> — из середины горла,
-          <span class="kb-ar">ع</span> — рядом, но другая; на слух они
+          <span class="kb-ar notranslate" translate="no">ح</span> — из середины горла,
+          <span class="kb-ar notranslate" translate="no">ع</span> — рядом, но другая; на слух они
           перестают быть «одинаковыми».</li>
         <li><b>Твёрдое — твёрдо, мягкое — мягко.</b>
-          <span class="kb-ar">ط</span> и <span class="kb-ar">ت</span> в чтении
+          <span class="kb-ar notranslate" translate="no">ط</span> и <span class="kb-ar notranslate" translate="no">ت</span> в чтении
           не путаются никогда.</li>
       </ul>
 
@@ -158,14 +173,15 @@
 
     </article>
 
-    <section class="kb-cta">
-      <h2>Проверьте, что вы уже знаете</h2>
-      <p>На сайте открыт бесплатный экзамен первого уровня: буквы, огласовки,
-        слоги и свойства букв. Результат сразу уходит преподавателю — он видит,
-        что западает, и говорит, с чего продолжать.</p>
-      <div class="kb-cta-actions">
-        <a class="kb-btn" href="../../#exam">Пройти экзамен</a>
-        <a class="kb-btn is-ghost" href="../../#lessons">Записаться на уроки</a>
+    <section class="cta-banner" aria-labelledby="ctaTitle">
+      <span class="hero-hatch" aria-hidden="true"></span>
+      <div class="marks is-out" aria-hidden="true"><span class="tick tl-v"></span><span class="tick tl-h"></span><span class="tick tr-v"></span><span class="tick tr-h"></span><span class="tick bl-v"></span><span class="tick bl-h"></span><span class="tick br-v"></span><span class="tick br-h"></span><span class="hatch tr"></span><span class="hatch bl"></span></div>
+      <div class="blueprint-layer is-desktop" style="--blueprint-cols:6;--blueprint-rows:3" aria-hidden="true"><div class="blueprint-cells"><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span></div><div class="blueprint-nodes"><span style="left:0.0%;top:0.0%"></span><span style="left:16.666666666666664%;top:0.0%"></span><span style="left:33.33333333333333%;top:0.0%"></span><span style="left:50.0%;top:0.0%"></span><span style="left:66.66666666666666%;top:0.0%"></span><span style="left:83.33333333333334%;top:0.0%"></span><span style="left:100.0%;top:0.0%"></span><span style="left:0.0%;top:33.33333333333333%"></span><span style="left:16.666666666666664%;top:33.33333333333333%"></span><span style="left:33.33333333333333%;top:33.33333333333333%"></span><span style="left:50.0%;top:33.33333333333333%"></span><span style="left:66.66666666666666%;top:33.33333333333333%"></span><span style="left:83.33333333333334%;top:33.33333333333333%"></span><span style="left:100.0%;top:33.33333333333333%"></span><span style="left:0.0%;top:66.66666666666666%"></span><span style="left:16.666666666666664%;top:66.66666666666666%"></span><span style="left:33.33333333333333%;top:66.66666666666666%"></span><span style="left:50.0%;top:66.66666666666666%"></span><span style="left:66.66666666666666%;top:66.66666666666666%"></span><span style="left:83.33333333333334%;top:66.66666666666666%"></span><span style="left:100.0%;top:66.66666666666666%"></span><span style="left:0.0%;top:100.0%"></span><span style="left:16.666666666666664%;top:100.0%"></span><span style="left:33.33333333333333%;top:100.0%"></span><span style="left:50.0%;top:100.0%"></span><span style="left:66.66666666666666%;top:100.0%"></span><span style="left:83.33333333333334%;top:100.0%"></span><span style="left:100.0%;top:100.0%"></span></div></div><div class="blueprint-layer is-tablet" style="--blueprint-cols:4;--blueprint-rows:2" aria-hidden="true"><div class="blueprint-cells"><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span></div><div class="blueprint-nodes"><span style="left:0.0%;top:0.0%"></span><span style="left:25.0%;top:0.0%"></span><span style="left:50.0%;top:0.0%"></span><span style="left:75.0%;top:0.0%"></span><span style="left:100.0%;top:0.0%"></span><span style="left:0.0%;top:50.0%"></span><span style="left:25.0%;top:50.0%"></span><span style="left:50.0%;top:50.0%"></span><span style="left:75.0%;top:50.0%"></span><span style="left:100.0%;top:50.0%"></span><span style="left:0.0%;top:100.0%"></span><span style="left:25.0%;top:100.0%"></span><span style="left:50.0%;top:100.0%"></span><span style="left:75.0%;top:100.0%"></span><span style="left:100.0%;top:100.0%"></span></div></div><div class="blueprint-layer is-mobile" style="--blueprint-cols:3;--blueprint-rows:2" aria-hidden="true"><div class="blueprint-cells"><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span><span class="blueprint-cell"></span></div><div class="blueprint-nodes"><span style="left:0.0%;top:0.0%"></span><span style="left:33.33333333333333%;top:0.0%"></span><span style="left:66.66666666666666%;top:0.0%"></span><span style="left:100.0%;top:0.0%"></span><span style="left:0.0%;top:50.0%"></span><span style="left:33.33333333333333%;top:50.0%"></span><span style="left:66.66666666666666%;top:50.0%"></span><span style="left:100.0%;top:50.0%"></span><span style="left:0.0%;top:100.0%"></span><span style="left:33.33333333333333%;top:100.0%"></span><span style="left:66.66666666666666%;top:100.0%"></span><span style="left:100.0%;top:100.0%"></span></div></div>
+      <h2 id="ctaTitle">Проверьте себя</h2>
+      <p class="kicker is-under">51 вопрос и чтение вслух · до 3 минут на вопрос<span class="cur">_</span></p>
+      <div class="hero-actions">
+        <a class="btn" href="../../#exam">Сдать экзамен →</a>
+        <a class="btn is-ghost" href="../../#lessons">Записаться на уроки</a>
       </div>
     </section>
 
@@ -190,15 +206,10 @@
     <a href="../../#profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></svg><span>Профиль</span></a>
   </nav>
 
-  <script>
-    /* Переключение темы: тот же ключ localStorage, что и на всём сайте. */
-    document.getElementById('kbTheme').onclick = function () {
-      var root = document.documentElement;
-      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      root.setAttribute('data-theme', next);
-      try { localStorage.setItem('tajweed_theme', next); } catch (e) { /* ок */ }
-    };
-  </script>
+  
+
+  <script src="../../assets/config.js?v=20260728-4"></script>
+  <script src="../stati.js?v=20260728-4"></script>
 
 </body>
 </html>

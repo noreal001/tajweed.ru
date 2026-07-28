@@ -2901,42 +2901,79 @@ html.is-exam .ayah {
 }
 
 @media (max-width: 759px) {
-  /* Экран входа обязан заканчиваться НАД нижним меню: правовая строка
-     уезжала под капсулу и была не видна. */
+  /* Экран входа обязан заканчиваться НАД нижним меню. Мерить надо не по
+     высоте телефона, а по видимой области Safari: панели браузера
+     съедают ~150 px, и того, что «влезало» в 844, на деле нет. Здесь
+     собран запас, чтобы экран умещался и в 640 px видимой высоты. */
   html.is-auth .auth-brand {
-    margin-bottom: 12px;
-    transform: scale(0.86);
+    display: none;
   }
 
   html.is-auth .auth-heading {
-    margin-bottom: 14px;
+    margin-bottom: 12px;
   }
 
   html.is-auth .auth-heading h1 {
-    font-size: 30px;
+    font-size: 27px;
     line-height: 1.1;
   }
 
   html.is-auth .auth-heading p {
-    margin-top: 6px;
-    font-size: 14px;
+    margin-top: 5px;
+    font-size: 13.5px;
+    line-height: 1.4;
   }
 
   html.is-auth .auth-phone-form {
-    gap: 14px;
+    gap: 11px;
+  }
+
+  html.is-auth .auth-phone-form .field label,
+  html.is-auth .auth-field-head label {
+    margin-bottom: 4px;
+    font-size: 12.5px;
+  }
+
+  html.is-auth .auth-phone-form input {
+    min-height: 46px;
+    padding-block: 11px;
+  }
+
+  html.is-auth .auth-submit {
+    min-height: 46px;
   }
 
   html.is-auth .auth-divider {
-    margin-block: 14px;
+    margin-block: 10px;
   }
 
   html.is-auth .auth-register {
-    margin-block: 12px;
+    margin-block: 10px;
+    font-size: 14px;
+  }
+
+  html.is-auth .auth-provider-secondary {
+    min-height: 46px;
   }
 
   html.is-auth .auth-legal {
-    margin-top: 12px;
-    font-size: 11.5px;
+    margin-top: 10px;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  /* Верхний отступ на экране входа меньше: шапка и так узкая, а каждый
+     пиксель сверху — это пиксель, которого не хватит внизу. */
+  html.is-auth body {
+    padding-top: 62px;
+  }
+
+  html.is-auth .auth-phone-form {
+    margin-top: 18px;
+  }
+
+  html.is-auth .auth-glass {
+    padding-top: 6px;
   }
 }
 
@@ -2982,4 +3019,219 @@ html.is-exam .ayah {
 
 .kb-teaser-all {
   text-decoration: none;
+}
+
+@media (max-width: 759px) {
+  /* Кабинет считаем по ВИДИМОЙ высоте Safari (~640-700 px), а не по
+     высоте телефона: панели браузера съедают полторы сотни пикселей.
+     Прошлая подгонка мерила по 844 и на живом телефоне не сходилась. */
+  .profile-title {
+    margin-bottom: 2px;
+    font-size: 26px;
+  }
+
+  .profile-tabs {
+    margin: 10px 0 12px;
+    padding: 4px;
+  }
+
+  .profile-tab {
+    min-height: 38px;
+    font-size: 13.5px;
+  }
+
+  /* Карточка ученика: меньше воздуха, меньше аватар. */
+  .profile-pane .profile-summary {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .profile-pane .profile-avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .profile-pane .profile-name {
+    margin-top: 4px;
+    font-size: 22px;
+  }
+
+  .profile-pane .profile-meta {
+    gap: 6px;
+  }
+
+  .profile-pane .profile-edit-action {
+    margin-top: 10px;
+  }
+
+  /* Сводка по экзамену. */
+  .profile-standing {
+    margin-top: 12px;
+    padding: 12px 14px 14px;
+  }
+
+  .profile-standing-head {
+    margin-top: 6px;
+  }
+
+  .profile-standing-head b {
+    font-size: 26px;
+  }
+
+  .profile-standing .level-bar {
+    margin-top: 8px;
+  }
+
+  .profile-standing-note {
+    margin-top: 7px;
+    font-size: 12.5px;
+  }
+
+  /* Вкладка «Результаты»: уровни и попытки плотнее. */
+  .profile-pane .profile-section {
+    margin-top: 18px;
+  }
+
+  .profile-pane .profile-section-head {
+    margin-bottom: 10px;
+  }
+
+  .profile-pane .profile-levels {
+    gap: 6px;
+  }
+
+  .profile-pane .profile-level {
+    padding: 7px 6px;
+  }
+
+  .profile-pane .profile-level-head {
+    margin-bottom: 6px;
+  }
+
+  .profile-pane .profile-level-meter {
+    height: 18px;
+  }
+
+  .profile-pane .result-list {
+    margin-top: 10px;
+  }
+
+  .profile-pane .result-item {
+    padding: 9px 0;
+  }
+
+  .profile-pane .result-item .meta {
+    font-size: 12px;
+  }
+
+  .profile-pane .btn-row {
+    margin-top: 14px;
+  }
+
+  .profile-pane .btn-row .btn {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 759px) {
+  /* Последние миллиметры для вкладки «Результаты» и экрана входа:
+     подпись раздела не несёт информации, а высоту занимает. */
+  .profile-pane .profile-section-head p {
+    display: none;
+  }
+
+  .profile-pane .profile-level-meter {
+    height: 16px;
+  }
+
+  .profile-pane .result-item .score {
+    font-size: 16px;
+  }
+
+  /* Экран входа: добираем последние пиксели, чтобы он умещался и на
+     невысоких экранах Safari. */
+  html.is-auth body {
+    padding-top: 54px;
+  }
+
+  html.is-auth .auth-heading h1 {
+    font-size: 24px;
+  }
+
+  html.is-auth .auth-phone-form {
+    margin-top: 14px;
+    gap: 9px;
+  }
+
+  html.is-auth .auth-phone-form input,
+  html.is-auth .auth-submit,
+  html.is-auth .auth-provider-secondary {
+    min-height: 44px;
+  }
+
+  html.is-auth .auth-divider {
+    margin-block: 8px;
+  }
+
+  html.is-auth .auth-register {
+    margin-block: 8px;
+  }
+
+  html.is-auth .auth-legal {
+    margin-top: 8px;
+    font-size: 10.5px;
+  }
+}
+
+/* На невысоких экранах капсула меню чуть ниже: 14 px высоты, которых
+   не хватает контенту, важнее воздуха вокруг иконок. */
+@media (max-height: 720px) {
+  .tabbar {
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    min-height: 58px;
+  }
+
+  .tabbar .tab {
+    min-height: 48px;
+    font-size: 10px;
+  }
+
+  .tab-icon {
+    width: 22px;
+    height: 22px;
+    flex-basis: 22px;
+  }
+
+  .tabbar .tab-home .tab-icon {
+    width: 26px;
+    height: 26px;
+    flex-basis: 26px;
+  }
+
+  html.has-tabbar body {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Последний запас для кабинета на невысоких экранах. */
+@media (max-width: 759px) and (max-height: 720px) {
+  .profile-title {
+    font-size: 23px;
+  }
+
+  .profile-tabs {
+    margin: 8px 0 10px;
+  }
+
+  .profile-pane .profile-summary {
+    padding: 12px;
+  }
+
+  .profile-pane .profile-section {
+    margin-top: 14px;
+  }
+
+  .profile-pane .result-item {
+    padding: 8px 0;
+  }
 }

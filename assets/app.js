@@ -1082,7 +1082,7 @@
         '<div class="auth-brand" aria-hidden="true"><span class="auth-brand-mark">ت</span></div>' +
         '<header class="auth-heading">' +
           '<h1 id="authPhoneTitle">Вход в профиль</h1>' +
-          '<p>Продолжите обучение и откройте свои результаты.</p>' +
+          '<p>Ваши результаты и разбор ошибок.</p>' +
         '</header>' +
         '<p class="notice is-error" id="loginErr" role="status" aria-live="polite"' +
           (startupError ? '>' + esc(startupError) : ' hidden>') + '</p>' +

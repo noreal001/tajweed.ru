@@ -585,3 +585,70 @@
     padding-bottom: 80px;
   }
 }
+
+/* ── Баннер статей = баннер главной ─────────────────────────
+   Копия точная, поэтому собственных стилей у него нет: всё приезжает
+   из folio.css. Здесь только отступ вокруг него и подзаголовок статьи,
+   который на главной отсутствует и потому вынесен ПОД баннер. */
+.kb-wrap .welcome-hero {
+  margin: 22px 0 0;
+}
+
+.kb-intro {
+  max-width: 60ch;
+  margin: 20px 0 30px;
+  color: var(--text-soft);
+  font-family: var(--font-ui);
+  font-size: clamp(15px, 2.4vw, 17px);
+  line-height: 1.6;
+}
+
+/* Заголовок статьи в баннере — той же величины, что на главной. На сайте
+   размер привязан к идентификатору #welcomeTitle, поэтому повторяем его
+   для #pageTitle: баннер обязан быть один в один. */
+.kb-wrap .welcome-hero #pageTitle {
+  max-width: 11ch;
+  color: var(--plaque-ink);
+  font-size: clamp(38px, 5.6vw, 64px);
+  line-height: 0.98;
+}
+
+.kb-wrap .welcome-hero #pageTitle em {
+  color: var(--plaque-soft);
+  font-style: italic;
+  font-weight: 500;
+}
+
+:root[data-theme="light"] .kb-wrap .welcome-hero #pageTitle {
+  color: #0a0a0b;
+}
+
+:root[data-theme="light"] .kb-wrap .welcome-hero #pageTitle em {
+  color: #4f4d52;
+}
+
+/* Кнопки темы и языка стоят парой, как в шапке сайта. */
+.kb-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kb-language .language-button {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Арабские вставки не переводим ни при каком языке интерфейса. */
+.kb-ar {
+  unicode-bidi: isolate;
+}
