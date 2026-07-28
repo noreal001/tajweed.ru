@@ -1489,7 +1489,11 @@
   }
 
   function showSavedResult(id, cabinetToken) {
-    setBar('Мой результат');
+    /* Полоса «Мой результат» дублировала заголовок «Результат экзамена»
+       строкой ниже и съедала 44 px в самом верху — там, где ученик
+       ищет свой процент. Название экрана остаётся во вкладке браузера. */
+    setBar(null);
+    document.title = 'Мой результат · таджвид.рф';
     loadingScreen('Результат экзамена', 'Загружаем результат…');
     var seq = screenToken();
     apiGet('/api/result/' + encodeURIComponent(id))
