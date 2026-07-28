@@ -755,6 +755,11 @@
         on: function () { return state.phase === 'reg' || state.phase === 'exam'; } },
       { id: 'lead', label: 'Уроки', act: function () { state.phase = 'lead'; show(); },
         on: function () { return state.phase === 'lead' || state.phase === 'leadDone'; } },
+      /* База знаний — статичные страницы: у них свои адреса, чтобы
+         поисковики видели статьи без выполнения скриптов. */
+      { id: 'kb', label: 'Статьи',
+        act: function () { location.href = 'stati/'; },
+        on: function () { return false; } },
       { id: 'profile', label: 'Профиль',
         act: function () { state.phase = 'profile'; show(); },
         on: function () { return state.phase === 'profile'; } }
@@ -1253,6 +1258,8 @@
         '<path d="m9 14 2 2 4-4"></path>',
       lead: '<path d="M12 7v14"></path>' +
         '<path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>',
+      kb: '<path d="m16 6 4 14"></path><path d="M12 6v14"></path>' +
+        '<path d="M8 8v12"></path><path d="M4 4v16"></path>',
       profile: '<circle cx="12" cy="8" r="5"></circle>' +
         '<path d="M20 21a8 8 0 0 0-16 0"></path>'
     };
@@ -1408,6 +1415,19 @@
         '<div class="hero-actions">' + examButton('ctaExam') +
           (draft ? '<button class="btn is-ghost" id="startOver">Начать заново</button>' : '') +
         '</div>' +
+      '</section>' +
+      /* База знаний внизу главной: обычные ссылки на статичные статьи —
+         и людям по пути, и поисковикам видно без выполнения скриптов. */
+      '<section class="kb-teaser" aria-labelledby="kbTitle">' +
+        '<p class="kicker" id="kbTitle">База знаний<span class="cur">_</span></p>' +
+        '<ul class="kb-teaser-list">' +
+          '<li><a href="stati/chto-takoe-tadzhvid/">Что такое таджвид</a></li>' +
+          '<li><a href="stati/pravila-tadzhvida/">Правила таджвида</a></li>' +
+          '<li><a href="stati/tadzhvid-dlya-nachinayushchih/">Таджвид для начинающих</a></li>' +
+          '<li><a href="stati/uroki-tadzhvida/">Уроки таджвида</a></li>' +
+          '<li><a href="stati/chtenie-korana-s-tadzhvidom/">Чтение Корана с таджвидом</a></li>' +
+        '</ul>' +
+        '<div class="btn-row"><a class="btn is-pill kb-teaser-all" href="stati/">Все статьи →</a></div>' +
       '</section>'
     );
     var startExam = function () { state.phase = 'reg'; show(); };

@@ -2829,8 +2829,8 @@ html.has-tabbar body {
      к правому краю блока и отрывается от своей подписи. */
   align-items: flex-start;
   justify-content: center;
-  gap: 2px;
-  height: 44px;
+  gap: 1px;
+  height: 52px;
   overflow: hidden;
   opacity: 1;
   transition: opacity 0.32s var(--ease);
@@ -2843,11 +2843,15 @@ html.has-tabbar body {
 .ayah-text {
   max-width: 100%;
   margin: 0;
+  /* Огласовки рисуются ВЫШЕ строки текста: без запаса сверху их
+     срезала обрезка блока. Паддинг входит в область отрисовки при
+     overflow: hidden, поэтому даёт огласовкам место. */
+  padding-top: 8px;
   overflow: hidden;
   color: var(--text);
   font-family: var(--font-ar);
   font-size: 19px;
-  line-height: 1.5;
+  line-height: 1.4;
   white-space: nowrap;
   text-overflow: ellipsis;
   direction: rtl;
@@ -2871,10 +2875,11 @@ html.has-tabbar body {
 
 @media (max-width: 759px) {
   .ayah {
-    height: 40px;
+    height: 48px;
   }
 
   .ayah-text {
+    padding-top: 7px;
     font-size: 16px;
   }
 
@@ -2933,4 +2938,48 @@ html.is-exam .ayah {
     margin-top: 12px;
     font-size: 11.5px;
   }
+}
+
+/* ── База знаний на главной ─────────────────────────────── */
+
+.kb-teaser {
+  margin-top: clamp(52px, 7vw, 76px);
+}
+
+.kb-teaser-list {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kb-teaser-list a {
+  padding: 13px 2px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: 15.5px;
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.kb-teaser-list li:first-child a {
+  border-top: 1px solid var(--line);
+}
+
+.kb-teaser-list a::after {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  content: "→";
+}
+
+.kb-teaser-list a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.kb-teaser-all {
+  text-decoration: none;
 }

@@ -1,0 +1,587 @@
+/* База знаний таджвид.рф — оформление статей.
+   Токены (цвета, шрифты, брейкпоинты) приезжают из ../assets/style.css и
+   ../assets/folio.css: статьи обязаны выглядеть родными сайту — тот же
+   монохромный чертёжный бланк, волосяные линии, Newsreader в заголовках. */
+
+.kb-page {
+  min-height: 100vh;
+  padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  background: var(--bg);
+}
+
+.kb-wrap {
+  width: min(calc(100% - 32px), var(--sheet-w));
+  margin: 0 auto;
+}
+
+/* ── Шапка страницы статьи ─────────────────────────────── */
+
+.kb-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-glass);
+  backdrop-filter: blur(14px);
+}
+
+.kb-topbar-inner {
+  width: min(calc(100% - 32px), var(--sheet-w));
+  min-height: 54px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kb-brand {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--mono-lg);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.kb-brand:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.kb-theme {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+}
+
+.kb-theme svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+/* Иконки темы: показываем ту, В КОТОРУЮ переключаем. */
+.kb-theme .kb-icon-sun { display: none; }
+:root[data-theme="dark"] .kb-theme .kb-icon-sun { display: block; }
+:root[data-theme="dark"] .kb-theme .kb-icon-moon { display: none; }
+
+/* ── Баннер-чертёж ─────────────────────────────────────── */
+
+.kb-hero {
+  position: relative;
+  margin: 26px 0 34px;
+  padding: clamp(26px, 5vw, 44px);
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  background:
+    linear-gradient(to right, var(--folio-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--folio-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  isolation: isolate;
+}
+
+/* Приводные уголки — как у баннеров главной. */
+.kb-hero::before,
+.kb-hero::after {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--line-strong);
+  content: "";
+}
+
+.kb-hero::before {
+  top: -1px;
+  left: -1px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.kb-hero::after {
+  right: -1px;
+  bottom: -1px;
+  border-top: 0;
+  border-left: 0;
+}
+
+/* Большая арабская буква-водяной знак в углу баннера. */
+.kb-hero-glyph {
+  position: absolute;
+  right: clamp(10px, 4vw, 34px);
+  top: 50%;
+  z-index: -1;
+  transform: translateY(-50%);
+  color: var(--text);
+  opacity: 0.08;
+  font-family: var(--font-ar);
+  font-size: clamp(120px, 26vw, 210px);
+  line-height: 1;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.kb-kicker {
+  margin: 0 0 10px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--mono-md);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.kb-hero h1 {
+  max-width: 17ch;
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: clamp(30px, 6.4vw, 52px);
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.kb-hero .kb-lede {
+  max-width: 56ch;
+  margin: 16px 0 0;
+  color: var(--text-soft);
+  font-size: clamp(15px, 2.4vw, 17px);
+  line-height: 1.6;
+}
+
+.kb-hero-meta {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--mono-md);
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+/* ── Тело статьи ───────────────────────────────────────── */
+
+.kb-body {
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 16.5px;
+  line-height: 1.75;
+}
+
+.kb-body > * + * {
+  margin-top: 18px;
+}
+
+.kb-body h2 {
+  margin: 44px 0 6px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-display);
+  font-size: clamp(23px, 4vw, 29px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.kb-body h3 {
+  margin: 30px 0 4px;
+  font-family: var(--font-ui);
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.kb-body p {
+  max-width: 68ch;
+  margin: 14px 0 0;
+  color: var(--text);
+}
+
+.kb-body ul,
+.kb-body ol {
+  max-width: 66ch;
+  margin: 14px 0 0;
+  padding-left: 22px;
+}
+
+.kb-body li {
+  margin-top: 8px;
+}
+
+.kb-body li::marker {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+/* Арабские примеры внутри текста. */
+.kb-ar {
+  font-family: var(--font-ar);
+  font-size: 1.25em;
+  line-height: 1;
+  direction: rtl;
+  unicode-bidi: isolate;
+}
+
+/* Врезка-факт: вертикальная волосяная линия, как notice на сайте. */
+.kb-note {
+  max-width: 62ch;
+  margin: 22px 0 0;
+  padding: 14px 18px;
+  border-left: 2px solid var(--text);
+  color: var(--text-soft);
+  background: var(--folio-wash);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* Таблица правил: волосяные линии, без заливок. */
+.kb-table-wrap {
+  margin-top: 22px;
+  overflow-x: auto;
+}
+
+.kb-table {
+  min-width: 480px;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.kb-table th {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line-strong);
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--mono-md);
+  font-weight: 500;
+  letter-spacing: var(--track-pill);
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.kb-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.kb-table td:first-child {
+  white-space: nowrap;
+  font-weight: 650;
+}
+
+/* Вопросы-ответы: карточки-раскрывашки без браузерных треугольников. */
+.kb-faq {
+  margin-top: 22px;
+  display: grid;
+  gap: 10px;
+}
+
+.kb-faq details {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.kb-faq summary {
+  padding: 14px 18px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  cursor: pointer;
+  font-weight: 650;
+  list-style: none;
+}
+
+.kb-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.kb-faq summary::after {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  content: "+";
+}
+
+.kb-faq details[open] summary::after {
+  content: "−";
+}
+
+.kb-faq details p {
+  max-width: none;
+  margin: 0;
+  padding: 0 18px 16px;
+  color: var(--text-soft);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* ── Призыв: экзамен и уроки ───────────────────────────── */
+
+.kb-cta {
+  margin-top: 48px;
+  padding: clamp(22px, 4vw, 32px);
+  border: 1px solid var(--line-strong);
+  background:
+    linear-gradient(to right, var(--folio-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--folio-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.kb-cta h2 {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 4vw, 28px);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.kb-cta p {
+  max-width: 58ch;
+  margin: 10px 0 0;
+  color: var(--text-soft);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.kb-cta-actions {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.kb-btn {
+  min-height: 46px;
+  padding: 12px 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--brand-ink);
+  color: var(--inverse-text);
+  background: var(--inverse-bg);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+:root[data-theme="light"] .kb-btn {
+  color: #ffffff;
+  background: var(--brand-ink);
+}
+
+.kb-btn.is-ghost {
+  border: 1px solid var(--control-line);
+  color: var(--text);
+  background: transparent;
+}
+
+:root[data-theme="light"] .kb-btn.is-ghost {
+  color: var(--brand-ink);
+}
+
+/* ── Перелинковка и подвал ─────────────────────────────── */
+
+.kb-related {
+  margin-top: 44px;
+}
+
+.kb-related .kb-kicker {
+  margin-bottom: 12px;
+}
+
+.kb-related-list {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  list-style: none;
+}
+
+.kb-related-list a {
+  padding: 13px 2px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: 15.5px;
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.kb-related-list li:first-child a {
+  border-top: 1px solid var(--line);
+}
+
+.kb-related-list a::after {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  content: "→";
+}
+
+.kb-related-list a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.kb-foot {
+  margin-top: 44px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--mono-md);
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+/* ── Хаб базы знаний: карточки статей ──────────────────── */
+
+.kb-grid {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.kb-card {
+  position: relative;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: var(--surface);
+  text-decoration: none;
+  transition: border-color 0.16s var(--ease);
+}
+
+.kb-card:hover {
+  border-color: var(--line-strong);
+}
+
+.kb-card-glyph {
+  color: var(--text);
+  opacity: 0.14;
+  font-family: var(--font-ar);
+  font-size: 40px;
+  line-height: 1;
+}
+
+.kb-card h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.22;
+}
+
+.kb-card p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.kb-card .kb-card-go {
+  margin-top: auto;
+  padding-top: 10px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--mono-md);
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+/* ── Нижнее меню на статичных страницах ────────────────── */
+
+/* Разметка повторяет капсулу сайта, но пункты — обычные ссылки. */
+.kb-tabbar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  z-index: 40;
+  width: min(calc(100% - 32px), 420px);
+  min-height: 70px;
+  padding: 5px;
+  display: flex;
+  transform: translateX(-50%);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(18px);
+}
+
+.kb-tabbar a {
+  min-width: 0;
+  min-height: 58px;
+  padding: 5px 3px;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 999px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+:root[data-theme="light"] .kb-tabbar a:not(.is-on) {
+  color: #19191b;
+}
+
+.kb-tabbar a.is-on {
+  color: #ffffff;
+  background: var(--nav-active-bg);
+}
+
+:root[data-theme="light"] .kb-tabbar a.is-on {
+  background: var(--brand-ink);
+}
+
+.kb-tabbar svg {
+  width: 26px;
+  height: 26px;
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .kb-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .kb-hero-glyph {
+    font-size: 110px;
+  }
+}
+
+@media (min-width: 760px) {
+  .kb-tabbar {
+    display: none;
+  }
+
+  .kb-page {
+    padding-bottom: 80px;
+  }
+}
