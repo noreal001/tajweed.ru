@@ -6,7 +6,7 @@
 :root {
   /* Высота шапки выросла вместе с аятом — отступ под неё должен
      совпадать, иначе контент подлезает под шапку. */
-  --site-nav-space: 116px;
+  --site-nav-space: 124px;
   --brand-ink: #19191b;
   --bg: #0a0a0b;
   --surface: #141416;
@@ -2050,7 +2050,7 @@ html.has-tabbar body {
 
 @media (max-width: 640px) {
   :root {
-    --site-nav-space: 78px;
+    --site-nav-space: 90px;
   }
 
   .sitenav {
@@ -2805,11 +2805,13 @@ html.has-tabbar body {
      к правому краю блока и отрывается от своей подписи. */
   align-items: flex-start;
   justify-content: center;
-  /* Зазор нужен реальный: у арабского есть выносные элементы вниз, и
-     подпись «АЛЬ-ХИДЖР, 15:9» упиралась прямо в них. */
-  gap: 5px;
-  height: 58px;
-  overflow: hidden;
+  /* Крупный зазор: у арабского выносные элементы уходят заметно ниже
+     базовой линии, и подпись «АЛЬ-ХИДЖР, 15:9» их перечёркивала. */
+  gap: 12px;
+  /* Высоту НЕ фиксируем и блок НЕ обрезаем: любая обрезка срезала то
+     огласовки сверху, то хвосты букв снизу. Ширину ограничивает сама
+     строка текста, а вертикаль пусть считается по содержимому. */
+  min-height: 76px;
   opacity: 1;
   transition: opacity 0.32s var(--ease);
 }
@@ -2820,16 +2822,14 @@ html.has-tabbar body {
 
 .ayah-text {
   max-width: 100%;
-  margin: 0;
-  /* Огласовки рисуются ВЫШЕ строки текста: без запаса сверху их
-     срезала обрезка блока. Паддинг входит в область отрисовки при
-     overflow: hidden, поэтому даёт огласовкам место. */
-  padding-top: 8px;
+  /* Запас сверху и снизу — под огласовки и хвосты букв. Он входит в
+     область отрисовки при обрезке по ширине, поэтому ничего не режет. */
+  padding: 10px 0 12px;
   overflow: hidden;
   color: var(--text);
   font-family: var(--font-ar);
-  font-size: 19px;
-  line-height: 1.4;
+  font-size: 23px;
+  line-height: 1.75;
   white-space: nowrap;
   text-overflow: ellipsis;
   direction: rtl;
@@ -2853,13 +2853,13 @@ html.has-tabbar body {
 
 @media (max-width: 759px) {
   .ayah {
-    height: 54px;
-    gap: 4px;
+    min-height: 62px;
+    gap: 9px;
   }
 
   .ayah-text {
-    padding-top: 7px;
-    font-size: 16px;
+    padding: 7px 0 9px;
+    font-size: 18px;
   }
 
   .ayah-ref {
@@ -3208,8 +3208,8 @@ html.is-exam .ayah {
   /* Высота с запасом: у крупного арабского выносные элементы уходят и
      вверх, и вниз — при впритык подобранной высоте их срезает. */
   .ayah {
-    height: 84px;
-    gap: 7px;
+    min-height: 92px;
+    gap: 14px;
   }
 
   .ayah-text {
@@ -3440,4 +3440,10 @@ html.is-exam .ayah {
     height: 5px;
     margin-top: 6px;
   }
+}
+
+/* Фиксированный масштаб: двойное касание больше не приближает страницу.
+   Прокрутку это не трогает — жесты панорамирования остаются. */
+html {
+  touch-action: manipulation;
 }

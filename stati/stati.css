@@ -686,15 +686,23 @@
   color: rgba(25, 25, 27, 0.13);
 }
 
-/* Карточки не должны сплетаться: между ними явный воздух. */
+/* Карточки не должны сплетаться. Считать надо не «на глаз»: у каждой
+   карточки приводные уголки ТОРЧАТ НАРУЖУ на --mark-out (22 px на
+   широком экране, 14 px на телефоне). Значит зазор обязан быть больше
+   удвоенного выноса, иначе уголки соседей упираются друг в друга. */
 .kb-levels {
-  gap: 34px;
+  gap: 46px;
 }
 
 @media (min-width: 760px) {
   .kb-levels {
-    gap: 40px;
+    gap: 68px;
   }
+}
+
+/* Текст под баннером тоже отходит с учётом нижних уголков баннера. */
+.kb-intro {
+  margin-top: 52px;
 }
 
 /* Между блоками статьи — ровный ритм. */
@@ -710,4 +718,45 @@
 
 .kb-wrap .cta-banner {
   margin-top: 48px;
+}
+
+/* ── Страница 404 ───────────────────────────────────────────
+   Баннер взят с хаба один в один, ниже — только куда идти дальше. */
+.kb-404-links {
+  margin-top: 34px;
+  display: grid;
+  gap: 0;
+}
+
+.kb-404-links a {
+  padding: 16px 2px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.kb-404-links a:first-child {
+  border-top: 1px solid var(--line);
+}
+
+.kb-404-links a::after {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  content: "→";
+}
+
+.kb-404-links a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* Баннер ошибки крупнее обычного: страница пустая, ему есть где встать. */
+.kb-404 .welcome-hero {
+  min-height: min(58vh, 460px);
 }
