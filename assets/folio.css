@@ -3455,3 +3455,150 @@ html.is-exam .ayah {
 html {
   touch-action: manipulation;
 }
+
+/* ── Кнопка смены темы: вдавленная плашка в ОБЕИХ темах ─────
+   Раньше её обводила светлая рамка — она «поднимала» кнопку и съедала
+   эффект вдавленности. Рамки нет: глубину даёт только внутренняя тень —
+   тёмная сверху, светлый отблеск снизу. */
+.theme-toggle,
+:root[data-theme="light"] .theme-toggle,
+:root[data-theme="dark"] .theme-toggle {
+  border: 0 !important;
+  color: var(--text) !important;
+  background: var(--panel-deep-raised) !important;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.55),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.06) !important;
+}
+
+:root[data-theme="light"] .theme-toggle {
+  color: #19191b !important;
+  background: #ececed !important;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.22),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.95) !important;
+}
+
+@media (hover: hover) {
+  .theme-toggle:hover,
+  :root[data-theme="dark"] .theme-toggle:hover {
+    border: 0 !important;
+    background: #121215 !important;
+    box-shadow:
+      inset 0 3px 6px rgba(0, 0, 0, 0.65),
+      inset 0 -1px 2px rgba(255, 255, 255, 0.07) !important;
+  }
+
+  :root[data-theme="light"] .theme-toggle:hover {
+    border: 0 !important;
+    color: #19191b !important;
+    background: #e4e4e6 !important;
+    box-shadow:
+      inset 0 3px 6px rgba(0, 0, 0, 0.28),
+      inset 0 -1px 2px rgba(255, 255, 255, 0.95) !important;
+  }
+}
+
+/* Нажатие — плашка проседает ещё глубже. */
+.theme-toggle:active {
+  box-shadow:
+    inset 0 4px 7px rgba(0, 0, 0, 0.7),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.05) !important;
+}
+
+:root[data-theme="light"] .theme-toggle:active {
+  box-shadow:
+    inset 0 4px 7px rgba(0, 0, 0, 0.32),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.95) !important;
+}
+
+/* ── Вдавленные плашки в СВЕТЛОЙ теме ───────────────────────
+   Раньше светлая тема гасила внутренние тени правилом
+   `box-shadow: none` — потому эффект был виден только на чёрном.
+   Здесь он возвращён, но с параметрами для белого: тень мягче
+   (на белом она читается сильнее), снизу — белый отблеск. */
+:root[data-theme="light"] .welcome-hero,
+:root[data-theme="light"] .cta-banner,
+:root[data-theme="light"] .level,
+:root[data-theme="light"] .level.is-locked,
+:root[data-theme="light"] .level.is-open,
+:root[data-theme="light"] .level.is-scored {
+  background: #fbfbfc;
+  box-shadow:
+    inset 5px 5px 14px rgba(25, 25, 27, 0.13),
+    inset -4px -4px 12px rgba(255, 255, 255, 0.9);
+}
+
+/* ── Плашки внутри карточек статей ──────────────────────────
+   Заголовок, ярлык раздела и кнопка «Читать статью» — вдавленные
+   плашки. Ярлык чуть теплее фона, чтобы выделялся. */
+.kb-level .level-topic,
+.kb-level .level-lock,
+.kb-level .level-hint {
+  padding: 8px 14px;
+  display: inline-block;
+  border-radius: 0;
+}
+
+.kb-level .level-topic {
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.05);
+}
+
+.kb-level .level-lock {
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.45),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.06);
+}
+
+/* «Читать статью» — на неё нажимают, поэтому реагирует на наведение. */
+.kb-level .level-hint {
+  margin-top: 16px;
+  color: var(--plaque-ink);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.06);
+  font-weight: 600;
+  transition: background-color 0.16s var(--ease), box-shadow 0.16s var(--ease);
+}
+
+@media (hover: hover) {
+  .kb-level:hover .level-hint {
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow:
+      inset 0 3px 7px rgba(0, 0, 0, 0.6),
+      inset 0 -1px 2px rgba(255, 255, 255, 0.08);
+  }
+}
+
+.kb-level:active .level-hint {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* Светлая тема: те же плашки, но тени мягче, отблеск белый. */
+:root[data-theme="light"] .kb-level .level-topic,
+:root[data-theme="light"] .kb-level .level-lock,
+:root[data-theme="light"] .kb-level .level-hint {
+  background: #f1f1f3;
+  box-shadow:
+    inset 0 2px 5px rgba(25, 25, 27, 0.18),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.95);
+}
+
+:root[data-theme="light"] .kb-level .level-lock {
+  background: #eaeaec;
+}
+
+@media (hover: hover) {
+  :root[data-theme="light"] .kb-level:hover .level-hint {
+    background: #e6e6e9;
+    box-shadow:
+      inset 0 3px 7px rgba(25, 25, 27, 0.24),
+      inset 0 -1px 2px rgba(255, 255, 255, 0.95);
+  }
+}
