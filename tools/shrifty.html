@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Выбор арабского шрифта · таджвид.рф</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Amiri+Quran&amp;family=Scheherazade+New:wght@400;500;600&amp;family=Noto+Naskh+Arabic:wght@400;500;600&amp;family=Lateef:wght@200;300;400&amp;family=Harmattan:wght@400&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --card: #101013;
+      --text: #f2f2f4;
+      --soft: rgba(255, 255, 255, 0.62);
+      --faint: rgba(255, 255, 255, 0.42);
+      --line: rgba(255, 255, 255, 0.14);
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --mono: ui-monospace, Menlo, 'SF Mono', monospace;
+    }
+
+    :root[data-theme="light"] {
+      --bg: #ffffff;
+      --card: #fbfbfc;
+      --text: #19191b;
+      --soft: #57555a;
+      --faint: #86838a;
+      --line: rgba(25, 25, 27, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px 16px 60px;
+      color: var(--text);
+      background: var(--bg);
+      font-family: var(--sans);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    .wrap { max-width: 860px; margin: 0 auto; }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 650;
+      line-height: 1.2;
+    }
+
+    .lede {
+      max-width: 60ch;
+      margin: 0 0 8px;
+      color: var(--soft);
+      font-size: 14.5px;
+      line-height: 1.6;
+    }
+
+    .controls {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      margin: 14px 0 22px;
+      padding: 12px 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+    }
+
+    .controls button {
+      min-height: 40px;
+      padding: 8px 14px;
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: transparent;
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .controls label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--soft);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .card {
+      margin-bottom: 18px;
+      padding: 18px 18px 20px;
+      border: 1px solid var(--line);
+      background: var(--card);
+    }
+
+    .card-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .card-head b {
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .card-head span {
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .note {
+      margin: 0 0 14px;
+      color: var(--soft);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .sample {
+      margin: 0;
+      padding: 12px 0;
+      direction: rtl;
+      line-height: 2;
+      unicode-bidi: isolate;
+    }
+
+    .sample + .sample { border-top: 1px dashed var(--line); }
+
+    .sample small {
+      display: block;
+      margin-bottom: 4px;
+      direction: ltr;
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .pick {
+      margin-top: 14px;
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: transparent;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .pick.is-on { color: var(--bg); background: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Какой арабский шрифт поставить</h1>
+    <p class="lede">Один и тот же текст в шести шрифтах. Смотрите две вещи:
+      насколько тонкие линии и как нарисован сукун — кружок или «головка ха».
+      Под каждым шрифтом кнопка: нажмите, чтобы запомнить выбор, потом скажите
+      мне название.</p>
+
+    <div class="controls">
+      <button id="theme" type="button">Сменить тему</button>
+      <label>Размер
+        <input id="size" type="range" min="18" max="46" value="30">
+        <b id="sizeVal">30</b>
+      </label>
+    </div>
+
+    <div id="cards"></div>
+  </div>
+
+  <script>
+    /* Образцы подобраны так, чтобы было видно спорное: сукун (ْ),
+       шадда с огласовкой, хамза и протяжные буквы. */
+    var SAMPLES = [
+      { label: 'Сукун: يَغْتَبْ · فِرْعَوْنَ · ٱقْرَأْ', text: 'يَغْتَبْ · فِرْعَوْنَ · ٱقْرَأْ' },
+      { label: 'Аят 96:1', text: 'ٱقْرَأْ بِٱسْمِ رَبِّكَ ٱلَّذِى خَلَقَ' },
+      { label: 'Аят 73:4', text: 'أَوْ زِدْ عَلَيْهِ وَرَتِّلِ ٱلْقُرْءَانَ تَرْتِيلًا' },
+      { label: 'Слова экзамена', text: 'سَبَقَ · لَذَهَبَ · مَشْـَٔمَةِ · فَلْيَسْتَعْفِفْ' }
+    ];
+
+    var FONTS = [
+      { name: 'Amiri', css: "'Amiri', serif", note: 'Сейчас стоит на сайте. Классический насх, сукун — кружок.' },
+      { name: 'Amiri Quran', css: "'Amiri Quran', serif", note: 'Коранический вариант того же шрифта: огласовки нарисованы по мусхафу.' },
+      { name: 'Scheherazade New', css: "'Scheherazade New', serif", note: 'Тоньше Amiri, спокойные огласовки. Делался для изданий Корана.' },
+      { name: 'Noto Naskh Arabic', css: "'Noto Naskh Arabic', serif", note: 'Ровный, хорошо читается мелко. Огласовки строгие.' },
+      { name: 'Lateef', css: "'Lateef', serif", note: 'Самый тонкий из подборки, лёгкое перо.' },
+      { name: 'Harmattan', css: "'Harmattan', serif", note: 'Упрощённый рисунок, очень лёгкий; сукун мелкий.' }
+    ];
+
+    var cards = document.getElementById('cards');
+    var size = document.getElementById('size');
+    var sizeVal = document.getElementById('sizeVal');
+
+    FONTS.forEach(function (font) {
+      var card = document.createElement('div');
+      card.className = 'card';
+      var html = '<div class="card-head"><b>' + font.name + '</b><span>' + font.name + '</span></div>' +
+        '<p class="note">' + font.note + '</p>';
+      SAMPLES.forEach(function (s) {
+        html += '<p class="sample" style="font-family:' + font.css + '" lang="ar" dir="rtl">' +
+          '<small>' + s.label + '</small>' + s.text + '</p>';
+      });
+      html += '<button class="pick" type="button">Выбрать этот</button>';
+      card.innerHTML = html;
+      cards.appendChild(card);
+    });
+
+    function applySize() {
+      var v = size.value;
+      sizeVal.textContent = v;
+      [].forEach.call(document.querySelectorAll('.sample'), function (el) {
+        el.style.fontSize = v + 'px';
+      });
+    }
+    size.oninput = applySize;
+    applySize();
+
+    document.getElementById('theme').onclick = function () {
+      var root = document.documentElement;
+      root.setAttribute('data-theme', root.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+    };
+
+    cards.onclick = function (event) {
+      var button = event.target.closest('.pick');
+      if (!button) return;
+      [].forEach.call(document.querySelectorAll('.pick'), function (b) { b.classList.remove('is-on'); });
+      button.classList.add('is-on');
+      button.textContent = 'Выбран: ' + button.closest('.card').querySelector('b').textContent;
+    };
+  </script>
+</body>
+</html>
