@@ -3716,3 +3716,148 @@ html {
     inset 0 3px 7px rgba(0, 0, 0, 0.9),
     inset 0 -1px 2px rgba(255, 255, 255, 0.05);
 }
+
+/* Карточки в ряду одинаковой высоты. `min-height: 100%` не работал:
+   процент считается от высоты <li>, а она у растянутого элемента сетки
+   не «определённая» — четвёртая карточка выходила ниже соседней. */
+.kb-levels > li {
+  display: flex;
+}
+
+.kb-levels .level {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
+/* Номер карточки — вдавленный кружок. Цифра приглушённая, сам кружок
+   темнее фона карточки, поэтому читается как утопленный. */
+.kb-level .level-n {
+  width: 64px;
+  height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #050506;
+  box-shadow:
+    inset 0 3px 8px rgba(0, 0, 0, 0.9),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.06);
+  font-size: 34px;
+  line-height: 1;
+}
+
+:root[data-theme="light"] .kb-level .level-n {
+  background: #efeff1;
+  box-shadow:
+    inset 0 3px 7px rgba(25, 25, 27, 0.2),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.95);
+  color: rgba(25, 25, 27, 0.34);
+}
+
+@media (max-width: 759px) {
+  .kb-level .level-n {
+    width: 52px;
+    height: 52px;
+    font-size: 27px;
+  }
+}
+
+/* Уголки карточки отходят так же, как у баннера. Раньше вынос (17 px)
+   был МЕНЬШЕ длины самого штриха (18 px) — уголки упирались в кант
+   карточки. У баннера вынос 25 при штрихе 18, отсюда его аккуратность. */
+.kb-level {
+  --level-frame: 26px;
+}
+
+@media (max-width: 759px) {
+  .kb-level {
+    --level-frame: 20px;
+  }
+}
+
+/* Плашка заголовка обнимает текст, а не тянется на всю ширину карточки:
+   у длинных названий в две строки она раздувалась до края. И тон мягче —
+   выделение было слишком резким. */
+:root[data-theme="dark"] .kb-level .level-topic {
+  width: fit-content;
+  max-width: 100%;
+  background: #08080a;
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.75),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.04);
+}
+
+/* ── Уголки карточки: штрих короче выноса ───────────────────
+   У баннера вынос 26 px, а штрих 18 — между концом штриха и кантом
+   остаётся воздух, отсюда аккуратный вид. У карточек штрих равнялся
+   выносу и упирался прямо в угол. Разводим: вынос задаёт --level-frame,
+   длину — отдельная --level-tick. */
+.kb-level {
+  --level-tick: 18px;
+}
+
+.kb-level .marks .tick.tl-v,
+.kb-level .marks .tick.tr-v,
+.kb-level .marks .tick.bl-v,
+.kb-level .marks .tick.br-v {
+  height: var(--level-tick);
+}
+
+.kb-level .marks .tick.tl-h,
+.kb-level .marks .tick.tr-h,
+.kb-level .marks .tick.bl-h,
+.kb-level .marks .tick.br-h {
+  width: var(--level-tick);
+}
+
+@media (max-width: 759px) {
+  .kb-level {
+    --level-tick: 14px;
+  }
+}
+
+/* ── Заголовок карточки: без плашки ─────────────────────────
+   Выделять сам текст оказалось лишним. Плашка остаётся только у
+   номера и у кнопки. */
+:root[data-theme="dark"] .kb-level .level-topic,
+:root[data-theme="light"] .kb-level .level-topic,
+.kb-level .level-topic {
+  width: auto;
+  margin-top: 12px;
+  padding: 0;
+  display: block;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ── «Читать статью» — белая плашка, как кнопки баннера ─────
+   На главной кнопки светлые и вдавленные; у статей были контурные,
+   и разнобой бросался в глаза. */
+.kb-level .level-hint,
+:root[data-theme="light"] .kb-level .level-hint {
+  min-height: 42px;
+  padding: 9px 18px;
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  border-radius: 0;
+  color: #0a0a0b;
+  background: linear-gradient(180deg, #e7e7ea, #fbfbfc);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.34),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.9);
+  font-weight: 650;
+}
+
+@media (hover: hover) {
+  .kb-level:hover .level-hint,
+  :root[data-theme="light"] .kb-level:hover .level-hint {
+    border: 0;
+    color: #0a0a0b;
+    background: linear-gradient(180deg, #dedee2, #f4f4f6);
+    box-shadow:
+      inset 0 3px 6px rgba(0, 0, 0, 0.42),
+      inset 0 -1px 2px rgba(255, 255, 255, 0.85);
+  }
+}
