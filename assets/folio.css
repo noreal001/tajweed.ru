@@ -3269,3 +3269,91 @@ html.is-exam .ayah {
 .kb-tabbar a:hover {
   text-decoration: none;
 }
+
+/* ── Кнопки шапки: тема и язык ──────────────────────────────
+   Приём с вики-страницы: мягкая вдавленная плашка. Здесь она монохромная
+   и работает в обеих темах, а у языка рядом с флагом стоит код — по
+   одному флажку не всегда понятно, какой язык включён. */
+.theme-toggle,
+.language-button {
+  border: 1px solid var(--line) !important;
+  background: var(--folio-wash) !important;
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 0, 0, 0.28),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.06) !important;
+  transition: box-shadow 0.16s var(--ease), color 0.16s var(--ease);
+}
+
+:root[data-theme="light"] .theme-toggle,
+:root[data-theme="light"] .language-button {
+  background: #f3f3f5 !important;
+  box-shadow:
+    inset 2px 2px 5px rgba(20, 19, 16, 0.13),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.95) !important;
+}
+
+.theme-toggle:hover,
+.language-button:hover {
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.22),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.05) !important;
+}
+
+:root[data-theme="light"] .theme-toggle:hover,
+:root[data-theme="light"] .language-button:hover {
+  box-shadow:
+    inset 1px 1px 3px rgba(20, 19, 16, 0.1),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.92) !important;
+}
+
+/* Иконка темы — круг, залитый наполовину: одна на обе темы, в тёмной
+   разворачивается. Читается яснее пары «луна/солнце». */
+.theme-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  transition: transform 0.24s var(--ease);
+}
+
+:root[data-theme="dark"] .theme-icon {
+  transform: rotate(180deg);
+}
+
+/* Кнопка языка — пилюля: флаг, код, шеврон. */
+.language-button {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 10px 0 4px !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px !important;
+  color: var(--text-soft);
+}
+
+.language-code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.language-chevron {
+  width: 13px;
+  height: 13px;
+  display: block;
+  opacity: 0.55;
+}
+
+.language-button .language-flag {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+}
+
+.theme-toggle {
+  border-radius: 999px !important;
+}
