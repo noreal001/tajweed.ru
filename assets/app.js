@@ -20,6 +20,17 @@
   })();
   var STUDENT_KEY = 'tajweed_student_token';
   var QUESTION_TIME = 180; // секунд на вопрос
+
+  /* Аяты для шапки. Только ЦЕЛЫЕ аяты, без обрезков; текст сверен
+     посимвольно по двум независимым источникам мусхафной орфографии
+     (Tanzil-Uthmani и КФГQPC) — по памяти арабский здесь не набирается.
+     Подборка — о чтении Корана, его сохранности и знании. */
+  var AYAHS = [
+    { text: 'أَوْ زِدْ عَلَيْهِ وَرَتِّلِ ٱلْقُرْءَانَ تَرْتِيلًا', ref: 'Аль-Муззаммиль, 73:4' },
+    { text: 'ٱقْرَأْ بِٱسْمِ رَبِّكَ ٱلَّذِى خَلَقَ', ref: 'Аль-Аляк, 96:1' },
+    { text: 'وَلَقَدْ يَسَّرْنَا ٱلْقُرْءَانَ لِلذِّكْرِ فَهَلْ مِن مُّدَّكِرٍ', ref: 'Аль-Камар, 54:17' },
+    { text: 'إِنَّا نَحْنُ نَزَّلْنَا ٱلذِّكْرَ وَإِنَّا لَهُۥ لَحَـٰفِظُونَ', ref: 'Аль-Хиджр, 15:9' }
+  ];
   var app = document.getElementById('app');
   var topbar = document.getElementById('topbar');
   var topbarLabel = document.getElementById('topbarLabel');
@@ -1914,14 +1925,16 @@
     });
   }
 
+  /* Кнопки возврата нет: уйти отсюда можно нижним меню, а лишняя строка
+     только сбивает — заявка уже отправлена, действий не осталось. */
   function showLeadDone() {
     setBar(null);
+    document.title = 'Заявка отправлена · таджвид.рф';
     render(
       '<h1>Заявка отправлена</h1>' +
       '<p class="lede">Спасибо! Преподаватель свяжется с вами в ближайшее время.</p>' +
-      '<div class="btn-row"><button class="btn is-ghost" id="homeBtn">← На главную</button></div>'
+      '<p class="notice">Пока ждёте — можно посмотреть, как устроен экзамен первого уровня.</p>'
     );
-    document.getElementById('homeBtn').onclick = function () { state.phase = 'welcome'; show(); };
   }
 
   function showReg() {
@@ -2995,7 +3008,45 @@
     }, 760);
   })();
 
+  /* Аят в шапке: начинаем с «аята дня» (по номеру дня в году), дальше
+     меняем по кругу. Высота блока задана в CSS, поэтому смена текста
+     не двигает шапку. */
+  function startAyahs() {
+    var host = document.getElementById('ayah');
+    var textNode = document.getElementById('ayahText');
+    var refNode = document.getElementById('ayahRef');
+    if (!host || !textNode || !refNode) return;
+
+    var start = new Date(new Date().getFullYear(), 0, 0);
+    var dayOfYear = Math.floor((Date.now() - start.getTime()) / 86400000);
+    var idx = ((dayOfYear % AYAHS.length) + AYAHS.length) % AYAHS.length;
+    var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function paint() {
+      var ayah = AYAHS[idx];
+      textNode.textContent = ayah.text;
+      refNode.textContent = ayah.ref;
+    }
+
+    paint();
+    host.hidden = false;
+
+    if (AYAHS.length < 2) return;
+    setInterval(function () {
+      /* Во время экзамена шапка скрыта — не тратим кадры на невидимое. */
+      if (state.phase === 'exam' || document.hidden) return;
+      idx = (idx + 1) % AYAHS.length;
+      if (calm) return paint();
+      host.classList.add('is-fading');
+      setTimeout(function () {
+        paint();
+        host.classList.remove('is-fading');
+      }, 320);
+    }, 25000);
+  }
+
   watchIntegrity();
+  startAyahs();
   restore();
   hit();
   var hashResult = location.hash.match(/^#r=([0-9a-f-]{36})$/i);

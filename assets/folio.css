@@ -2812,3 +2812,125 @@ html.has-tabbar body {
     margin-top: 10px;
   }
 }
+
+/* ── Аят дня в шапке ────────────────────────────────────────
+   Слева в шапке было пусто. Блок занимает свободное место и НЕ двигает
+   шапку при смене: высота фиксирована, поэтому строка меняется на месте. */
+.sitenav-inner:has(.ayah) {
+  justify-content: space-between;
+}
+
+.ayah {
+  min-width: 0;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  /* Строки прижаты влево как одно целое: иначе арабская строка уезжает
+     к правому краю блока и отрывается от своей подписи. */
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  height: 44px;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.32s var(--ease);
+}
+
+.ayah.is-fading {
+  opacity: 0;
+}
+
+.ayah-text {
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-family: var(--font-ar);
+  font-size: 19px;
+  line-height: 1.5;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  direction: rtl;
+}
+
+.ayah-ref {
+  margin: 0;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ayah {
+    transition: none;
+  }
+}
+
+@media (max-width: 759px) {
+  .ayah {
+    height: 40px;
+  }
+
+  .ayah-text {
+    font-size: 16px;
+  }
+
+  .ayah-ref {
+    font-size: 9px;
+  }
+}
+
+/* На самых узких экранах место нужно кнопкам темы и языка. */
+@media (max-width: 379px) {
+  .ayah {
+    display: none;
+  }
+}
+
+/* Во время экзамена шапка и так скрыта; правило страхует от мигания. */
+html.is-exam .ayah {
+  display: none;
+}
+
+@media (max-width: 759px) {
+  /* Экран входа обязан заканчиваться НАД нижним меню: правовая строка
+     уезжала под капсулу и была не видна. */
+  html.is-auth .auth-brand {
+    margin-bottom: 12px;
+    transform: scale(0.86);
+  }
+
+  html.is-auth .auth-heading {
+    margin-bottom: 14px;
+  }
+
+  html.is-auth .auth-heading h1 {
+    font-size: 30px;
+    line-height: 1.1;
+  }
+
+  html.is-auth .auth-heading p {
+    margin-top: 6px;
+    font-size: 14px;
+  }
+
+  html.is-auth .auth-phone-form {
+    gap: 14px;
+  }
+
+  html.is-auth .auth-divider {
+    margin-block: 14px;
+  }
+
+  html.is-auth .auth-register {
+    margin-block: 12px;
+  }
+
+  html.is-auth .auth-legal {
+    margin-top: 12px;
+    font-size: 11.5px;
+  }
+}
