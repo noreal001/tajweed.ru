@@ -4,7 +4,9 @@
    остаётся эталонным #0a0a0b. */
 
 :root {
-  --site-nav-space: 80px;
+  /* Высота шапки выросла вместе с аятом — отступ под неё должен
+     совпадать, иначе контент подлезает под шапку. */
+  --site-nav-space: 116px;
   --brand-ink: #19191b;
   --bg: #0a0a0b;
   --surface: #141416;
@@ -2048,7 +2050,7 @@ html.has-tabbar body {
 
 @media (max-width: 640px) {
   :root {
-    --site-nav-space: 68px;
+    --site-nav-space: 78px;
   }
 
   .sitenav {
@@ -2133,32 +2135,6 @@ html.has-tabbar body {
     gap: 10px;
   }
 
-  /* Шесть уровней встают в три колонки: в два ряда вкладка «Результаты»
-     помещается в экран вместе со списком попыток. */
-  .profile-levels {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .profile-level {
-    padding: 9px 8px;
-  }
-
-  .profile-level-head {
-    margin-bottom: 8px;
-    display: grid;
-    gap: 3px;
-    font-size: 9.5px;
-    letter-spacing: 0.04em;
-  }
-
-  .profile-level-head strong {
-    font-size: 9.5px;
-  }
-
-  .profile-level-meter {
-    height: 22px;
-  }
 
   .welcome-hero .crosshair {
     width: 14px;
@@ -2829,8 +2805,10 @@ html.has-tabbar body {
      к правому краю блока и отрывается от своей подписи. */
   align-items: flex-start;
   justify-content: center;
-  gap: 1px;
-  height: 52px;
+  /* Зазор нужен реальный: у арабского есть выносные элементы вниз, и
+     подпись «АЛЬ-ХИДЖР, 15:9» упиралась прямо в них. */
+  gap: 5px;
+  height: 58px;
   overflow: hidden;
   opacity: 1;
   transition: opacity 0.32s var(--ease);
@@ -2875,7 +2853,8 @@ html.has-tabbar body {
 
 @media (max-width: 759px) {
   .ayah {
-    height: 48px;
+    height: 54px;
+    gap: 4px;
   }
 
   .ayah-text {
@@ -3096,21 +3075,6 @@ html.is-exam .ayah {
     margin-bottom: 10px;
   }
 
-  .profile-pane .profile-levels {
-    gap: 6px;
-  }
-
-  .profile-pane .profile-level {
-    padding: 7px 6px;
-  }
-
-  .profile-pane .profile-level-head {
-    margin-bottom: 6px;
-  }
-
-  .profile-pane .profile-level-meter {
-    height: 18px;
-  }
 
   .profile-pane .result-list {
     margin-top: 10px;
@@ -3140,9 +3104,6 @@ html.is-exam .ayah {
     display: none;
   }
 
-  .profile-pane .profile-level-meter {
-    height: 16px;
-  }
 
   .profile-pane .result-item .score {
     font-size: 16px;
@@ -3247,7 +3208,8 @@ html.is-exam .ayah {
   /* Высота с запасом: у крупного арабского выносные элементы уходят и
      вверх, и вниз — при впритык подобранной высоте их срезает. */
   .ayah {
-    height: 74px;
+    height: 84px;
+    gap: 7px;
   }
 
   .ayah-text {
@@ -3356,4 +3318,126 @@ html.is-exam .ayah {
 
 .theme-toggle {
   border-radius: 999px !important;
+}
+
+/* ── Уровни в кабинете: строки с заполненной линией ─────────
+   Было шесть карточек с квадратиками-«батарейками»: мелко, шумно и
+   непонятно. Стало: номер, состояние и одна линия заполнения. */
+.profile-levels {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+
+.profile-level {
+  padding: 12px 2px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+}
+
+.profile-level-n {
+  color: var(--text-faint);
+  font-family: var(--font-ui);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-align: center;
+}
+
+.profile-level.is-primary .profile-level-n {
+  color: var(--text);
+}
+
+.profile-level-body {
+  min-width: 0;
+  display: block;
+}
+
+.profile-level-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: var(--mono-md);
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+.profile-level-head strong {
+  color: var(--text);
+  font-size: var(--mono-md);
+  font-weight: 650;
+}
+
+/* Линия заполнения: тонкая дорожка и залитая доля. */
+.profile-level-meter {
+  position: relative;
+  height: 6px;
+  margin-top: 8px;
+  display: block;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: var(--folio-highlight);
+}
+
+.profile-meter-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--meter-progress, 0%);
+  border-radius: 999px;
+  background: var(--text);
+}
+
+/* Первый уровень — заливка по результату, закрытые — приглушённая. */
+.profile-level.is-primary .profile-meter-fill {
+  background-color: var(--text);
+  background-image: none;
+}
+
+.profile-level.is-blocked .profile-meter-fill,
+.profile-level.is-future .profile-meter-fill {
+  background-color: var(--text-faint);
+  background-image: none;
+  opacity: 0.5;
+}
+
+.profile-level.is-ready .profile-meter-fill {
+  background-color: var(--text);
+  opacity: 0.75;
+}
+
+/* Дорожка уровня видна всегда — даже у закрытых, где заливки нет. */
+.profile-level-meter {
+  background: var(--folio-line);
+}
+
+:root[data-theme="light"] .profile-level-meter {
+  background: rgba(25, 25, 27, 0.1);
+}
+
+@media (max-width: 759px) {
+  .profile-level {
+    padding: 9px 2px;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .profile-level-n {
+    font-size: 22px;
+  }
+
+  .profile-level-meter {
+    height: 5px;
+    margin-top: 6px;
+  }
 }

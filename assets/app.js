@@ -327,14 +327,19 @@
         kind = 'is-ready';
       }
       pct = Math.max(0, Math.min(100, pct));
+      /* Строка на уровень: крупный номер, название состояния и одна
+         заполненная линия. Прежние трёхсекционные «батарейки» из
+         квадратиков читались как мусор и ничего не сообщали. */
       return '<li class="profile-level ' + kind + '">' +
-        '<div class="profile-level-head"><span>Уровень ' + level.n + '</span>' +
-          '<strong>' + status + '</strong></div>' +
-        '<div class="profile-level-meter" style="--meter-progress:' + pct + '%" ' +
-          'role="img" aria-label="Уровень ' + level.n + ': ' + status + '">' +
-          '<span class="profile-meter-fill" aria-hidden="true"></span>' +
-          '<i aria-hidden="true"></i><i aria-hidden="true"></i>' +
-        '</div>' +
+        '<span class="profile-level-n">' + level.n + '</span>' +
+        '<span class="profile-level-body">' +
+          '<span class="profile-level-head"><span>Уровень ' + level.n + '</span>' +
+            '<strong>' + status + '</strong></span>' +
+          '<span class="profile-level-meter" style="--meter-progress:' + pct + '%" ' +
+            'role="img" aria-label="Уровень ' + level.n + ': ' + status + '">' +
+            '<span class="profile-meter-fill" aria-hidden="true"></span>' +
+          '</span>' +
+        '</span>' +
       '</li>';
     });
     return '<ol class="profile-levels">' + items.join('') + '</ol>';
