@@ -170,8 +170,10 @@
       blueprintLayer(3, 2, 'is-mobile');
   }
 
+  /* Внутренняя сетка маленькой карточки — 2×2. Прежние 3×2 давали шесть
+     клеток: для карточки такого размера это дробно и шумно. */
   function levelDecor() {
-    return marks('is-level') + blueprintLayer(3, 2, 'is-level');
+    return marks('is-level') + blueprintLayer(2, 2, 'is-level');
   }
 
   /* Цвет уровня по проценту: от тревожного красного к неоновой зелени. */

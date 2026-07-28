@@ -821,7 +821,10 @@ html.is-exam body {
   padding: 20px;
   grid-template-columns: repeat(2, minmax(0, 420px));
   justify-content: center;
-  gap: 56px;
+  /* Зазор больше удвоенного выноса приводных уголков (--mark-out 22 px
+     на широком экране): при 56 px уголки соседних карточек сходились
+     вплотную и читались как одна линия. */
+  gap: 72px;
 }
 
 .levels > li {
