@@ -3235,3 +3235,37 @@ html.is-exam .ayah {
     padding: 8px 0;
   }
 }
+
+/* Аят в шапке: тонкое кораническое начертание и крупнее на широком
+   экране — мелкий плотный текст читался тяжело. */
+.ayah-text {
+  font-family: var(--font-ar-quran);
+  font-weight: 400;
+}
+
+@media (min-width: 760px) {
+  /* Высота с запасом: у крупного арабского выносные элементы уходят и
+     вверх, и вниз — при впритык подобранной высоте их срезает. */
+  .ayah {
+    height: 74px;
+  }
+
+  .ayah-text {
+    padding-block: 10px 6px;
+    font-size: 26px;
+    line-height: 1.5;
+  }
+
+  .ayah-ref {
+    font-size: 10.5px;
+  }
+}
+
+/* Ссылки-разделы в шапке базы знаний: у кнопок сайта подчёркивания нет,
+   а ссылки браузер подчёркивает по умолчанию. */
+.sitenav-tabs a.tab,
+.sitenav-tabs a.tab:hover,
+.kb-tabbar a,
+.kb-tabbar a:hover {
+  text-decoration: none;
+}

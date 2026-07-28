@@ -55,6 +55,10 @@
   --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
   --font-ar: 'Amiri', 'Noto Naskh Arabic', serif;
+  /* Отдельное начертание для аятов: Amiri Quran нарисован под
+     коранический текст — линии тоньше, огласовки аккуратнее.
+     Текст заданий экзамена остаётся на обычном Amiri. */
+  --font-ar-quran: 'Amiri Quran', 'Amiri', 'Noto Naskh Arabic', serif;
   --font-mono: ui-monospace, Menlo, 'SF Mono', monospace;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   /* моношрифтовый слой: ровно две ступени, других размеров в моно нет */

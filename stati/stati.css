@@ -630,3 +630,23 @@
 .kb-levels .level-button:hover {
   text-decoration: none;
 }
+
+/* Между карточками нужен явный воздух: вплотную они читались как одна
+   сплошная сетка. */
+.kb-levels {
+  gap: 26px;
+}
+
+/* Номер карточки — крупная цифра, как в чертёжной нумерации. */
+.kb-levels .level-n {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+@media (min-width: 760px) {
+  .kb-levels {
+    gap: 30px;
+  }
+}
