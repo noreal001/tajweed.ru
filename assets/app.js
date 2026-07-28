@@ -298,11 +298,15 @@
     return html;
   }
 
-  /* В кабинете уровни читаются как компактная шестиступенчатая батарея:
-     три секции дают понятный масштаб, а штриховка показывает заполнение. */
+  /* Уровни в кабинете: подробно показываем только те, где что-то
+     происходит (первый и второй). Закрытые 3-6 сворачиваются в одну
+     строку — иначе вкладка «Результаты» не помещалась в экран телефона,
+     а шесть одинаковых строк «закрыт» ничего не сообщали. */
   function profileLevels(value) {
     var progress = normalizedProgress(value);
-    var items = LEVELS.map(function (level) {
+    var shown = LEVELS.filter(function (level) { return level.n <= 2; });
+    var hidden = LEVELS.filter(function (level) { return level.n > 2; });
+    var items = shown.map(function (level) {
       var pct = 0;
       var status = 'закрыт';
       var kind = 'is-future';
@@ -344,6 +348,20 @@
         '</span>' +
       '</li>';
     });
+
+    /* Свёрнутая строка: номера закрытых уровней и пояснение, кто их
+       откроет. Так же, как на главной под карточками уровней. */
+    if (hidden.length) {
+      items.push('<li class="profile-level is-rest">' +
+        '<span class="profile-rest-chips">' +
+          hidden.map(function (level) {
+            return '<span class="profile-rest-chip">' + level.n + '</span>';
+          }).join('') +
+        '</span>' +
+        '<span class="profile-rest-note">Откроет преподаватель</span>' +
+      '</li>');
+    }
+
     return '<ol class="profile-levels">' + items.join('') + '</ol>';
   }
 

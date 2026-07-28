@@ -3861,3 +3861,80 @@ html {
       inset 0 -1px 2px rgba(255, 255, 255, 0.85);
   }
 }
+
+/* Свёрнутая строка закрытых уровней: номера кружками и пояснение.
+   Шесть отдельных строк «закрыт» не помещались в экран и ничего не
+   сообщали — теперь подробно только первый и второй уровни. */
+.profile-level.is-rest {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-rest-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.profile-rest-chip {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-rest-note {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--mono-md);
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+@media (max-width: 759px) {
+  /* Запас для маленьких телефонов: на видимой высоте 650 px правовая
+     строка ещё цепляла нижнее меню. */
+  html.is-auth .auth-phone-form {
+    margin-top: 12px;
+  }
+
+  html.is-auth .auth-legal {
+    margin-top: 8px;
+  }
+
+  html.is-auth .auth-divider {
+    margin-block: 8px;
+  }
+}
+
+@media (max-width: 759px) {
+  /* Экран входа умещается даже на маленьком телефоне (видимая высота
+     650 px), причём с запасом — с учётом подсказки под входом Яндекса,
+     которая появляется, когда вход временно недоступен. */
+  html.is-auth .auth-phone-form {
+    gap: 9px;
+  }
+
+  html.is-auth .auth-phone-form input {
+    min-height: 44px;
+  }
+
+  html.is-auth .auth-submit {
+    min-height: 44px;
+  }
+
+  html.is-auth .auth-provider-secondary {
+    min-height: 44px;
+  }
+
+  html.is-auth .auth-register {
+    margin-block: 8px;
+  }
+}
