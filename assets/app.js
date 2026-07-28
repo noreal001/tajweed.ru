@@ -1889,11 +1889,14 @@
               scheduleFields() +
               '<p class="notice">Данные получит преподаватель Деаб Анас Т. Больше никуда они не уходят.</p>' +
               '<p class="notice is-error" id="leadErr" role="status" aria-live="polite" hidden></p>' +
-              '<div class="btn-row"><button type="submit" class="btn btn-block">Отправить заявку</button></div>' +
+              /* Возврат стоит РЯДОМ с отправкой, а не строкой ниже: на
+                 телефоне отдельный ряд уводил кнопку «Назад» под нижнее
+                 меню, и с последнего шага нельзя было вернуться. */
+              '<div class="btn-row wizard-send">' +
+                '<button class="btn is-quiet" id="wBack">← Назад</button>' +
+                '<button type="submit" class="btn">Отправить заявку</button>' +
+              '</div>' +
             '</form>' +
-            '<div class="btn-row wizard-back">' +
-              '<button class="btn is-quiet" id="wBack">← Предыдущий шаг</button>' +
-            '</div>' +
           '</section>'
         );
         window.scrollTo(0, 0);

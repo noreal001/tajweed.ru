@@ -4068,3 +4068,60 @@ html {
     line-height: 1.4;
   }
 }
+
+/* ── Шаг выбора времени: помещается в экран телефона ────────
+   Барабан с подписями занимал 280 px, плюс плашка о данных 59 —
+   до кнопки «Отправить заявку» приходилось листать. Ужимаем высоту
+   строки барабана и отступы; сам выбор (дни и часы) не меняется. */
+@media (max-width: 759px) {
+  .wizard-schedule-form .schedule-dual-wheel {
+    --wheel-row: 42px;
+  }
+
+  .wizard-schedule-form .schedule-picker {
+    padding-top: 0;
+  }
+
+  .wizard-schedule-form .field-hint {
+    margin-bottom: 8px;
+    font-size: 12.5px;
+  }
+
+  .wizard-schedule-form .schedule-wheel-label {
+    margin-bottom: 4px;
+  }
+
+  .wizard-schedule-form .schedule-selection {
+    margin-top: 8px;
+    font-size: 13.5px;
+  }
+
+  .wizard-schedule-form .notice {
+    padding-block: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .wizard-schedule-form .btn-row {
+    margin-top: 12px;
+  }
+}
+
+/* Ряд «Назад + Отправить заявку»: отправка занимает всё свободное
+   место, возврат — компактный слева. */
+.wizard-send {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wizard-send .btn[type="submit"] {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.wizard-send .btn.is-quiet {
+  flex: 0 0 auto;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
