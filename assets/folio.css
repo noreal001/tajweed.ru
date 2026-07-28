@@ -3682,23 +3682,26 @@ html {
 .kb-faq details::before,
 .kb-faq details::after {
   position: absolute;
-  width: 10px;
-  height: 10px;
+  width: 7px;
+  height: 7px;
   border: 1px solid var(--line-strong);
   content: "";
   pointer-events: none;
 }
 
+/* Уголки вынесены НАРУЖУ и короче своего выноса — то же правило, что
+   у баннера и карточек: вынос 9 px при штрихе 7. Раньше они сидели
+   прямо на канте и читались как утолщение рамки. */
 .kb-faq details::before {
-  top: -1px;
-  left: -1px;
+  top: -9px;
+  left: -9px;
   border-right: 0;
   border-bottom: 0;
 }
 
 .kb-faq details::after {
-  right: -1px;
-  bottom: -1px;
+  right: -9px;
+  bottom: -9px;
   border-top: 0;
   border-left: 0;
 }
@@ -3980,5 +3983,88 @@ html {
     box-shadow:
       inset 0 3px 6px rgba(25, 25, 27, 0.22),
       inset 0 -1px 2px rgba(255, 255, 255, 0.95) !important;
+  }
+}
+
+/* ── Сифаты: две колонки на телефоне ────────────────────────
+   Девять вариантов в один столбец занимали 705 px — экран вопроса не
+   помещался в видимую высоту Safari, и до кнопки «Сохранить» надо было
+   листать. Порядок вариантов НЕ меняется: колонки заполняются построчно
+   слева направо, как читается список. */
+@media (max-width: 759px) {
+  .checks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .check {
+    padding: 11px 12px;
+    gap: 9px;
+  }
+
+  /* Разделители между ячейками — волосяные линии сетки. */
+  .checks .check {
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .checks .check:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .checks .check:nth-last-child(-n + 1) {
+    border-bottom: 0;
+  }
+
+  .check .ru {
+    font-size: 14px;
+  }
+
+  .check .ar {
+    font-size: 17px;
+  }
+}
+
+/* ── Сопоставление букв: чуть плотнее на телефоне ───────────
+   Экран не помещался в видимую высоту Safari на 41 px, и кнопка
+   «Сохранить» уходила за край. Уменьшены только высота плиток и
+   зазоры — количество, порядок и нумерация плиток не меняются. */
+@media (max-width: 759px) {
+  .match {
+    margin-top: 16px;
+    gap: 8px 14px;
+  }
+
+  .match .col {
+    gap: 8px;
+  }
+
+  .match .opt {
+    min-height: 58px;
+    padding: 10px 12px;
+  }
+
+  .q-head {
+    margin-bottom: 0;
+  }
+
+  .match-hint {
+    margin-top: 10px;
+  }
+}
+
+/* Шапка вопроса на телефоне плотнее — но только за счёт кегля и
+   интерлиньяжа. Текст задания не трогаем: он живёт в data.js и сверен
+   с PDF преподавателя. */
+@media (max-width: 759px) {
+  .q-head .q-title {
+    font-size: 21px;
+    line-height: 1.2;
+  }
+
+  .q-head .q-note {
+    margin-top: 6px;
+    font-size: 13.5px;
+    line-height: 1.4;
   }
 }
