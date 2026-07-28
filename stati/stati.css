@@ -14,65 +14,7 @@
   margin: 0 auto;
 }
 
-/* ── Шапка страницы статьи ─────────────────────────────── */
-
-.kb-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-glass);
-  backdrop-filter: blur(14px);
-}
-
-.kb-topbar-inner {
-  width: min(calc(100% - 32px), var(--sheet-w));
-  min-height: 54px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.kb-brand {
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: var(--mono-lg);
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
-  text-decoration: none;
-}
-
-.kb-brand:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
-.kb-theme {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 0;
-  color: var(--text);
-  background: transparent;
-  cursor: pointer;
-}
-
-.kb-theme svg {
-  width: 18px;
-  height: 18px;
-  display: block;
-}
-
-/* Иконки темы: показываем ту, В КОТОРУЮ переключаем. */
-.kb-theme .kb-icon-sun { display: none; }
-:root[data-theme="dark"] .kb-theme .kb-icon-sun { display: block; }
-:root[data-theme="dark"] .kb-theme .kb-icon-moon { display: none; }
-
-/* ── Баннер-чертёж ─────────────────────────────────────── */
+────────────────────────────────── */
 
 .kb-hero {
   position: relative;
@@ -451,64 +393,7 @@
   text-transform: uppercase;
 }
 
-/* ── Хаб базы знаний: карточки статей ──────────────────── */
 
-.kb-grid {
-  margin-top: 26px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.kb-card {
-  position: relative;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border: 1px solid var(--line);
-  color: var(--text);
-  background: var(--surface);
-  text-decoration: none;
-  transition: border-color 0.16s var(--ease);
-}
-
-.kb-card:hover {
-  border-color: var(--line-strong);
-}
-
-.kb-card-glyph {
-  color: var(--text);
-  opacity: 0.14;
-  font-family: var(--font-ar);
-  font-size: 40px;
-  line-height: 1;
-}
-
-.kb-card h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 21px;
-  font-weight: 500;
-  line-height: 1.22;
-}
-
-.kb-card p {
-  margin: 0;
-  color: var(--text-soft);
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-.kb-card .kb-card-go {
-  margin-top: auto;
-  padding-top: 10px;
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: var(--mono-md);
-  letter-spacing: var(--track-pill);
-  text-transform: uppercase;
-}
 
 /* ── Нижнее меню на статичных страницах ────────────────── */
 
@@ -651,4 +536,97 @@
 /* Арабские вставки не переводим ни при каком языке интерфейса. */
 .kb-ar {
   unicode-bidi: isolate;
+}
+
+/* ── Шапка: та же, что на сайте ─────────────────────────────
+   Разметку и стили даёт folio.css; здесь только отступ под неё, потому
+   что на статичных страницах нет body-класса приложения. */
+.kb-page {
+  padding-top: var(--site-nav-space);
+}
+
+/* ── Хлебные крошки ─────────────────────────────────────────
+   Нужны на широком экране: там нижней капсулы нет, и уйти из статьи
+   было некуда. */
+.kb-crumbs {
+  margin: 18px 0 0;
+}
+
+.kb-crumbs ol {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--mono-md);
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+.kb-crumbs li + li::before {
+  margin-right: 8px;
+  color: var(--text-faint);
+  content: "/";
+}
+
+.kb-crumbs a {
+  color: var(--text-soft);
+  text-decoration: none;
+}
+
+.kb-crumbs a:hover {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.kb-crumbs [aria-current] {
+  color: var(--text);
+}
+
+/* Баннер отходит от шапки: раньше линия шапки ложилась прямо на него. */
+.kb-wrap .welcome-hero {
+  margin: 18px 0 0;
+}
+
+/* ── Карточки базы знаний ───────────────────────────────────
+   Те же карточки, что у уровней: приводные уголки, чертёжная сетка,
+   список тем. Ширина ровно как у баннера — сетка в одну колонку. */
+.kb-levels {
+  margin-top: 26px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.kb-levels .level {
+  aspect-ratio: auto;
+  min-height: 0;
+}
+
+.kb-levels .level-topic {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 4.4vw, 30px);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.kb-levels .level-hint {
+  margin-top: 14px;
+}
+
+@media (min-width: 760px) {
+  .kb-levels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Карточка — ссылка, поэтому браузер подчёркивает весь её текст. */
+.kb-levels .level-button,
+.kb-levels .level-button:hover {
+  text-decoration: none;
 }

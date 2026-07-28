@@ -1,8 +1,8 @@
-/* Статичные страницы базы знаний: тема и язык — те же, что на сайте.
-   Приложение (app.js) сюда не грузится, поэтому переключатели собраны
-   отдельно, но работают через тот же localStorage и тот же список
-   языков из config.js — переключил язык в статье, вернулся на главную,
-   язык сохранился. */
+/* Статичные страницы базы знаний: шапка у них та же, что на сайте, но
+   приложение (app.js) сюда не грузится. Поэтому аят, тема и язык
+   собраны здесь — через тот же localStorage, тот же список языков и тот
+   же список аятов из config.js. Переключил язык или тему в статье,
+   вернулся на главную — состояние сохранилось. */
 (function () {
   'use strict';
 
@@ -14,19 +14,69 @@
     } catch (e) { return 'light'; }
   }
 
-  var themeButton = document.getElementById('kbTheme');
+  var themeButton = document.getElementById('themeToggle');
+  var themeLabel = document.getElementById('themeLabel');
+
+  function syncTheme() {
+    var light = currentTheme() === 'light';
+    document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
+    if (themeLabel) themeLabel.textContent = light ? 'Светлая' : 'Тёмная';
+    if (themeButton) {
+      themeButton.setAttribute('aria-pressed', light ? 'true' : 'false');
+      themeButton.setAttribute('aria-label', 'Тема оформления: ' + (light ? 'светлая' : 'тёмная') +
+        '. Переключить на ' + (light ? 'тёмную' : 'светлую'));
+    }
+  }
+
+  syncTheme();
+
   if (themeButton) {
     themeButton.onclick = function () {
-      var next = currentTheme() === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
+      var next = currentTheme() === 'light' ? 'dark' : 'light';
       try { localStorage.setItem('tajweed_theme', next); } catch (e) { /* ок */ }
+      syncTheme();
     };
   }
 
+  /* ── Аят дня ──────────────────────────────────────────── */
+
+  (function ayah() {
+    var host = document.getElementById('ayah');
+    var textNode = document.getElementById('ayahText');
+    var refNode = document.getElementById('ayahRef');
+    var list = window.TAJWEED_AYAHS || [];
+    if (!host || !textNode || !refNode || !list.length) return;
+
+    var start = new Date(new Date().getFullYear(), 0, 0);
+    var dayOfYear = Math.floor((Date.now() - start.getTime()) / 86400000);
+    var idx = ((dayOfYear % list.length) + list.length) % list.length;
+    var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function paint() {
+      textNode.textContent = list[idx].text;
+      refNode.textContent = list[idx].ref;
+    }
+
+    paint();
+    host.hidden = false;
+    if (list.length < 2) return;
+
+    setInterval(function () {
+      if (document.hidden) return;
+      idx = (idx + 1) % list.length;
+      if (calm) return paint();
+      host.classList.add('is-fading');
+      setTimeout(function () {
+        paint();
+        host.classList.remove('is-fading');
+      }, 320);
+    }, 25000);
+  })();
+
   /* ── Язык ─────────────────────────────────────────────── */
 
-  var button = document.getElementById('kbLanguageButton');
-  var menu = document.getElementById('kbLanguageMenu');
+  var button = document.getElementById('languageButton');
+  var menu = document.getElementById('languageMenu');
   var languages = window.TAJWEED_LANGUAGES || [];
   var i18n = window.TAJWEED_I18N;
   if (!button || !menu || !languages.length) return;
