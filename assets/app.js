@@ -236,7 +236,8 @@
     if (!best) {
       html += '<li class="level is-level-one is-open is-empty">' +
         levelDecor() +
-        '<div class="level-head"><span class="level-n">Уровень 1</span>' +
+        '<div class="level-head"><span class="level-n">1</span>' +
+        '<span class="level-name">Уровень</span>' +
         '<span class="level-lock is-ready">доступен</span></div>' +
         '<p class="level-topic">' + esc(first.topic) + '</p>' +
         levelOutline(first) +
@@ -246,7 +247,8 @@
       var pct = Math.round(best.percent);
       html += '<li class="level is-level-one is-open is-scored" style="--score-color: ' + scoreColor(pct) + '">' +
         levelDecor() +
-        '<div class="level-head"><span class="level-n">Уровень 1</span>' +
+        '<div class="level-head"><span class="level-n">1</span>' +
+        '<span class="level-name">Уровень</span>' +
         '<span class="level-verdict">' + scoreVerdict(pct) + '</span></div>' +
         '<p class="level-topic">' + esc(first.topic) + '</p>' +
         levelOutline(first) +
@@ -262,7 +264,8 @@
       html += '<li><button class="level level-button is-level-two is-open' + (level2 ? ' is-submitted' : ' is-empty') +
         '" type="button" data-open-level="2">' +
         levelDecor() +
-        '<div class="level-head"><span class="level-n">Уровень 2</span>' +
+        '<div class="level-head"><span class="level-n">2</span>' +
+          '<span class="level-name">Уровень</span>' +
           '<span class="level-lock is-ready">' + (level2 ? 'отправлен' : 'открыт') + '</span></div>' +
         '<p class="level-topic">' + esc(second.topic) + '</p>' +
         levelOutline(second) +
@@ -273,7 +276,8 @@
     } else {
       html += '<li class="level is-level-two is-locked">' +
         levelDecor() +
-        '<div class="level-head"><span class="level-n">Уровень 2</span>' +
+        '<div class="level-head"><span class="level-n">2</span>' +
+          '<span class="level-name">Уровень</span>' +
           '<span class="level-lock"><svg class="level-lock-icon" viewBox="0 0 24 24" fill="none" ' +
             'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" ' +
             'focusable="false" aria-hidden="true"><circle cx="12" cy="16" r="1"></circle>' +

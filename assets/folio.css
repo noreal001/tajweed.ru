@@ -4125,3 +4125,67 @@ html {
   padding-inline: 10px;
   white-space: nowrap;
 }
+
+/* ── Номер уровня на карточках главной ──────────────────────
+   Была мелкая моношрифтовая строка «УРОВЕНЬ 1» — терялась на карточке.
+   Стал крупный номер во вдавленном кружке, как у карточек базы знаний,
+   а слово «Уровень» — обычной читаемой подписью рядом. */
+.level-head {
+  align-items: center;
+  gap: 12px;
+}
+
+.level-n {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--plaque-soft);
+  background: #050506;
+  box-shadow:
+    inset 0 3px 8px rgba(0, 0, 0, 0.9),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.06);
+  font-family: var(--font-ui);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-transform: none;
+}
+
+:root[data-theme="light"] .level-n {
+  color: rgba(25, 25, 27, 0.42);
+  background: #efeff1;
+  box-shadow:
+    inset 0 3px 7px rgba(25, 25, 27, 0.2),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.95);
+}
+
+.level-name {
+  margin-right: auto;
+  color: var(--plaque-ink);
+  font-family: var(--font-ui);
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 759px) {
+  .level-n {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+    font-size: 24px;
+  }
+
+  .level-name {
+    font-size: 15.5px;
+  }
+
+  .level-head {
+    gap: 10px;
+  }
+}
