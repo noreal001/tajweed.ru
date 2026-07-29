@@ -818,10 +818,20 @@
      раньше это была одна длинная простыня, которую приходилось листать. */
   var PROFILE_TABS = [
     { id: 'me', label: 'Профиль', hash: '#profile' },
-    { id: 'settings', label: 'Настройки', hash: '#profile/settings' },
-    { id: 'results', label: 'Результаты', hash: '#profile/results' }
+    { id: 'classes', label: 'Классы', hash: '#profile/classes' },
+    { id: 'results', label: 'Результаты', hash: '#profile/results' },
+    { id: 'settings', label: 'Настройки', hash: '#profile/settings' }
   ];
   var profileTab = 'me';
+
+  function formatDueDate(value) {
+    try {
+      return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' })
+        .format(new Date(value + 'T00:00:00'));
+    } catch (e) {
+      return value;
+    }
+  }
 
   function profileTabInfo(id) {
     for (var i = 0; i < PROFILE_TABS.length; i++) {
@@ -840,6 +850,89 @@
           esc(tab.label) + '</button>';
       }).join('') +
     '</div>';
+  }
+
+
+  /* ── Вступление в класс по ссылке ──────────────────────────
+     Преподаватель присылает ссылку вида #join=КОД. Сначала показываем,
+     во что человек вступает, и только потом отправляем заявку: код
+     сам по себе ничего не открывает, пока преподаватель не одобрит. */
+  function joinClass(code) {
+    state.phase = 'join';
+    paintNav();
+    setBar(null);
+    document.title = 'Вступить в класс · таджвид.рф';
+    loadingScreen('Класс', 'Проверяем приглашение…');
+    var seq = screenToken();
+
+    apiGet('/api/class/' + encodeURIComponent(code)).then(function (d) {
+      if (isStale(seq)) return;
+      if (!d.ok) throw new Error(d.error || 'Класс не найден');
+      var token = studentToken();
+      app.innerHTML = '<div class="screen"><h1>Вступить в класс</h1>' +
+        '<p class="lede">' + esc(d.class.name) + '</p>' +
+        (token
+          ? '<p class="profile-standing-note">Преподаватель увидит заявку и примет вас. ' +
+            'После этого домашние задания появятся в кабинете.</p>' +
+            '<div class="btn-row"><button class="btn" id="joinGo">Отправить заявку</button>' +
+            '<button class="btn is-ghost" id="joinSkip">Не сейчас</button></div>'
+          : '<p class="profile-standing-note">Чтобы вступить в класс, сначала войдите в свой ' +
+            'кабинет — по нему преподаватель вас и узнает.</p>' +
+            '<div class="btn-row"><button class="btn" id="joinLogin">Войти в кабинет</button></div>') +
+        '<p class="notice" id="joinState" role="status" aria-live="polite" hidden></p></div>';
+
+      var skip = document.getElementById('joinSkip');
+      if (skip) skip.onclick = function () { clearHash(); showProfile(); };
+      var login = document.getElementById('joinLogin');
+      if (login) {
+        login.onclick = function () {
+          /* Код держим до возврата: после входа ученик дожимает вступление
+             одной кнопкой, а не ищет письмо с ссылкой заново. */
+          try { sessionStorage.setItem('tajweed_join', code); } catch (e) { /* ок */ }
+          showLogin();
+        };
+      }
+      var go = document.getElementById('joinGo');
+      if (go) {
+        go.onclick = function () {
+          go.disabled = true;
+          var note = document.getElementById('joinState');
+          api('/api/class/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code, token: token })
+          }).then(function (r) {
+            if (!r.ok) throw new Error(r.error || 'Не получилось');
+            try { sessionStorage.removeItem('tajweed_join'); } catch (e) { /* ок */ }
+            note.hidden = false;
+            note.textContent = r.status === 'active'
+              ? 'Вы уже в этом классе.'
+              : 'Заявка отправлена. Преподаватель её увидит.';
+            go.textContent = 'Готово';
+            setTimeout(function () {
+              clearHash();
+              profileTab = 'classes';
+              showProfile();
+            }, 1400);
+          }).catch(function (error) {
+            go.disabled = false;
+            note.hidden = false;
+            note.textContent = error.message || 'Не получилось отправить заявку.';
+          });
+        };
+      }
+    }).catch(function (error) {
+      if (isStale(seq)) return;
+      app.innerHTML = '<div class="screen"><h1>Класс не найден</h1>' +
+        '<p class="lede">' + esc(error.message || 'Ссылка устарела.') + '</p>' +
+        '<p class="profile-standing-note">Попросите у преподавателя свежую ссылку.</p>' +
+        '<div class="btn-row"><button class="btn" id="joinBack">На главную</button></div></div>';
+      document.getElementById('joinBack').onclick = function () { clearHash(); showProfile(); };
+    });
+  }
+
+  function clearHash() {
+    if (history.replaceState) history.replaceState(null, '', location.pathname);
   }
 
   function showProfile() {
@@ -926,6 +1019,56 @@
         '</div>';
       }
 
+      /* ── Вкладка «Классы»: группы ученика и что в них задано ── */
+      function paneClasses() {
+        var classes = d.classes || [];
+        var homework = d.homework || [];
+        var html = '';
+
+        if (!classes.length) {
+          return '<section class="profile-section"><div class="profile-section-head">' +
+            '<h2 class="kicker">Классы<span class="cur">_</span></h2>' +
+            '<p>Пока ни одного</p></div>' +
+            '<p class="profile-standing-note">Вы не состоите ни в одном классе. ' +
+            'Преподаватель добавит вас сам или пришлёт ссылку-приглашение.</p></section>';
+        }
+
+        html += '<section class="profile-section"><div class="profile-section-head">' +
+          '<h2 class="kicker">Мои классы<span class="cur">_</span></h2>' +
+          '<p>' + classes.length + '</p></div><div class="class-list">';
+        classes.forEach(function (c) {
+          var waiting = c.status === 'pending';
+          html += '<div class="class-row' + (waiting ? ' is-waiting' : '') + '">' +
+            '<span class="class-name">' + esc(c.name) + '</span>' +
+            (waiting
+              ? '<span class="class-state">ждёт одобрения</span>'
+              : (c.note ? '<span class="class-note">' + esc(c.note) + '</span>' : '')) +
+          '</div>';
+        });
+        html += '</div></section>';
+
+        html += '<section class="profile-section"><div class="profile-section-head">' +
+          '<h2 class="kicker">Домашние задания<span class="cur">_</span></h2>' +
+          '<p>' + (homework.length ? homework.length : 'нет') + '</p></div>';
+        if (!homework.length) {
+          html += '<p class="profile-standing-note">Заданий пока нет.</p>';
+        } else {
+          html += '<div class="hw-list">';
+          homework.forEach(function (h) {
+            html += '<article class="hw-item' + (h.done ? ' is-done' : '') + '">' +
+              '<p class="hw-head"><b>' + esc(h.title) + '</b>' +
+                (h.done ? '<span class="hw-flag">сдано</span>' : '') + '</p>' +
+              '<p class="hw-meta">' + esc(h.className) +
+                (h.dueDate ? ' · до ' + esc(formatDueDate(h.dueDate)) : ' · без срока') + '</p>' +
+              (h.body ? '<p class="hw-text">' + esc(h.body) + '</p>' : '') +
+            '</article>';
+          });
+          html += '</div>';
+        }
+        html += '</section>';
+        return html;
+      }
+
       /* ── Вкладка «Результаты»: уровни и все попытки ── */
       function paneResults() {
         var html = '<section class="profile-section"><div class="profile-section-head">' +
@@ -968,6 +1111,7 @@
         if (!pane) return;
         pane.innerHTML = profileTab === 'settings' ? paneSettings()
           : profileTab === 'results' ? paneResults()
+          : profileTab === 'classes' ? paneClasses()
           : paneMe();
         pane.setAttribute('aria-labelledby', 'ptab-' + profileTab);
         [].slice.call(app.querySelectorAll('[data-profile-tab]')).forEach(function (button) {
@@ -3111,7 +3255,8 @@
   var hashStudent = location.hash.match(/^#student=([0-9a-f-]{36})$/i);
   var hashYandex = location.hash.match(/^#yandex=([0-9a-f-]{36})$/i);
   var hashYandexError = location.hash.match(/^#yandex-error=/i);
-  var hashSection = location.hash.match(/^#(lessons|profile|exam)(?:\/(me|settings|results))?$/i);
+  var hashSection = location.hash.match(/^#(lessons|profile|exam)(?:\/(me|settings|results|classes))?$/i);
+  var hashJoin = location.hash.match(/^#join=([A-Za-z0-9]{4,16})$/);
   if (hashYandex && state.phase !== 'exam') {
     /* Вернулись с oauth.yandex.ru: токен кабинета уже выдан сервером */
     try { localStorage.setItem(STUDENT_KEY, hashYandex[1]); } catch (e) { /* ок */ }
@@ -3120,6 +3265,8 @@
   } else if (hashYandexError && state.phase !== 'exam') {
     if (history.replaceState) history.replaceState(null, '', location.pathname);
     showLogin('Не получилось войти через Яндекс. Попробуйте ещё раз или войдите по номеру и паролю.');
+  } else if (hashJoin && state.phase !== 'exam') {
+    joinClass(hashJoin[1].toUpperCase());
   } else if (hashStudent && state.phase !== 'exam') {
     showStudentCabinet(hashStudent[1]);
   } else if (hashResult && state.phase !== 'exam') {
