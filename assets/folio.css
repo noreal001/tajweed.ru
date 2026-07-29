@@ -2821,42 +2821,33 @@ html.has-tabbar body {
      строка текста, а вертикаль пусть считается по содержимому. */
   min-height: 76px;
   opacity: 1;
-  /* Призрачные копии для «раздвоения» при смене аята. На прайсе BAHUR
-     копии расходятся фиолетовой и циановой — у нас монохром, поэтому
-     разлёт держится на чернильных копиях разной прозрачности. */
-  --ayah-ghost-a: rgba(255, 255, 255, 0.5);
-  --ayah-ghost-b: rgba(255, 255, 255, 0.34);
-  --ayah-ghost-c: rgba(255, 255, 255, 0.22);
 }
 
-:root[data-theme="light"] .ayah {
-  --ayah-ghost-a: rgba(25, 25, 27, 0.44);
-  --ayah-ghost-b: rgba(25, 25, 27, 0.28);
-  --ayah-ghost-c: rgba(25, 25, 27, 0.18);
-}
+/* Смена аята — тот же приём, что у логотипов на wiki.bahur.store/prays:
+   строка раздваивается хроматикой (фиолет / циан / малина), копии
+   расходятся по горизонтали и растворяются; новая приходит зеркально.
+   Цвета и тайминг взяты с прайса один в один — владелец просил именно
+   его, а не монохромный пересказ. Размер не трогаем: масштабирование
+   заставило бы шапку «дышать» и двигать соседние кнопки.
 
-/* Смена аята: строка раздваивается и расходится в стороны, растворяясь;
-   новая приходит зеркально — копии сходятся к центру. Масштаб не трогаем,
-   иначе шапка «дышит» и соседние кнопки прыгают.
-
-   Раздваивается только арабская строка. Подпись «АЛЬ-КАМАР, 54:17» набрана
-   мелким моноширинным капсом: на ней те же призрачные копии читались не как
+   Раздваивается только арабская строка. Подпись «АЛЬ-КАМАР, 54:17»
+   набрана мелким моноширинным капсом: на ней те же копии читались не как
    приём, а как опечатка («ААЛЛЬЬ-ККААММААРР»), поэтому она просто уходит
    в сторону и гаснет. */
 .ayah.is-swap-out .ayah-text {
-  animation: ayahSwapOut 0.5s ease-in forwards;
+  animation: ayahSwapOut 0.95s ease-in forwards;
 }
 
 .ayah.is-swap-in .ayah-text {
-  animation: ayahSwapIn 0.55s ease-out forwards;
+  animation: ayahSwapIn 0.95s ease-out forwards;
 }
 
 .ayah.is-swap-out .ayah-ref {
-  animation: ayahRefOut 0.5s ease-in forwards;
+  animation: ayahRefOut 0.95s ease-in forwards;
 }
 
 .ayah.is-swap-in .ayah-ref {
-  animation: ayahRefIn 0.55s ease-out forwards;
+  animation: ayahRefIn 0.95s ease-out forwards;
 }
 
 @keyframes ayahRefOut {
@@ -2887,19 +2878,19 @@ html.has-tabbar body {
     filter: none;
   }
   40% {
-    opacity: 0.9;
+    opacity: 0.95;
     filter:
-      drop-shadow(4px 0 var(--ayah-ghost-a))
-      drop-shadow(-4px 0 var(--ayah-ghost-b))
-      drop-shadow(2px 0 var(--ayah-ghost-c))
+      drop-shadow(4px 0 rgba(168, 85, 247, 0.8))
+      drop-shadow(-4px 0 rgba(56, 189, 248, 0.6))
+      drop-shadow(2px 0 rgba(236, 72, 153, 0.55))
       blur(0.3px);
   }
   100% {
     opacity: 0;
     filter:
-      drop-shadow(15px 0 var(--ayah-ghost-a))
-      drop-shadow(-15px 0 var(--ayah-ghost-b))
-      drop-shadow(8px 0 var(--ayah-ghost-c))
+      drop-shadow(13px 0 rgba(168, 85, 247, 0.55))
+      drop-shadow(-13px 0 rgba(56, 189, 248, 0.5))
+      drop-shadow(7px 0 rgba(236, 72, 153, 0.45))
       blur(2.4px);
   }
 }
@@ -2908,38 +2899,23 @@ html.has-tabbar body {
   0% {
     opacity: 0;
     filter:
-      drop-shadow(-15px 0 var(--ayah-ghost-a))
-      drop-shadow(15px 0 var(--ayah-ghost-b))
-      drop-shadow(-8px 0 var(--ayah-ghost-c))
+      drop-shadow(-13px 0 rgba(168, 85, 247, 0.55))
+      drop-shadow(13px 0 rgba(56, 189, 248, 0.5))
+      drop-shadow(-7px 0 rgba(236, 72, 153, 0.45))
       blur(2.4px);
   }
   60% {
-    opacity: 0.9;
+    opacity: 0.95;
     filter:
-      drop-shadow(-4px 0 var(--ayah-ghost-a))
-      drop-shadow(4px 0 var(--ayah-ghost-b))
-      drop-shadow(-2px 0 var(--ayah-ghost-c))
+      drop-shadow(-4px 0 rgba(168, 85, 247, 0.75))
+      drop-shadow(4px 0 rgba(56, 189, 248, 0.55))
+      drop-shadow(-2px 0 rgba(236, 72, 153, 0.5))
       blur(0.3px);
   }
   100% {
     opacity: 1;
     filter: none;
   }
-}
-
-.ayah-text {
-  max-width: 100%;
-  /* Запас сверху и снизу — под огласовки и хвосты букв. Он входит в
-     область отрисовки при обрезке по ширине, поэтому ничего не режет. */
-  padding: 10px 0 12px;
-  overflow: hidden;
-  color: var(--text);
-  font-family: var(--font-ar);
-  font-size: 23px;
-  line-height: 1.75;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  direction: rtl;
 }
 
 .ayah-ref {
