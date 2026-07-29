@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
 
+# Яндекс отдельным блоком: так в Вебмастере видно, что правила прочитаны.
+User-agent: Yandex
+Allow: /
+Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term
+
 Sitemap: https://xn--80aefbin9d.xn--p1ai/sitemap.xml

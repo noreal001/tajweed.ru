@@ -2,41 +2,55 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://xn--80aefbin9d.xn--p1ai/</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://xn--80aefbin9d.xn--p1ai/stati/</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://xn--80aefbin9d.xn--p1ai/stati/chto-takoe-tadzhvid/</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://xn--80aefbin9d.xn--p1ai/stati/pravila-tadzhvida/</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://xn--80aefbin9d.xn--p1ai/stati/tadzhvid-dlya-nachinayushchih/</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://xn--80aefbin9d.xn--p1ai/stati/uroki-tadzhvida/</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://xn--80aefbin9d.xn--p1ai/stati/chtenie-korana-s-tadzhvidom/</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://xn--80aefbin9d.xn--p1ai/level2.html</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://xn--80aefbin9d.xn--p1ai/legal.html</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
