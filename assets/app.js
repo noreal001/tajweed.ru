@@ -3090,11 +3090,16 @@
       if (state.phase === 'exam' || document.hidden) return;
       idx = (idx + 1) % AYAHS.length;
       if (calm) return paint();
-      host.classList.add('is-fading');
+      host.classList.remove('is-swap-in');
+      host.classList.add('is-swap-out');
       setTimeout(function () {
         paint();
-        host.classList.remove('is-fading');
-      }, 320);
+        host.classList.remove('is-swap-out');
+        /* Принудительный пересчёт: без него браузер склеивает снятие и
+           навешивание класса в один кадр, и вход не проигрывается. */
+        void host.offsetWidth;
+        host.classList.add('is-swap-in');
+      }, 500);
     }, 25000);
   }
 
