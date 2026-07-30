@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" fill="#FFFFFF"/>
+  <path d="M6 6h52v52H6z" fill="none" stroke="#0A0A0B" stroke-opacity=".45" stroke-width="1"/>
+  <text x="32" y="45" font-size="34" text-anchor="middle" fill="#0A0A0B" font-family="Georgia,serif">ت</text>
+</svg>
