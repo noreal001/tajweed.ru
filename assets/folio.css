@@ -4363,3 +4363,60 @@ html {
 .hw-item.is-done .hw-text {
   color: var(--text-faint);
 }
+
+.hw-feedback {
+  margin-top: 12px;
+  padding: 11px 13px;
+  border-left: 2px solid var(--line-strong);
+  background: var(--lit);
+}
+
+.hw-feedback b {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+.hw-feedback p,
+.hw-state-note {
+  margin: 6px 0 0;
+  color: var(--text-soft);
+  font-size: 13.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.hw-submit {
+  margin-top: 14px;
+  padding-top: 14px;
+  display: grid;
+  gap: 7px;
+  border-top: 1px solid var(--line);
+}
+
+.hw-submit label {
+  margin-top: 5px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+.hw-submit textarea,
+.hw-submit input {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 12px;
+  border: 1px solid var(--control-line);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: var(--surface);
+  font: 15px/1.45 var(--font-ui);
+}
+
+.hw-submit textarea { min-height: 92px; resize: vertical; }
+.hw-submit .btn { margin-top: 5px; justify-self: start; }
+.hw-submit-state { min-height: 20px; color: var(--text-soft); font-size: 13px; }

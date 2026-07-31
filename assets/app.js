@@ -1055,12 +1055,28 @@
         } else {
           html += '<div class="hw-list">';
           homework.forEach(function (h) {
-            html += '<article class="hw-item' + (h.done ? ' is-done' : '') + '">' +
+            var workStatus = h.status || (h.done ? 'accepted' : 'assigned');
+            var statusLabels = {
+              assigned: 'не сдано', submitted: 'отправлено', in_review: 'проверяется',
+              changes_requested: 'нужно доработать', accepted: 'принято'
+            };
+            var canSubmit = workStatus === 'assigned' || workStatus === 'changes_requested';
+            html += '<article class="hw-item' + (workStatus === 'accepted' ? ' is-done' : '') + '">' +
               '<p class="hw-head"><b>' + esc(h.title) + '</b>' +
-                (h.done ? '<span class="hw-flag">сдано</span>' : '') + '</p>' +
+                '<span class="hw-flag">' + esc(statusLabels[workStatus] || workStatus) + '</span></p>' +
               '<p class="hw-meta">' + esc(h.className) +
                 (h.dueDate ? ' · до ' + esc(formatDueDate(h.dueDate)) : ' · без срока') + '</p>' +
               (h.body ? '<p class="hw-text">' + esc(h.body) + '</p>' : '') +
+              (h.feedback ? '<div class="hw-feedback"><b>Отзыв преподавателя</b><p>' + esc(h.feedback) + '</p></div>' : '') +
+              (workStatus === 'submitted' || workStatus === 'in_review'
+                ? '<p class="hw-state-note">Работа у преподавателя. Когда он её проверит, здесь появится отзыв.</p>' : '') +
+              (canSubmit ? '<form class="hw-submit" data-homework-submit="' + h.id + '">' +
+                '<label for="hw-answer-' + h.id + '">Ответ</label>' +
+                '<textarea id="hw-answer-' + h.id + '" name="responseText" maxlength="8000" placeholder="Что вы сделали, где было трудно">' + esc(h.responseText || '') + '</textarea>' +
+                '<label for="hw-link-' + h.id + '">Ссылка на аудио, видео или файл</label>' +
+                '<input id="hw-link-' + h.id + '" name="attachmentUrl" type="url" maxlength="1000" placeholder="https://…" value="' + esc(h.attachmentUrl || '') + '">' +
+                '<button class="btn" type="submit">' + (workStatus === 'changes_requested' ? 'Отправить заново' : 'Сдать работу') + '</button>' +
+                '<p class="hw-submit-state" role="status" aria-live="polite"></p></form>' : '') +
             '</article>';
           });
           html += '</div>';
@@ -1135,6 +1151,30 @@
 
       function wirePane() {
       wireLevelActions();
+      [].slice.call(app.querySelectorAll('[data-homework-submit]')).forEach(function (form) {
+        form.onsubmit = function (event) {
+          event.preventDefault();
+          var button = form.querySelector('button[type="submit"]');
+          var note = form.querySelector('.hw-submit-state');
+          button.disabled = true;
+          button.textContent = 'Отправляем…';
+          note.textContent = '';
+          api('/api/homework/' + form.getAttribute('data-homework-submit') + '/submit', {
+            studentToken: token,
+            responseText: form.responseText.value,
+            attachmentUrl: form.attachmentUrl.value
+          }).then(function () {
+            note.textContent = 'Работа отправлена.';
+            setTimeout(showProfile, 500);
+          }).catch(function (error) {
+            button.disabled = false;
+            button.textContent = 'Отправить ещё раз';
+            note.textContent = error && error.status === 400
+              ? 'Напишите ответ или дайте ссылку на работу.'
+              : 'Не удалось отправить. Попробуйте ещё раз.';
+          });
+        };
+      });
       [].slice.call(app.querySelectorAll('[data-result-id], [data-open-result]')).forEach(function (b) {
         b.onclick = function () {
           showSavedResult(b.getAttribute('data-result-id') || b.getAttribute('data-open-result'), token);
