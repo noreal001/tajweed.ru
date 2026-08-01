@@ -4371,6 +4371,17 @@ html {
   background: var(--lit);
 }
 
+.hw-score {
+  margin: 10px 0 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--text);
+}
+
+.hw-score b { font: 500 28px/1 var(--font-display); }
+.hw-score span { color: var(--text-faint); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; }
+
 .hw-feedback b {
   font-family: var(--font-mono);
   font-size: 10px;

@@ -1066,6 +1066,7 @@
                 '<span class="hw-flag">' + esc(statusLabels[workStatus] || workStatus) + '</span></p>' +
               '<p class="hw-meta">' + esc(h.className) +
                 (h.dueDate ? ' · до ' + esc(formatDueDate(h.dueDate)) : ' · без срока') + '</p>' +
+              (h.score != null ? '<p class="hw-score"><b>' + esc(h.score) + '</b><span>из 100</span></p>' : '') +
               (h.body ? '<p class="hw-text">' + esc(h.body) + '</p>' : '') +
               (h.feedback ? '<div class="hw-feedback"><b>Отзыв преподавателя</b><p>' + esc(h.feedback) + '</p></div>' : '') +
               (workStatus === 'submitted' || workStatus === 'in_review'
