@@ -4877,3 +4877,95 @@ a.lesson-material:hover {
   background: #ffffff;
   box-shadow: none;
 }
+
+/* ── Сохранение гостевого результата ───────────────────────
+   Сначала ученик видит процент, затем — один заметный вход через Яндекс и
+   необязательную ручную форму. Никаких карточек поверх карточек: только
+   линии белого/чёрного бланка. */
+.result-claim {
+  margin: 32px 0;
+  padding: 24px 0;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line);
+}
+
+.result-claim h2 {
+  max-width: 18ch;
+  margin: 8px 0 10px;
+  font-size: clamp(28px, 5vw, 46px);
+  line-height: 1;
+}
+
+.result-claim-yandex {
+  width: min(100%, 520px) !important;
+  min-height: 52px !important;
+  margin-top: 18px;
+  justify-content: flex-start !important;
+  border: 1px solid var(--control-line) !important;
+  border-radius: 0 !important;
+  color: var(--text) !important;
+  background: var(--surface) !important;
+  box-shadow: none !important;
+}
+
+.result-claim-yandex .yandex-mark {
+  border-radius: 0;
+}
+
+.result-claim-manual {
+  margin-top: 10px;
+}
+
+.result-claim-form {
+  width: min(100%, 680px);
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.result-claim-form[hidden] { display: none; }
+
+.result-claim-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+.result-claim-form input {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 12px;
+  border: 1px solid var(--control-line);
+  border-radius: 0;
+  color: var(--text);
+  background: var(--surface);
+  font: 15px/1.4 var(--font-ui);
+}
+
+.result-claim-status {
+  min-height: 20px;
+  margin: 10px 0 0;
+  color: var(--text-soft);
+  font-size: 13px;
+}
+
+.result-claim-form .result-claim-status,
+.result-claim-form .btn {
+  grid-column: 1 / -1;
+}
+
+.result-claim-form .btn {
+  justify-self: start;
+}
+
+@media (max-width: 640px) {
+  .result-claim { padding-block: 20px; }
+  .result-claim-form { grid-template-columns: minmax(0, 1fr); }
+  .result-claim-form .result-claim-status,
+  .result-claim-form .btn { grid-column: auto; }
+}

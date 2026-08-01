@@ -19,6 +19,7 @@
     } catch (e) { return false; }
   })();
   var STUDENT_KEY = 'tajweed_student_token';
+  var GUEST_KEY = 'tajweed_guest_token';
   var QUESTION_TIME = 180; // секунд на вопрос
 
   /* Аяты для шапки лежат в config.js: их читают и приложение,
@@ -831,6 +832,14 @@
 
   function studentToken() {
     try { return localStorage.getItem(STUDENT_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function guestToken() {
+    try { return localStorage.getItem(GUEST_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function examOwnerToken() {
+    return studentToken() || guestToken();
   }
 
   /* Кабинет разложен на три вкладки-пилюльки: «Профиль», «Настройки»,
@@ -1851,6 +1860,117 @@
     showProfile();
   }
 
+  function resultClaimHtml() {
+    return '<section class="result-claim" id="resultClaim" aria-labelledby="resultClaimTitle">' +
+      '<p class="kicker">Сохранить результат<span class="cur">_</span></p>' +
+      '<h2 id="resultClaimTitle">Забрать результат в свой кабинет</h2>' +
+      '<p class="lede">Процент уже показан. Регистрация нужна только для истории, пересдач и связи с преподавателем.</p>' +
+      '<button class="auth-provider-secondary result-claim-yandex" id="claimYandex" type="button">' +
+        '<span class="yandex-mark" aria-hidden="true">Я</span><span>Продолжить через Яндекс</span>' +
+      '</button>' +
+      '<p class="result-claim-status" id="claimYandexStatus" role="status" hidden></p>' +
+      '<button class="btn is-ghost result-claim-manual" id="claimManualToggle" type="button">Ввести данные вручную</button>' +
+      '<form class="result-claim-form" id="claimForm" hidden novalidate>' +
+        '<label>Имя<input id="claimFirstName" name="firstName" autocomplete="given-name" required></label>' +
+        '<label>Фамилия<input id="claimLastName" name="lastName" autocomplete="family-name" required></label>' +
+        '<label>Город<input id="claimCity" name="city" autocomplete="address-level2" required></label>' +
+        '<label>Телефон<input id="claimPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required></label>' +
+        '<p class="result-claim-status" id="claimFormStatus" role="status" aria-live="polite"></p>' +
+        '<button class="btn" type="submit">Сохранить результат</button>' +
+      '</form>' +
+      '<p class="wallet-fineprint">Можно пропустить: ссылка на результат останется на этом устройстве.</p>' +
+    '</section>';
+  }
+
+  function wireResultClaim(submissionId, savedResult) {
+    var host = document.getElementById('resultClaim');
+    var guest = guestToken();
+    if (!host || !guest || !submissionId) return;
+    var yandex = document.getElementById('claimYandex');
+    var yandexStatus = document.getElementById('claimYandexStatus');
+    var manual = document.getElementById('claimManualToggle');
+    var form = document.getElementById('claimForm');
+
+    function complete(token, identity) {
+      try {
+        localStorage.setItem(STUDENT_KEY, token);
+        localStorage.removeItem(GUEST_KEY);
+      } catch (error) { /* кабинет всё равно открыт в текущей вкладке */ }
+      if (serverResult) {
+        serverResult.studentToken = token;
+        serverResult.isGuest = false;
+      }
+      if (identity) {
+        state.student = {
+          firstName: identity.firstName,
+          lastName: identity.lastName,
+          city: identity.city,
+          phone: identity.phone,
+          registered: true
+        };
+        if (savedResult) {
+          savedResult.firstName = identity.firstName;
+          savedResult.lastName = identity.lastName;
+          savedResult.city = identity.city;
+          savedResult.phone = identity.phone;
+          savedResult.studentToken = token;
+          savedResult.isGuest = false;
+          wireReportButtons(reportFromResult(savedResult), identity.lastName);
+        } else {
+          wireReportButtons(reportText(), identity.lastName);
+        }
+      }
+      host.innerHTML = '<p class="kicker">Результат сохранён<span class="cur">_</span></p>' +
+        '<h2>Кабинет готов</h2>' +
+        '<p class="lede">Экзамен добавлен в историю. Теперь доступны кошелёк, занятия и будущие результаты.</p>' +
+        '<button class="btn" id="claimCabinet" type="button">Открыть кабинет</button>';
+      document.getElementById('claimCabinet').onclick = function () { showStudentCabinet(token); };
+    }
+
+    yandex.onclick = function () {
+      location.href = API + '/api/auth/yandex/start?guestToken=' + encodeURIComponent(guest) +
+        '&submissionId=' + encodeURIComponent(submissionId);
+    };
+    apiGet('/api/auth/yandex/enabled').then(function (result) {
+      if (result.enabled) return;
+      yandex.disabled = true;
+      yandexStatus.hidden = false;
+      yandexStatus.textContent = 'Вход через Яндекс временно недоступен — используйте короткую форму ниже.';
+    }).catch(function () { /* кнопка всё равно ведёт на сервер, который покажет точный статус */ });
+
+    manual.onclick = function () {
+      form.hidden = !form.hidden;
+      manual.textContent = form.hidden ? 'Ввести данные вручную' : 'Скрыть ручную форму';
+      if (!form.hidden) document.getElementById('claimFirstName').focus();
+    };
+    form.onsubmit = function (event) {
+      event.preventDefault();
+      var submit = form.querySelector('button[type="submit"]');
+      var status = document.getElementById('claimFormStatus');
+      var data = {
+        guestToken: guest,
+        firstName: document.getElementById('claimFirstName').value.trim(),
+        lastName: document.getElementById('claimLastName').value.trim(),
+        city: document.getElementById('claimCity').value.trim(),
+        phone: document.getElementById('claimPhone').value.trim()
+      };
+      if (!data.firstName || !data.lastName || !data.city || data.phone.replace(/\D/g, '').length < 10) {
+        status.textContent = 'Заполните четыре поля и проверьте номер телефона.';
+        return;
+      }
+      submit.disabled = true;
+      submit.textContent = 'Сохраняем…';
+      status.textContent = '';
+      api('/api/result/' + encodeURIComponent(submissionId) + '/claim', data).then(function (result) {
+        complete(result.studentToken, data);
+      }).catch(function (error) {
+        submit.disabled = false;
+        submit.textContent = 'Сохранить результат';
+        status.textContent = error.message || 'Не удалось сохранить. Попробуйте ещё раз.';
+      });
+    };
+  }
+
   function showSavedResult(id, cabinetToken) {
     /* Полоса «Мой результат» дублировала заголовок «Результат экзамена»
        строкой ниже и съедала 44 px в самом верху — там, где ученик
@@ -1868,7 +1988,8 @@
         var level = Number(res.examLevel) || 1;
         var pending = res.gradingStatus === 'pending';
         var html = '<h1>Результат экзамена</h1>' +
-          '<p class="lede">' + esc(res.lastName) + ' ' + esc(res.firstName) + ' (' + esc(res.city) + ') · ' +
+          '<p class="lede">' + (res.isGuest ? ''
+            : esc(res.lastName) + ' ' + esc(res.firstName) + ' (' + esc(res.city) + ') · ') +
             new Date(res.createdAt).toLocaleString('ru-RU') + '</p>';
         if (pending) {
           html += '<div class="score-hero frame">' +
@@ -1895,6 +2016,7 @@
             '</span><span class="pts">оценит преподаватель</span></div>';
           html += '</div>';
         }
+        if (!cabinetToken && res.isGuest && guestToken()) html += resultClaimHtml();
         html += '<hr class="rule"><h2 class="kicker">Отчёт для преподавателя</h2>' +
           '<p class="lede">Отчёт уже у преподавателя. Эти кнопки нужны, если хотите сохранить копию себе или переслать её сами.</p>' +
           reportButtonsHtml();
@@ -1902,6 +2024,7 @@
           '<div class="btn-row"><button class="btn is-ghost" id="homeBtn">' +
           (cabinetToken ? '← В кабинет' : '← На главную') + '</button></div>';
         render(html);
+        wireResultClaim(id, res);
         wireReportButtons(reportFromResult(res), res.lastName);
         document.getElementById('homeBtn').onclick = function () {
           if (history.replaceState) history.replaceState(null, '', location.pathname);
@@ -2360,6 +2483,16 @@
   }
 
   function prepareExamAttempt(token, requestId, onReady) {
+    function restartAfterInvalidToken(error) {
+      if (!error || error.status !== 401) return false;
+      try {
+        if (studentToken() === token) localStorage.removeItem(STUDENT_KEY);
+        if (guestToken() === token) localStorage.removeItem(GUEST_KEY);
+      } catch (err) { /* ок */ }
+      showReg();
+      return true;
+    }
+
     function issuePass() {
       loadingScreen('Готовим попытку', 'Проверяем доступ и баланс…');
       return api('/api/exam/start', {
@@ -2371,6 +2504,7 @@
         state.attemptRequestId = requestId;
         onReady(result);
       }).catch(function (error) {
+        if (restartAfterInvalidToken(error)) return;
         if (error && error.status === 402) {
           profileTab = 'settings';
           state.phase = 'profile';
@@ -2386,19 +2520,24 @@
     loadingScreen('Доступ к экзамену', 'Проверяем предыдущую попытку…');
     apiGet('/api/exam/access?examLevel=1&studentToken=' + encodeURIComponent(token)).then(function (access) {
       if (access.free) return issuePass();
+      var guestAttempt = !studentToken() && guestToken() === token;
       var enough = Number(access.balance) >= Number(access.cost);
       render('<section class="retake-gate">' +
         '<p class="kicker">Повторная попытка<span class="cur">_</span></p>' +
-        '<h1>Сейчас или бесплатно позже</h1>' +
+        '<h1>' + (guestAttempt ? 'Бесплатно через 48 часов' : 'Сейчас или бесплатно позже') + '</h1>' +
         '<p class="lede">Следующая бесплатная попытка откроется ' + esc(examFreeTime(access.freeAt)) +
-          '. Если хотите начать сейчас, с кошелька спишется ' + esc(access.cost) + ' нуров.</p>' +
-        '<div class="retake-balance"><span>Мой кошелёк</span><b>' + esc(access.balance) + '</b><small>нуров</small></div>' +
-        (enough
+          (guestAttempt
+            ? '. Сохраните первый результат в кабинете, если хотите пополнить кошелёк и начать раньше.</p>'
+            : '. Если хотите начать сейчас, с кошелька спишется ' + esc(access.cost) + ' нуров.</p>') +
+        (guestAttempt ? ''
+          : '<div class="retake-balance"><span>Мой кошелёк</span><b>' + esc(access.balance) + '</b><small>нуров</small></div>') +
+        (!guestAttempt && enough
           ? '<button class="btn btn-block" id="buyRetake" type="button">Начать сейчас · ' + esc(access.cost) + ' нуров</button>'
-          : '<p class="notice is-error">На балансе не хватает нуров для мгновенной попытки.</p>') +
-        '<div class="btn-row"><button class="btn is-ghost" id="openWallet" type="button">Открыть кошелёк</button>' +
+          : guestAttempt ? '' : '<p class="notice is-error">На балансе не хватает нуров для мгновенной попытки.</p>') +
+        '<div class="btn-row"><button class="btn is-ghost" id="openWallet" type="button">' +
+          (guestAttempt ? 'Сохранить первый результат' : 'Открыть кошелёк') + '</button>' +
           '<button class="btn is-quiet" id="retakeHome" type="button">Подождать</button></div>' +
-        '<p class="wallet-fineprint">Нуры — внутренние учебные единицы. Они не выводятся в деньги; каждое списание видно в истории.</p>' +
+        (guestAttempt ? '' : '<p class="wallet-fineprint">Нуры — внутренние учебные единицы. Они не выводятся в деньги; каждое списание видно в истории.</p>') +
       '</section>');
       var buy = document.getElementById('buyRetake');
       if (buy) buy.onclick = function () {
@@ -2407,12 +2546,14 @@
         issuePass();
       };
       document.getElementById('openWallet').onclick = function () {
+        if (guestAttempt && access.lastResultId) return showSavedResult(access.lastResultId);
         profileTab = 'settings'; state.phase = 'profile'; show();
       };
       document.getElementById('retakeHome').onclick = function () {
         state.phase = 'welcome'; show();
       };
     }).catch(function (error) {
+      if (restartAfterInvalidToken(error)) return;
       errorScreen('Не удалось проверить доступ', error.message || 'Попробуйте ещё раз.', function () {
         prepareExamAttempt(token, requestId, onReady);
       });
@@ -2422,48 +2563,49 @@
   function showReg() {
     state.attemptPassId = null;
     state.attemptRequestId = uuid();
-    setBar('Анкета перед экзаменом');
-    personWizard({
-      finishLabel: 'Начать экзамен',
-      isExam: true,
-      onDone: function (data) {
-        render('<h1>Открываем кабинет…</h1><p class="lede">Секунду, готовим экзамен.</p>');
+    var permanentToken = studentToken();
+    var temporaryToken = guestToken();
+    var ownerToken = permanentToken || temporaryToken;
 
-      function startExam() {
-        state.student = data;
-        state.startedAt = new Date().toISOString();
-        state.submissionId = uuid();
-        state.answers = freshAnswers();
-        state.phase = 'exam';
-        state.resumable = true;
-        state.stepIdx = 0;
-        examFinished = false;
-        /* новая попытка начинается с чистого листа: журнал уходов и запись
-           голоса от прошлой попытки не должны уехать преподавателю */
-        integrity = { away: 0, awayMs: 0, events: [] };
-        audioBlob = null;
-        audioMime = '';
-        save();
-        show();
+    function startExam(result) {
+      var token = result.studentToken || ownerToken;
+      var isGuest = !!result.isGuest || (!permanentToken && token === temporaryToken);
+      if (isGuest && token) {
+        try { localStorage.setItem(GUEST_KEY, token); } catch (err) { /* ок */ }
       }
+      state.student = isGuest ? { isGuest: true } : { registered: true };
+      state.startedAt = new Date().toISOString();
+      state.submissionId = uuid();
+      state.answers = freshAnswers();
+      state.phase = 'exam';
+      state.resumable = true;
+      state.stepIdx = 0;
+      examFinished = false;
+      /* новая попытка начинается с чистого листа: журнал уходов и запись
+         голоса от прошлой попытки не должны уехать преподавателю */
+      integrity = { away: 0, awayMs: 0, events: [] };
+      audioBlob = null;
+      audioMime = '';
+      save();
+      show();
+    }
 
-      // кабинет заводим до экзамена: ученик сразу закреплён за своим номером
-      var savedToken = '';
-      try { savedToken = localStorage.getItem(STUDENT_KEY) || ''; } catch (err) { /* ок */ }
-      api('/api/student/register', {
-        firstName: data.firstName, lastName: data.lastName,
-        city: data.city, phone: data.phone, studentToken: savedToken
-      }).then(function (res) {
-        if (res && res.studentToken) {
-          try { localStorage.setItem(STUDENT_KEY, res.studentToken); } catch (err) { /* ок */ }
-        }
-        if (!res || !res.studentToken) throw new Error('Кабинет не создан');
-        return prepareExamAttempt(res.studentToken, state.attemptRequestId, startExam);
-      }).catch(function (error) {
-        errorScreen('Не удалось открыть экзамен',
-          error.message || 'Проверьте интернет и попробуйте ещё раз.', showReg);
-      });
-      }
+    if (ownerToken) {
+      return prepareExamAttempt(ownerToken, state.attemptRequestId, startExam);
+    }
+
+    /* Первая попытка — один запрос и сразу задания. Сервер сам создаёт
+       временный кабинет, чтобы результат и лимит пересдачи не зависели от
+       анкеты и не обходились простым обновлением страницы. */
+    loadingScreen('Готовим экзамен', 'Открываем первую попытку без анкеты…');
+    api('/api/exam/start', {
+      studentToken: '', examLevel: 1, requestId: state.attemptRequestId
+    }).then(function (result) {
+      state.attemptPassId = result.attemptPassId;
+      startExam(result);
+    }).catch(function (error) {
+      errorScreen('Не удалось открыть экзамен',
+        error.message || 'Проверьте интернет и попробуйте ещё раз.', showReg);
     });
   }
 
@@ -3140,8 +3282,7 @@
   }
 
   function submitAll(onAttempt) {
-    var savedStudentToken = '';
-    try { savedStudentToken = localStorage.getItem(STUDENT_KEY) || ''; } catch (e) { /* ок */ }
+    var savedStudentToken = examOwnerToken();
     var payload = {
       examLevel: 1,
       submissionId: state.submissionId,
@@ -3182,7 +3323,9 @@
     var level = Number(res.examLevel) || 1;
     var pending = res.gradingStatus === 'pending';
     lines.push('ЭКЗАМЕН ПО ТАДЖВИДУ · ' + (level === 2 ? '2-Й' : '1-Й') + ' УРОВЕНЬ');
-    lines.push('Ученик: ' + res.lastName + ' ' + res.firstName + ' (' + res.city + ')');
+    lines.push(res.isGuest
+      ? 'Ученик: данные ещё не сохранены'
+      : 'Ученик: ' + res.lastName + ' ' + res.firstName + ' (' + res.city + ')');
     lines.push('Дата: ' + new Date(res.createdAt).toLocaleString('ru-RU'));
     lines.push('');
     if (pending) {
@@ -3252,8 +3395,10 @@
     var s = state.student || {};
     var lines = [];
     lines.push('ЭКЗАМЕН ПО ТАДЖВИДУ · 1-Й УРОВЕНЬ');
-    lines.push('Ученик: ' + s.lastName + ' ' + s.firstName + ' (' + s.city + ')');
-    lines.push('Телефон: ' + s.phone);
+    lines.push(s.isGuest
+      ? 'Ученик: данные ещё не сохранены'
+      : 'Ученик: ' + (s.lastName || '') + ' ' + (s.firstName || '') + ' (' + (s.city || '') + ')');
+    if (s.phone) lines.push('Телефон: ' + s.phone);
     lines.push('Дата: ' + new Date().toLocaleString('ru-RU'));
     lines.push('');
     lines.push('ЗАДАНИЕ 1 — соединение букв с названиями:');
@@ -3291,11 +3436,11 @@
     setBar('Экзамен завершён');
     var html = '<h1>Экзамен завершён</h1>';
     var s = state.student || {};
-    html += '<p class="lede">' + esc(s.firstName) + ', спасибо! ';
+    html += '<p class="lede">' + (s.firstName ? esc(s.firstName) + ', спасибо! ' : 'Готово. ');
 
     if (serverResult && serverResult.id) {
       try { localStorage.setItem('tajweed_last_result', serverResult.id); } catch (e) { /* ок */ }
-      if (serverResult.studentToken) {
+      if (serverResult.studentToken && !serverResult.isGuest) {
         try { localStorage.setItem(STUDENT_KEY, serverResult.studentToken); } catch (e) { /* ок */ }
       }
       if (history.replaceState) history.replaceState(null, '', '#r=' + serverResult.id);
@@ -3351,6 +3496,7 @@
       html += '<div class="btn-row"><button class="btn" id="retrySubmitBtn">Повторить отправку</button></div>';
     }
 
+    if (serverResult && serverResult.id && serverResult.isGuest) html += resultClaimHtml();
     html += '<hr class="rule">';
     html += '<p class="kicker">Отчёт<span class="cur">_</span></p>';
     html += '<p class="lede">' + (serverResult && serverResult.id
@@ -3358,7 +3504,7 @@
       : 'Пока отчёт до преподавателя не дошёл. Сохраните его или перешлите сами — так результат точно не потеряется.') + '</p>';
     html += reportButtonsHtml(audioBlob && (!serverResult || !serverResult.audioUploaded));
 
-    if (serverResult && serverResult.studentToken) {
+    if (serverResult && serverResult.studentToken && !serverResult.isGuest) {
       html += '<div class="btn-row"><button class="btn" id="cabinetBtn">Открыть личный кабинет</button>' +
         '<button class="btn is-ghost" id="homeBtn">На главную</button></div>';
     } else {
@@ -3367,6 +3513,7 @@
 
     render(html);
     wireLevelActions();
+    if (serverResult && serverResult.isGuest) wireResultClaim(serverResult.id);
     wireReportButtons(reportText(), s.lastName);
 
     var retrySubmit = document.getElementById('retrySubmitBtn');
@@ -3594,18 +3741,24 @@
   hit();
   var hashResult = location.hash.match(/^#r=([0-9a-f-]{36})$/i);
   var hashStudent = location.hash.match(/^#student=([0-9a-f-]{36})$/i);
-  var hashYandex = location.hash.match(/^#yandex=([0-9a-f-]{36})$/i);
+  var hashYandex = location.hash.match(/^#yandex=([0-9a-f-]{36})(?:&saved=([0-9a-f-]{36}))?$/i);
   var hashYandexError = location.hash.match(/^#yandex-error=/i);
   var hashSection = location.hash.match(/^#(lessons|profile|exam)(?:\/(me|lessons|settings|results|classes))?$/i);
   var hashJoin = location.hash.match(/^#join=([A-Za-z0-9]{4,16})$/);
   if (hashYandex && state.phase !== 'exam') {
     /* Вернулись с oauth.yandex.ru: токен кабинета уже выдан сервером */
-    try { localStorage.setItem(STUDENT_KEY, hashYandex[1]); } catch (e) { /* ок */ }
+    try {
+      localStorage.setItem(STUDENT_KEY, hashYandex[1]);
+      localStorage.removeItem(GUEST_KEY);
+    } catch (e) { /* ок */ }
     if (history.replaceState) history.replaceState(null, '', location.pathname);
     showStudentCabinet(hashYandex[1]);
   } else if (hashYandexError && state.phase !== 'exam') {
     if (history.replaceState) history.replaceState(null, '', location.pathname);
-    showLogin('Не получилось войти через Яндекс. Попробуйте ещё раз или войдите по номеру и паролю.');
+    var failedResult = '';
+    try { failedResult = localStorage.getItem('tajweed_last_result') || ''; } catch (e) { /* ок */ }
+    if (failedResult && guestToken()) showSavedResult(failedResult);
+    else showLogin('Не получилось войти через Яндекс. Попробуйте ещё раз или войдите по номеру и паролю.');
   } else if (hashJoin && state.phase !== 'exam') {
     joinClass(hashJoin[1].toUpperCase());
   } else if (hashStudent && state.phase !== 'exam') {
