@@ -453,6 +453,22 @@
   display: block;
 }
 
+/* В активном разделе подпись уступает место крупной
+   пиктограмме. Текст остаётся доступен скринридеру. */
+.kb-tabbar a.is-on svg {
+  width: 34px;
+  height: 34px;
+}
+
+.kb-tabbar a.is-on span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 @media (max-width: 480px) {
   .kb-grid {
     grid-template-columns: minmax(0, 1fr);

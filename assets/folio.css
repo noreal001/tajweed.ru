@@ -1987,18 +1987,12 @@ html.is-auth .sheet {
   shape-rendering: geometricPrecision;
 }
 
-.tabbar .tab-home .tab-icon {
-  width: 30px;
-  height: 30px;
-  flex-basis: 30px;
-}
-
 .tab-icon.is-home .icon-bolt {
   fill: currentColor;
   stroke-width: 1.7;
 }
 
-.tabbar .tab-home .tab-label {
+.tabbar .tab.is-on .tab-label {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -2007,7 +2001,10 @@ html.is-auth .sheet {
   white-space: nowrap;
 }
 
-.tab.is-on .tab-icon {
+.tabbar .tab.is-on .tab-icon {
+  width: 34px;
+  height: 34px;
+  flex-basis: 34px;
   opacity: 1;
 }
 
