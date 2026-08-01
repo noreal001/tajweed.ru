@@ -2568,6 +2568,7 @@ html.has-tabbar body {
 
 .profile-tab {
   min-height: 44px;
+  min-width: 0;
   padding: 0 8px;
   flex: 1 1 0;
   display: inline-flex;
@@ -3111,7 +3112,8 @@ html.is-exam .ayah {
 
   .profile-tab {
     min-height: 38px;
-    font-size: 13.5px;
+    font-size: clamp(10px, 2.8vw, 12px);
+    letter-spacing: -0.01em;
   }
 
   /* Карточка ученика: меньше воздуха, меньше аватар. */
@@ -4474,6 +4476,252 @@ a.lesson-material:hover {
 
 .class-row.is-waiting {
   border-style: dashed;
+}
+
+.class-progress {
+  width: 100%;
+  height: 3px;
+  display: block;
+  background: var(--folio-highlight);
+}
+
+.class-progress span {
+  height: 100%;
+  display: block;
+  background: var(--text);
+}
+
+/* ── Кошелёк «Нуры» ─────────────────────────────────────── */
+.wallet-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.wallet-balance {
+  padding-bottom: 16px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.wallet-balance p,
+.wallet-balance span {
+  margin: 0;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+.wallet-balance div {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.wallet-balance b {
+  color: var(--text);
+  font: 500 clamp(42px, 8vw, 64px)/0.85 var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.wallet-intro {
+  margin: 16px 0 0;
+  color: var(--text-soft);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.wallet-prices {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.wallet-prices div {
+  min-height: 70px;
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wallet-prices div + div {
+  padding-left: 14px;
+  border-left: 1px solid var(--line);
+}
+
+.wallet-prices span {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.wallet-prices b {
+  color: var(--text);
+  font: 500 26px/1 var(--font-display);
+}
+
+.wallet-topup,
+.wallet-history {
+  margin-top: 20px;
+}
+
+.wallet-topup-options {
+  margin-top: 9px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.wallet-topup-options button {
+  min-height: 44px;
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  background: transparent;
+  font: 650 13px/1 var(--font-ui);
+  cursor: pointer;
+}
+
+.wallet-topup-options button:hover,
+.wallet-topup-options button:focus-visible {
+  color: var(--surface);
+  background: var(--text);
+}
+
+.wallet-topup-options button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.wallet-topup-note,
+.wallet-fineprint {
+  margin: 10px 0 0;
+  color: var(--text-faint);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.wallet-operation {
+  min-height: 52px;
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.wallet-operation div {
+  display: grid;
+  gap: 3px;
+}
+
+.wallet-operation b {
+  color: var(--text);
+  font: 600 13.5px/1.3 var(--font-ui);
+}
+
+.wallet-operation span {
+  color: var(--text-faint);
+  font: 10px/1.2 var(--font-mono);
+  text-transform: uppercase;
+}
+
+.wallet-operation > strong {
+  color: var(--text-soft);
+  font: 600 18px/1 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.wallet-operation > strong.is-plus {
+  color: var(--text);
+}
+
+.wallet-settings {
+  margin-top: 18px;
+}
+
+/* Экран выбора ранней пересдачи — тот же строгий бланк, без ощущения
+   магазина: сначала объясняется бесплатная альтернатива, затем цена. */
+.retake-gate {
+  max-width: 640px;
+}
+
+.retake-balance {
+  margin: 22px 0 16px;
+  padding: 16px 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.retake-balance span {
+  margin-right: auto;
+  color: var(--text-faint);
+  font: 10px/1 var(--font-mono);
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+.retake-balance b {
+  color: var(--text);
+  font: 500 38px/1 var(--font-display);
+}
+
+.retake-balance small {
+  color: var(--text-faint);
+  font: 10px/1 var(--font-mono);
+  text-transform: uppercase;
+}
+
+.exam-hint {
+  margin: 14px 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.exam-hint-button {
+  min-height: 38px;
+  padding: 0;
+  border: 0;
+  color: var(--text-soft);
+  background: transparent;
+  font: 600 12px/1 var(--font-ui);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.exam-hint-button:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.exam-hint-text {
+  margin: 8px 0 0;
+  padding-left: 12px;
+  border-left: 2px solid var(--line-strong);
+  color: var(--text-soft);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+@media (max-width: 759px) {
+  .wallet-card { padding: 14px; }
+  .wallet-topup-options { grid-template-columns: repeat(2, 1fr); }
 }
 
 .hw-list {

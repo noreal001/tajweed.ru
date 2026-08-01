@@ -423,6 +423,8 @@
     student: null,
     startedAt: null,
     submissionId: null,
+    attemptPassId: null,
+    attemptRequestId: null,
     answers: freshAnswers()
   };
 
@@ -533,6 +535,8 @@
         student: state.student,
         startedAt: state.startedAt,
         submissionId: state.submissionId,
+        attemptPassId: state.attemptPassId,
+        attemptRequestId: state.attemptRequestId,
         answers: state.answers,
         integrity: integrity
       }));
@@ -578,6 +582,10 @@
       state.student = saved.student;
       state.startedAt = saved.startedAt;
       state.submissionId = saved.submissionId || uuid();
+      state.attemptPassId = /^[0-9a-f-]{36}$/i.test(String(saved.attemptPassId || ''))
+        ? saved.attemptPassId : null;
+      state.attemptRequestId = /^[0-9a-f-]{36}$/i.test(String(saved.attemptRequestId || ''))
+        ? saved.attemptRequestId : null;
 
       var fresh = freshAnswers();
       if (saved.answers) {
@@ -1044,13 +1052,46 @@
               '<div class="level-bar"><span style="width: ' + pct + '%"></span></div>' +
               '<p class="profile-standing-note">' + esc(scoreVerdict(pct)) + '</p>'
             : '<p class="profile-standing-note">Экзамен первого уровня ещё не сдан.</p>' +
-              '<div class="btn-row"><button class="btn" id="againBtn">Сдать экзамен</button></div>') +
+              '<p class="profile-standing-note">Экзамен запускается из отдельного раздела нижнего меню.</p>') +
         '</section>';
       }
 
       /* ── Вкладка «Настройки»: пароль и выход ── */
       function paneSettings() {
-        return '<div class="settings">' +
+        var wallet = d.wallet || { balance: 0, prices: { instantRetake: 100, hint: 50 }, transactions: [], topups: [] };
+        var pending = (wallet.topups || []).filter(function (item) { return item.status === 'pending'; });
+        var transactionLabels = {
+          teacher_adjustment: 'Корректировка преподавателем',
+          topup: 'Пополнение', instant_retake: 'Мгновенная попытка', exam_hint: 'Подсказка'
+        };
+        var history = (wallet.transactions || []).slice(0, 8).map(function (item) {
+          var when = '';
+          try {
+            when = new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+              .format(new Date(item.createdAt));
+          } catch (error) { when = item.createdAt || ''; }
+          return '<div class="wallet-operation"><div><b>' + esc(transactionLabels[item.kind] || item.note || 'Операция') +
+            '</b><span>' + esc(when) + '</span></div><strong class="' + (item.amount > 0 ? 'is-plus' : '') + '">' +
+            (item.amount > 0 ? '+' : '') + esc(item.amount) + '</strong></div>';
+        }).join('');
+        return '<section class="wallet-card">' +
+          '<div class="wallet-balance"><p>Мой кошелёк</p><div><b>' + esc(wallet.balance) + '</b><span>нуров</span></div></div>' +
+          '<p class="wallet-intro">Нуры дают удобство, но не закрывают обучение: повторный экзамен бесплатен через 48 часов. ' +
+            'Сейчас начать раньше стоит ' + esc(wallet.prices.instantRetake) + ', подсказка — ' + esc(wallet.prices.hint) + ' нуров.</p>' +
+          '<div class="wallet-prices"><div><span>Быстрая пересдача</span><b>' + esc(wallet.prices.instantRetake) + '</b></div>' +
+            '<div><span>Подсказка</span><b>' + esc(wallet.prices.hint) + '</b></div></div>' +
+          '<div class="wallet-topup"><p class="kicker">Пополнить<span class="cur">_</span></p>' +
+            '<div class="wallet-topup-options">' + [100, 300, 500, 1000].map(function (amount) {
+              return '<button type="button" data-wallet-topup="' + amount + '">+' + amount + '</button>';
+            }).join('') + '</div>' +
+            '<p class="wallet-topup-note" id="walletTopupState" role="status" aria-live="polite">' +
+              (pending.length ? 'Ожидает подтверждения: ' + pending.map(function (item) { return item.amount; }).join(', ') + ' нуров.'
+                : 'Заявка уйдёт преподавателю. После подтверждения нуры сразу появятся на балансе.') + '</p></div>' +
+          '<div class="wallet-history"><p class="kicker">История<span class="cur">_</span></p>' +
+            (history || '<p class="profile-standing-note">Операций пока нет.</p>') + '</div>' +
+          '<p class="wallet-fineprint">Нуры — внутренние учебные единицы без вывода и перевода другому ученику. Реальные онлайн-платежи появятся только после подключения защищённого платёжного провайдера.</p>' +
+        '</section>' +
+        '<div class="settings wallet-settings">' +
           '<button class="setting-row" id="' + (s.hasPassword ? 'changePass' : 'setPass') + '" type="button">' +
             '<span><b>Пароль</b><small>Вход с другого телефона</small></span>' +
             '<span class="setting-value">' + (s.hasPassword ? 'Изменить' : 'Задать') + '</span></button>' +
@@ -1162,11 +1203,21 @@
           '<p>' + classes.length + '</p></div><div class="class-list">';
         classes.forEach(function (c) {
           var waiting = c.status === 'pending';
+          var classHomework = homework.filter(function (item) { return Number(item.classId) === Number(c.id); });
+          var accepted = classHomework.filter(function (item) {
+            return item.status === 'accepted' || item.done;
+          }).length;
+          var progressPercent = classHomework.length ? Math.round(accepted / classHomework.length * 100) : 0;
           html += '<div class="class-row' + (waiting ? ' is-waiting' : '') + '">' +
             '<span class="class-name">' + esc(c.name) + '</span>' +
             (waiting
               ? '<span class="class-state">ждёт одобрения</span>'
-              : (c.note ? '<span class="class-note">' + esc(c.note) + '</span>' : '')) +
+              : '<span class="class-state">' + (classHomework.length
+                ? accepted + ' из ' + classHomework.length + ' · ' + progressPercent + '%'
+                : 'заданий пока нет') + '</span>') +
+            (!waiting ? '<span class="class-progress" aria-label="Выполнено ' + progressPercent + ' процентов">' +
+              '<span style="width:' + progressPercent + '%"></span></span>' : '') +
+            (c.note ? '<span class="class-note">' + esc(c.note) + '</span>' : '') +
           '</div>';
         });
         html += '</div></section>';
@@ -1214,10 +1265,8 @@
           html += '</div></section>';
         }
 
-        return html + '<div class="btn-row">' +
-          (best ? '<button class="btn" data-open-result="' + esc(best.id) + '">Разбор и отчёт</button>' : '') +
-          '<button class="btn' + (best ? ' is-ghost' : '') + '" id="againBtn">' +
-            (best ? 'Пройти ещё раз' : 'Сдать экзамен') + '</button></div>';
+        return html + (best ? '<div class="btn-row"><button class="btn" data-open-result="' +
+          esc(best.id) + '">Разбор и отчёт</button></div>' : '');
       }
 
       /* Переключение вкладок не ходит на сервер: данные уже загружены,
@@ -1279,6 +1328,25 @@
       [].slice.call(app.querySelectorAll('[data-result-id], [data-open-result]')).forEach(function (b) {
         b.onclick = function () {
           showSavedResult(b.getAttribute('data-result-id') || b.getAttribute('data-open-result'), token);
+        };
+      });
+      [].slice.call(app.querySelectorAll('[data-wallet-topup]')).forEach(function (button) {
+        button.onclick = function () {
+          var amount = Number(button.getAttribute('data-wallet-topup'));
+          var note = document.getElementById('walletTopupState');
+          button.disabled = true;
+          note.textContent = 'Отправляем заявку…';
+          api('/api/wallet/topups', {
+            studentToken: token,
+            amount: amount,
+            requestId: uuid()
+          }).then(function () {
+            note.textContent = 'Заявка на ' + amount + ' нуров отправлена преподавателю.';
+            setTimeout(showProfile, 700);
+          }).catch(function (error) {
+            button.disabled = false;
+            note.textContent = error.message || 'Не удалось отправить заявку.';
+          });
         };
       });
       var again = document.getElementById('againBtn');
@@ -2282,7 +2350,78 @@
     );
   }
 
+  function examFreeTime(value) {
+    if (!value) return '';
+    try {
+      return new Intl.DateTimeFormat('ru-RU', {
+        day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+      }).format(new Date(value));
+    } catch (error) { return value; }
+  }
+
+  function prepareExamAttempt(token, requestId, onReady) {
+    function issuePass() {
+      loadingScreen('Готовим попытку', 'Проверяем доступ и баланс…');
+      return api('/api/exam/start', {
+        studentToken: token,
+        examLevel: 1,
+        requestId: requestId
+      }).then(function (result) {
+        state.attemptPassId = result.attemptPassId;
+        state.attemptRequestId = requestId;
+        onReady(result);
+      }).catch(function (error) {
+        if (error && error.status === 402) {
+          profileTab = 'settings';
+          state.phase = 'profile';
+          return showProfile();
+        }
+        errorScreen('Не удалось открыть попытку',
+          error.message || 'Проверьте интернет и попробуйте ещё раз.', function () {
+            prepareExamAttempt(token, requestId, onReady);
+          });
+      });
+    }
+
+    loadingScreen('Доступ к экзамену', 'Проверяем предыдущую попытку…');
+    apiGet('/api/exam/access?examLevel=1&studentToken=' + encodeURIComponent(token)).then(function (access) {
+      if (access.free) return issuePass();
+      var enough = Number(access.balance) >= Number(access.cost);
+      render('<section class="retake-gate">' +
+        '<p class="kicker">Повторная попытка<span class="cur">_</span></p>' +
+        '<h1>Сейчас или бесплатно позже</h1>' +
+        '<p class="lede">Следующая бесплатная попытка откроется ' + esc(examFreeTime(access.freeAt)) +
+          '. Если хотите начать сейчас, с кошелька спишется ' + esc(access.cost) + ' нуров.</p>' +
+        '<div class="retake-balance"><span>Мой кошелёк</span><b>' + esc(access.balance) + '</b><small>нуров</small></div>' +
+        (enough
+          ? '<button class="btn btn-block" id="buyRetake" type="button">Начать сейчас · ' + esc(access.cost) + ' нуров</button>'
+          : '<p class="notice is-error">На балансе не хватает нуров для мгновенной попытки.</p>') +
+        '<div class="btn-row"><button class="btn is-ghost" id="openWallet" type="button">Открыть кошелёк</button>' +
+          '<button class="btn is-quiet" id="retakeHome" type="button">Подождать</button></div>' +
+        '<p class="wallet-fineprint">Нуры — внутренние учебные единицы. Они не выводятся в деньги; каждое списание видно в истории.</p>' +
+      '</section>');
+      var buy = document.getElementById('buyRetake');
+      if (buy) buy.onclick = function () {
+        buy.disabled = true;
+        buy.textContent = 'Списываем…';
+        issuePass();
+      };
+      document.getElementById('openWallet').onclick = function () {
+        profileTab = 'settings'; state.phase = 'profile'; show();
+      };
+      document.getElementById('retakeHome').onclick = function () {
+        state.phase = 'welcome'; show();
+      };
+    }).catch(function (error) {
+      errorScreen('Не удалось проверить доступ', error.message || 'Попробуйте ещё раз.', function () {
+        prepareExamAttempt(token, requestId, onReady);
+      });
+    });
+  }
+
   function showReg() {
+    state.attemptPassId = null;
+    state.attemptRequestId = uuid();
     setBar('Анкета перед экзаменом');
     personWizard({
       finishLabel: 'Начать экзамен',
@@ -2318,9 +2457,12 @@
         if (res && res.studentToken) {
           try { localStorage.setItem(STUDENT_KEY, res.studentToken); } catch (err) { /* ок */ }
         }
-      }).catch(function () {
-        // без сети кабинет создастся позже, при отправке результата
-      }).then(startExam);
+        if (!res || !res.studentToken) throw new Error('Кабинет не создан');
+        return prepareExamAttempt(res.studentToken, state.attemptRequestId, startExam);
+      }).catch(function (error) {
+        errorScreen('Не удалось открыть экзамен',
+          error.message || 'Проверьте интернет и попробуйте ещё раз.', showReg);
+      });
       }
     });
   }
@@ -2383,6 +2525,48 @@
     app.appendChild(wm);
   }
 
+  function wireExamHint(step) {
+    var token = studentToken();
+    if (!token || !state.attemptPassId) return;
+    var taskNumber = taskIndex(step.task);
+    var stepKey = String(taskNumber) + ':' + String(step.sub == null ? 0 : Number(step.sub));
+    var target = document.getElementById('answerBtn');
+    var anchor = target ? target.closest('.btn-row') : null;
+    var host = document.createElement('div');
+    host.className = 'exam-hint';
+    host.innerHTML = '<button class="exam-hint-button" type="button">Подсказка · 50 нуров</button>' +
+      '<p class="exam-hint-text" role="status" aria-live="polite" hidden></p>';
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(host, anchor);
+    else app.querySelector('.screen').appendChild(host);
+    var button = host.querySelector('button');
+    var text = host.querySelector('p');
+    button.onclick = function () {
+      systemDialog = true;
+      var accepted = window.confirm('Открыть подсказку за 50 нуров? Она направит ход мысли, но не покажет правильный ответ.');
+      systemDialog = false;
+      if (!accepted) return;
+      button.disabled = true;
+      button.textContent = 'Открываем…';
+      api('/api/exam/hint', {
+        studentToken: token,
+        attemptPassId: state.attemptPassId,
+        stepKey: stepKey,
+        requestId: uuid()
+      }).then(function (result) {
+        text.hidden = false;
+        text.textContent = result.hint;
+        button.textContent = 'Подсказка открыта · осталось ' + result.balance;
+      }).catch(function (error) {
+        button.disabled = false;
+        button.textContent = 'Подсказка · 50 нуров';
+        text.hidden = false;
+        text.textContent = error && error.status === 402
+          ? 'На балансе не хватает нуров. Пополнить кошелёк можно в настройках профиля.'
+          : 'Не удалось открыть подсказку. Попробуйте ещё раз.';
+      });
+    };
+  }
+
   function showQuestion(step) {
     var task = step.task;
     setBar(qLabel(step));
@@ -2395,8 +2579,10 @@
       // render() внутри renderReading перетирает содержимое, поэтому знак
       // ставим после отрисовки — иначе на этом экране его просто нет
       renderReading(task);
+      wireExamHint(step);
       return stampWatermark();
     }
+    wireExamHint(step);
     stampWatermark();
     startTimer(QUESTION_TIME, commitAndNext);
   }
@@ -2960,6 +3146,7 @@
       examLevel: 1,
       submissionId: state.submissionId,
       studentToken: savedStudentToken,
+      attemptPassId: state.attemptPassId,
       student: state.student,
       startedAt: state.startedAt,
       finishedAt: new Date().toISOString(),
@@ -3149,7 +3336,9 @@
       html += 'Ответы сохранены на этом устройстве.</p>';
       var code = submitError && submitError.status;
       html += '<p class="notice is-error">' + (
-        code === 429
+        code === 402
+          ? 'Эта повторная попытка не была оплачена. Ответы сохранены: откройте кошелёк или дождитесь бесплатного доступа через 48 часов.'
+        : code === 429
           ? 'Сегодня с вашего номера уже отправлено пять работ. Ответы сохранены — отправьте их завтра или передайте отчёт преподавателю вручную.'
         : code === 409
           ? 'Эта работа уже отправлена раньше. Откройте свой результат в профиле — повторная отправка не нужна.'
