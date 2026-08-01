@@ -2702,6 +2702,13 @@ html.has-tabbar body {
 
   .profile-tabs {
     margin: 12px 0 14px;
+    padding: 4px;
+  }
+
+  .profile-tab {
+    min-height: 42px;
+    padding-inline: 4px;
+    font-size: 12px;
   }
 }
 
@@ -4246,6 +4253,194 @@ html {
 /* ── Классы и домашние задания в кабинете ученика ───────────
    Держатся на линиях, как всё остальное на бланке: ни плашек, ни
    заливок. Сданное отмечено ярлыком, а не цветом — монохром. */
+.lesson-overview {
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.lesson-overview .profile-section-head {
+  margin-bottom: 16px;
+}
+
+.lesson-class-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lesson-class {
+  padding: 13px 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.lesson-class div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.lesson-class b {
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.lesson-class span,
+.lesson-class p {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lesson-class p {
+  margin: 0;
+  color: var(--text);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lesson-request {
+  margin-top: 14px;
+}
+
+.lesson-feed {
+  display: grid;
+  gap: 18px;
+}
+
+.lesson-entry {
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.lesson-entry-head {
+  padding-bottom: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.lesson-date,
+.lesson-time,
+.lesson-homework-title,
+.lesson-materials > p {
+  margin: 0;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+}
+
+.lesson-date::first-letter {
+  text-transform: uppercase;
+}
+
+.lesson-entry h3 {
+  margin: 5px 0 0;
+  color: var(--text);
+  font: 500 24px/1.08 var(--font-display);
+}
+
+.lesson-time {
+  color: var(--text-soft);
+  line-height: 1.6;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lesson-summary {
+  margin: 14px 0 0;
+  color: var(--text-soft);
+  font-size: 14.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.lesson-materials {
+  margin-top: 16px;
+  display: grid;
+  gap: 0;
+}
+
+.lesson-materials > p {
+  margin-bottom: 7px;
+}
+
+.lesson-material {
+  min-height: 42px;
+  padding: 9px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+a.lesson-material:hover {
+  color: var(--text-soft);
+}
+
+.lesson-homework {
+  margin-top: 17px;
+  padding-top: 15px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.lesson-homework-title {
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.lesson-homework .hw-item {
+  padding: 13px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 759px) {
+  .lesson-overview,
+  .lesson-entry {
+    padding: 14px;
+  }
+
+  .lesson-class {
+    padding-inline: 0;
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .lesson-class p {
+    text-align: left;
+  }
+
+  .lesson-entry-head {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .lesson-time {
+    text-align: left;
+  }
+}
+
 .class-list {
   display: grid;
   gap: 8px;

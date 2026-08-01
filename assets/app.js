@@ -775,8 +775,20 @@
           show();
         },
         on: function () { return state.phase === 'reg' || state.phase === 'exam'; } },
-      { id: 'lead', label: 'Уроки', act: function () { state.phase = 'lead'; show(); },
-        on: function () { return state.phase === 'lead' || state.phase === 'leadDone'; } },
+      { id: 'lead', label: 'Уроки',
+        act: function () {
+          if (studentToken()) {
+            profileTab = 'lessons';
+            state.phase = 'profile';
+          } else {
+            state.phase = 'lead';
+          }
+          show();
+        },
+        on: function () {
+          return state.phase === 'lead' || state.phase === 'leadDone' ||
+            (state.phase === 'profile' && profileTab === 'lessons');
+        } },
       /* База знаний — статичные страницы: у них свои адреса, чтобы
          поисковики видели статьи без выполнения скриптов. */
       { id: 'kb', label: 'Статьи',
@@ -818,6 +830,7 @@
      раньше это была одна длинная простыня, которую приходилось листать. */
   var PROFILE_TABS = [
     { id: 'me', label: 'Профиль', hash: '#profile' },
+    { id: 'lessons', label: 'Уроки', hash: '#profile/lessons' },
     { id: 'classes', label: 'Классы', hash: '#profile/classes' },
     { id: 'results', label: 'Результаты', hash: '#profile/results' },
     { id: 'settings', label: 'Настройки', hash: '#profile/settings' }
@@ -831,6 +844,34 @@
     } catch (e) {
       return value;
     }
+  }
+
+  function formatLessonDate(value) {
+    try {
+      return new Intl.DateTimeFormat('ru-RU', {
+        weekday: 'long', day: 'numeric', month: 'long'
+      }).format(new Date(value + 'T00:00:00'));
+    } catch (e) {
+      return value;
+    }
+  }
+
+  function lessonClock(value) {
+    var minute = Number(value);
+    if (!Number.isInteger(minute)) return '';
+    return String(Math.floor(minute / 60)).padStart(2, '0') + ':' +
+      String(minute % 60).padStart(2, '0');
+  }
+
+  function classScheduleText(item) {
+    var days = (item.scheduleDays || []).map(function (value) {
+      var day = WEEK_DAYS.filter(function (candidate) { return candidate.value === value; })[0];
+      return day ? day.short : value;
+    }).join(', ');
+    var start = lessonClock(item.scheduleTimeMinute);
+    var end = lessonClock(item.scheduleEndMinute);
+    if (days || start) return [days, start && end ? start + '—' + end : start].filter(Boolean).join(' · ');
+    return item.schedule || 'Расписание уточняется';
   }
 
   function profileTabInfo(id) {
@@ -1019,6 +1060,89 @@
         '</div>';
       }
 
+      function homeworkItemHtml(h) {
+        var workStatus = h.status || (h.done ? 'accepted' : 'assigned');
+        var statusLabels = {
+          assigned: 'не сдано', submitted: 'отправлено', in_review: 'проверяется',
+          changes_requested: 'нужно доработать', accepted: 'принято'
+        };
+        var canSubmit = workStatus === 'assigned' || workStatus === 'changes_requested';
+        return '<article class="hw-item' + (workStatus === 'accepted' ? ' is-done' : '') + '">' +
+          '<p class="hw-head"><b>' + esc(h.title) + '</b>' +
+            '<span class="hw-flag">' + esc(statusLabels[workStatus] || workStatus) + '</span></p>' +
+          '<p class="hw-meta">' + esc(h.className) +
+            (h.dueDate ? ' · до ' + esc(formatDueDate(h.dueDate)) : ' · без срока') + '</p>' +
+          (h.score != null ? '<p class="hw-score"><b>' + esc(h.score) + '</b><span>из 100</span></p>' : '') +
+          (h.body ? '<p class="hw-text">' + esc(h.body) + '</p>' : '') +
+          (h.feedback ? '<div class="hw-feedback"><b>Отзыв преподавателя</b><p>' + esc(h.feedback) + '</p></div>' : '') +
+          (workStatus === 'submitted' || workStatus === 'in_review'
+            ? '<p class="hw-state-note">Работа у преподавателя. Когда он её проверит, здесь появится отзыв.</p>' : '') +
+          (canSubmit ? '<form class="hw-submit" data-homework-submit="' + h.id + '">' +
+            '<label for="hw-answer-' + h.id + '">Ответ</label>' +
+            '<textarea id="hw-answer-' + h.id + '" name="responseText" maxlength="8000" placeholder="Что вы сделали, где было трудно">' + esc(h.responseText || '') + '</textarea>' +
+            '<label for="hw-link-' + h.id + '">Ссылка на аудио, видео или файл</label>' +
+            '<input id="hw-link-' + h.id + '" name="attachmentUrl" type="url" maxlength="1000" placeholder="https://…" value="' + esc(h.attachmentUrl || '') + '">' +
+            '<button class="btn" type="submit">' + (workStatus === 'changes_requested' ? 'Отправить заново' : 'Сдать работу') + '</button>' +
+            '<p class="hw-submit-state" role="status" aria-live="polite"></p></form>' : '') +
+        '</article>';
+      }
+
+      /* ── Вкладка «Уроки»: расписание, журнал занятий и материалы ── */
+      function paneLessons() {
+        var classes = (d.classes || []).filter(function (item) { return item.status === 'active'; });
+        var lessons = (d.lessons || []).slice().sort(function (a, b) {
+          return String(b.date || '').localeCompare(String(a.date || ''));
+        });
+        var homework = d.homework || [];
+        var html = '<section class="lesson-overview"><div class="profile-section-head">' +
+          '<h2 class="kicker">Мои уроки<span class="cur">_</span></h2>' +
+          '<p>' + (classes.length ? classes.length + (classes.length === 1 ? ' группа' : ' группы') : 'Нет группы') + '</p></div>';
+
+        if (!classes.length) {
+          return html + '<p class="profile-standing-note">Когда преподаватель добавит вас в класс, ' +
+            'здесь появятся расписание, материалы уроков и домашние задания.</p>' +
+            '<div class="btn-row"><button class="btn" id="requestLessons" type="button">Записаться на уроки</button></div></section>';
+        }
+
+        html += '<div class="lesson-class-list">';
+        classes.forEach(function (item) {
+          html += '<article class="lesson-class"><div><b>' + esc(item.name) + '</b>' +
+            (item.level ? '<span>' + esc(item.level) + '</span>' : '') + '</div>' +
+            '<p>' + esc(classScheduleText(item)) + '</p></article>';
+        });
+        html += '</div><button class="profile-text-action lesson-request" id="requestLessons" type="button">Записаться в другую группу</button></section>';
+
+        html += '<section class="profile-section lesson-journal"><div class="profile-section-head">' +
+          '<h2 class="kicker">Журнал занятий<span class="cur">_</span></h2>' +
+          '<p>' + (lessons.length || 'Пока пусто') + '</p></div>';
+        if (!lessons.length) {
+          return html + '<p class="profile-standing-note">Преподаватель ещё не добавил проведённые уроки.</p></section>';
+        }
+
+        html += '<div class="lesson-feed">';
+        lessons.forEach(function (lesson) {
+          var linked = homework.filter(function (item) { return Number(item.lessonId) === Number(lesson.id); });
+          html += '<article class="lesson-entry">' +
+            '<header class="lesson-entry-head"><div><p class="lesson-date">' + esc(formatLessonDate(lesson.date)) + '</p>' +
+              '<h3>' + esc(lesson.title) + '</h3></div>' +
+              '<p class="lesson-time">' + esc(lesson.className) +
+                (lesson.startMinute != null ? '<br>' + esc(lessonClock(lesson.startMinute)) +
+                  (lesson.endMinute != null ? '—' + esc(lessonClock(lesson.endMinute)) : '') : '') + '</p></header>' +
+            (lesson.summary ? '<p class="lesson-summary">' + esc(lesson.summary) + '</p>' : '') +
+            ((lesson.materials || []).length ? '<div class="lesson-materials"><p>Материалы урока</p>' +
+              lesson.materials.map(function (material) {
+                return material.url
+                  ? '<a class="lesson-material" href="' + esc(material.url) + '" target="_blank" rel="noopener">' + esc(material.title) + '<span aria-hidden="true">↗</span></a>'
+                  : '<span class="lesson-material">' + esc(material.title) + '</span>';
+              }).join('') + '</div>' : '') +
+            '<div class="lesson-homework"><p class="lesson-homework-title">Домашнее задание</p>' +
+              (linked.length ? linked.map(homeworkItemHtml).join('')
+                : '<p class="profile-standing-note">К этому уроку задание не назначено.</p>') + '</div>' +
+          '</article>';
+        });
+        return html + '</div></section>';
+      }
+
       /* ── Вкладка «Классы»: группы ученика и что в них задано ── */
       function paneClasses() {
         var classes = d.classes || [];
@@ -1054,32 +1178,7 @@
           html += '<p class="profile-standing-note">Заданий пока нет.</p>';
         } else {
           html += '<div class="hw-list">';
-          homework.forEach(function (h) {
-            var workStatus = h.status || (h.done ? 'accepted' : 'assigned');
-            var statusLabels = {
-              assigned: 'не сдано', submitted: 'отправлено', in_review: 'проверяется',
-              changes_requested: 'нужно доработать', accepted: 'принято'
-            };
-            var canSubmit = workStatus === 'assigned' || workStatus === 'changes_requested';
-            html += '<article class="hw-item' + (workStatus === 'accepted' ? ' is-done' : '') + '">' +
-              '<p class="hw-head"><b>' + esc(h.title) + '</b>' +
-                '<span class="hw-flag">' + esc(statusLabels[workStatus] || workStatus) + '</span></p>' +
-              '<p class="hw-meta">' + esc(h.className) +
-                (h.dueDate ? ' · до ' + esc(formatDueDate(h.dueDate)) : ' · без срока') + '</p>' +
-              (h.score != null ? '<p class="hw-score"><b>' + esc(h.score) + '</b><span>из 100</span></p>' : '') +
-              (h.body ? '<p class="hw-text">' + esc(h.body) + '</p>' : '') +
-              (h.feedback ? '<div class="hw-feedback"><b>Отзыв преподавателя</b><p>' + esc(h.feedback) + '</p></div>' : '') +
-              (workStatus === 'submitted' || workStatus === 'in_review'
-                ? '<p class="hw-state-note">Работа у преподавателя. Когда он её проверит, здесь появится отзыв.</p>' : '') +
-              (canSubmit ? '<form class="hw-submit" data-homework-submit="' + h.id + '">' +
-                '<label for="hw-answer-' + h.id + '">Ответ</label>' +
-                '<textarea id="hw-answer-' + h.id + '" name="responseText" maxlength="8000" placeholder="Что вы сделали, где было трудно">' + esc(h.responseText || '') + '</textarea>' +
-                '<label for="hw-link-' + h.id + '">Ссылка на аудио, видео или файл</label>' +
-                '<input id="hw-link-' + h.id + '" name="attachmentUrl" type="url" maxlength="1000" placeholder="https://…" value="' + esc(h.attachmentUrl || '') + '">' +
-                '<button class="btn" type="submit">' + (workStatus === 'changes_requested' ? 'Отправить заново' : 'Сдать работу') + '</button>' +
-                '<p class="hw-submit-state" role="status" aria-live="polite"></p></form>' : '') +
-            '</article>';
-          });
+          homework.forEach(function (h) { html += homeworkItemHtml(h); });
           html += '</div>';
         }
         html += '</section>';
@@ -1129,6 +1228,7 @@
         pane.innerHTML = profileTab === 'settings' ? paneSettings()
           : profileTab === 'results' ? paneResults()
           : profileTab === 'classes' ? paneClasses()
+          : profileTab === 'lessons' ? paneLessons()
           : paneMe();
         pane.setAttribute('aria-labelledby', 'ptab-' + profileTab);
         [].slice.call(app.querySelectorAll('[data-profile-tab]')).forEach(function (button) {
@@ -1183,6 +1283,12 @@
       });
       var again = document.getElementById('againBtn');
       if (again) again.onclick = function () { state.phase = 'reg'; show(); };
+      var requestLessons = document.getElementById('requestLessons');
+      if (requestLessons) requestLessons.onclick = function () {
+        state.phase = 'lead';
+        paintNav();
+        showLead(true);
+      };
       var editor = document.getElementById('profileEditor');
       var editButton = document.getElementById('editProfile');
       if (editButton) editButton.onclick = function () {
@@ -2059,7 +2165,12 @@
   /* Запись на урок идёт по одному вопросу, как анкета перед экзаменом:
      сразу четыре поля и барабан на одном экране в телефон не помещались
      и пугали объёмом. Последним шагом — выбор дня и времени. */
-  function showLead() {
+  function showLead(forceSignup) {
+    if (!forceSignup && studentToken()) {
+      profileTab = 'lessons';
+      state.phase = 'profile';
+      return showProfile();
+    }
     setBar(null);
     document.title = 'Запись на уроки · таджвид.рф';
     var requestId = '';
@@ -3296,7 +3407,7 @@
   var hashStudent = location.hash.match(/^#student=([0-9a-f-]{36})$/i);
   var hashYandex = location.hash.match(/^#yandex=([0-9a-f-]{36})$/i);
   var hashYandexError = location.hash.match(/^#yandex-error=/i);
-  var hashSection = location.hash.match(/^#(lessons|profile|exam)(?:\/(me|settings|results|classes))?$/i);
+  var hashSection = location.hash.match(/^#(lessons|profile|exam)(?:\/(me|lessons|settings|results|classes))?$/i);
   var hashJoin = location.hash.match(/^#join=([A-Za-z0-9]{4,16})$/);
   if (hashYandex && state.phase !== 'exam') {
     /* Вернулись с oauth.yandex.ru: токен кабинета уже выдан сервером */
