@@ -4847,3 +4847,33 @@ a.lesson-material:hover {
 .hw-submit textarea { min-height: 92px; resize: vertical; }
 .hw-submit .btn { margin-top: 5px; justify-self: start; }
 .hw-submit-state { min-height: 20px; color: var(--text-soft); font-size: 13px; }
+
+/* ── Светлая тема: карточки как белые листы ────────────────
+   Серый #fbfbfc и внутренние тени делали баннеры и карточки грязнее
+   фона. В светлой теме глубину теперь задают только тонкие линии; сами
+   поверхности главной и базы знаний остаются чисто белыми. */
+:root[data-theme="light"] .welcome-hero,
+:root[data-theme="light"] .cta-banner,
+:root[data-theme="light"] .level,
+:root[data-theme="light"] .level.is-locked,
+:root[data-theme="light"] .level.is-open,
+:root[data-theme="light"] .level.is-scored,
+:root[data-theme="light"] .kb-level {
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .level-n,
+:root[data-theme="light"] .kb-level .level-n {
+  border: 1px solid var(--line);
+  background: #ffffff;
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .kb-level .level-hint,
+:root[data-theme="light"] .kb-level:hover .level-hint {
+  border: 1px solid var(--control-line);
+  color: var(--text);
+  background: #ffffff;
+  box-shadow: none;
+}
