@@ -644,6 +644,71 @@
     });
   }
 
+  function courseworkFileMime(file) {
+    if (file.type) return file.type;
+    var extension = String(file.name || '').split('.').pop().toLowerCase();
+    return ({
+      pdf: 'application/pdf', txt: 'text/plain', mp3: 'audio/mpeg', m4a: 'audio/mp4',
+      wav: 'audio/wav', ogg: 'audio/ogg', mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime',
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', heic: 'image/heic',
+      doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ppt: 'application/vnd.ms-powerpoint', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    })[extension] || 'application/octet-stream';
+  }
+
+  function uploadHomeworkFile(homeworkId, token, file) {
+    return fetchWithTimeout(API + '/api/homework/' + homeworkId + '/files', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'X-Student-Token': token,
+        'X-File-Name': encodeURIComponent(file.name),
+        'X-File-Type': courseworkFileMime(file)
+      },
+      body: file
+    }, 60000).then(function (response) {
+      if (response.ok) return response.json();
+      return response.json().catch(function () { return {}; }).then(function (data) {
+        var error = new Error(data.error || 'Не удалось загрузить файл');
+        error.status = response.status;
+        throw error;
+      });
+    });
+  }
+
+  function openCourseworkFile(id, name, token) {
+    return fetchWithTimeout(API + '/api/learning-files/' + encodeURIComponent(id), {
+      headers: { 'X-Student-Token': token }
+    }, 60000).then(function (response) {
+      if (!response.ok) throw new Error('Не удалось открыть файл');
+      return response.blob();
+    }).then(function (blob) {
+      var href = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = href;
+      link.download = name || 'material';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(function () { URL.revokeObjectURL(href); }, 30000);
+    });
+  }
+
+  function courseworkFilesHtml(files, label) {
+    if (!files || !files.length) return '';
+    return '<div class="coursework-files"><p>' + esc(label || 'Файлы') + '</p>' +
+      files.map(function (file) {
+        var size = Number(file.size) || 0;
+        var textSize = size >= 1024 * 1024
+          ? (size / 1024 / 1024).toFixed(1) + ' МБ' : Math.max(1, Math.round(size / 1024)) + ' КБ';
+        return '<button class="coursework-file" type="button" data-coursework-file="' + esc(file.id) +
+          '" data-coursework-name="' + esc(file.name) + '"><span>' + esc(file.name) + '</span><small>' +
+          esc(textSize) + '</small></button>';
+      }).join('') + '</div>';
+  }
+
   function fetchWithTimeout(url, options, timeout) {
     if (typeof AbortController === 'undefined') return fetch(url, options);
     var controller = new AbortController();
@@ -779,16 +844,17 @@
          анкету заново: иначе ответы незаметно обнулятся на шаге onDone. */
       { id: 'exam', label: 'Экзамен',
         act: function () {
-          state.phase = state.resumable && state.student ? 'exam' : 'reg';
+          /* Пункт меню больше не запускает попытку случайным касанием:
+             сначала ученик видит уровни и отдельно подтверждает старт. */
+          state.phase = 'exams';
           save();
           show();
         },
-        on: function () { return state.phase === 'reg' || state.phase === 'exam'; } },
+        on: function () { return state.phase === 'exams' || state.phase === 'reg' || state.phase === 'exam'; } },
       { id: 'lead', label: 'Уроки',
         act: function () {
           if (studentToken()) {
-            profileTab = 'lessons';
-            state.phase = 'profile';
+            state.phase = 'lessons';
           } else {
             state.phase = 'lead';
           }
@@ -796,7 +862,7 @@
         },
         on: function () {
           return state.phase === 'lead' || state.phase === 'leadDone' ||
-            (state.phase === 'profile' && profileTab === 'lessons');
+            state.phase === 'lessons';
         } },
       /* База знаний — статичные страницы: у них свои адреса, чтобы
          поисковики видели статьи без выполнения скриптов. */
@@ -813,11 +879,11 @@
      всегда создаётся с phase=welcome. Служебные ссылки результата, кабинета
      и Яндекс OAuth по-прежнему имеют собственные hash-маршруты ниже. */
   function sectionHash(phase) {
-    if (phase === 'lead' || phase === 'leadDone') return '#lessons';
+    if (phase === 'lead' || phase === 'leadDone' || phase === 'lessons') return '#lessons';
     /* У кабинета три вкладки, и каждая имеет свой адрес: после F5 ученик
        возвращается ровно туда, где был, а не на первую вкладку. */
     if (phase === 'profile') return profileTabInfo(profileTab).hash;
-    if (phase === 'reg') return '#exam';
+    if (phase === 'exams' || phase === 'reg') return '#exam';
     if (phase === 'welcome') return '';
     return null;
   }
@@ -847,12 +913,12 @@
      раньше это была одна длинная простыня, которую приходилось листать. */
   var PROFILE_TABS = [
     { id: 'me', label: 'Профиль', hash: '#profile' },
-    { id: 'lessons', label: 'Уроки', hash: '#profile/lessons' },
     { id: 'classes', label: 'Классы', hash: '#profile/classes' },
     { id: 'results', label: 'Результаты', hash: '#profile/results' },
     { id: 'settings', label: 'Настройки', hash: '#profile/settings' }
   ];
   var profileTab = 'me';
+  var lessonView = 'lessons';
 
   function formatDueDate(value) {
     try {
@@ -995,16 +1061,24 @@
 
   function showProfile() {
     if (state.phase === 'exam') return;
-    state.phase = 'profile';
+    var standaloneLessons = state.phase === 'lessons';
+    if (!standaloneLessons && profileTabInfo(profileTab).id !== profileTab) profileTab = 'me';
+    state.phase = standaloneLessons ? 'lessons' : 'profile';
     paintNav();
     var token = studentToken();
     /* Полоса экрана не нужна: заголовок «Профиль» и так стоит первой
        строкой, а лишний ярус съедает высоту, которой на телефоне нет. */
     setBar(null);
-    document.title = 'Профиль · таджвид.рф';
-    if (!token) return showLogin();
+    document.title = (standaloneLessons ? 'Мои уроки' : 'Профиль') + ' · таджвид.рф';
+    if (!token) {
+      if (standaloneLessons) {
+        state.phase = 'lead';
+        return showLead();
+      }
+      return showLogin();
+    }
 
-    loadingScreen('Профиль', 'Загружаем ваши данные…');
+    loadingScreen(standaloneLessons ? 'Мои уроки' : 'Профиль', 'Загружаем ваши данные…');
     var seq = screenToken();
     apiGet('/api/student/' + encodeURIComponent(token)).then(function (d) {
       if (isStale(seq)) return;
@@ -1124,14 +1198,16 @@
             (h.dueDate ? ' · до ' + esc(formatDueDate(h.dueDate)) : ' · без срока') + '</p>' +
           (h.score != null ? '<p class="hw-score"><b>' + esc(h.score) + '</b><span>из 100</span></p>' : '') +
           (h.body ? '<p class="hw-text">' + esc(h.body) + '</p>' : '') +
+          courseworkFilesHtml(h.files || [], 'Приложенная работа') +
           (h.feedback ? '<div class="hw-feedback"><b>Отзыв преподавателя</b><p>' + esc(h.feedback) + '</p></div>' : '') +
           (workStatus === 'submitted' || workStatus === 'in_review'
             ? '<p class="hw-state-note">Работа у преподавателя. Когда он её проверит, здесь появится отзыв.</p>' : '') +
-          (canSubmit ? '<form class="hw-submit" data-homework-submit="' + h.id + '">' +
+          (canSubmit ? '<form class="hw-submit" data-homework-submit="' + h.id + '" data-existing-files="' + (h.files || []).length + '">' +
             '<label for="hw-answer-' + h.id + '">Ответ</label>' +
             '<textarea id="hw-answer-' + h.id + '" name="responseText" maxlength="8000" placeholder="Что вы сделали, где было трудно">' + esc(h.responseText || '') + '</textarea>' +
-            '<label for="hw-link-' + h.id + '">Ссылка на аудио, видео или файл</label>' +
-            '<input id="hw-link-' + h.id + '" name="attachmentUrl" type="url" maxlength="1000" placeholder="https://…" value="' + esc(h.attachmentUrl || '') + '">' +
+            '<label for="hw-files-' + h.id + '">Фото, аудио, видео или файл</label>' +
+            '<input id="hw-files-' + h.id + '" name="files" type="file" multiple accept="image/*,audio/*,video/*,.pdf,.txt,.doc,.docx,.xls,.xlsx,.ppt,.pptx">' +
+            '<small class="hw-file-hint">До 8 файлов, каждый не больше 20 МБ.</small>' +
             '<button class="btn" type="submit">' + (workStatus === 'changes_requested' ? 'Отправить заново' : 'Сдать работу') + '</button>' +
             '<p class="hw-submit-state" role="status" aria-live="polite"></p></form>' : '') +
         '</article>';
@@ -1144,8 +1220,24 @@
           return String(b.date || '').localeCompare(String(a.date || ''));
         });
         var homework = d.homework || [];
-        var html = '<section class="lesson-overview"><div class="profile-section-head">' +
-          '<h2 class="kicker">Мои уроки<span class="cur">_</span></h2>' +
+        var html = '';
+
+        if (lessonView === 'homework') {
+          html += '<section class="profile-section lesson-assignments"><div class="profile-section-head">' +
+            '<h2 class="kicker">Задания<span class="cur">_</span></h2>' +
+            '<p>' + (homework.length || 'Пока пусто') + '</p></div>';
+          if (!classes.length) {
+            return html + '<p class="profile-standing-note">Когда преподаватель добавит вас в класс, ' +
+              'здесь появятся задания.</p></section>';
+          }
+          if (!homework.length) {
+            return html + '<p class="profile-standing-note">Преподаватель ещё не выдал заданий.</p></section>';
+          }
+          return html + '<div class="hw-list">' + homework.map(homeworkItemHtml).join('') + '</div></section>';
+        }
+
+        html += '<section class="lesson-overview"><div class="profile-section-head">' +
+          '<h2 class="kicker">Расписание<span class="cur">_</span></h2>' +
           '<p>' + (classes.length ? classes.length + (classes.length === 1 ? ' группа' : ' группы') : 'Нет группы') + '</p></div>';
 
         if (!classes.length) {
@@ -1171,7 +1263,6 @@
 
         html += '<div class="lesson-feed">';
         lessons.forEach(function (lesson) {
-          var linked = homework.filter(function (item) { return Number(item.lessonId) === Number(lesson.id); });
           html += '<article class="lesson-entry">' +
             '<header class="lesson-entry-head"><div><p class="lesson-date">' + esc(formatLessonDate(lesson.date)) + '</p>' +
               '<h3>' + esc(lesson.title) + '</h3></div>' +
@@ -1185,9 +1276,7 @@
                   ? '<a class="lesson-material" href="' + esc(material.url) + '" target="_blank" rel="noopener">' + esc(material.title) + '<span aria-hidden="true">↗</span></a>'
                   : '<span class="lesson-material">' + esc(material.title) + '</span>';
               }).join('') + '</div>' : '') +
-            '<div class="lesson-homework"><p class="lesson-homework-title">Домашнее задание</p>' +
-              (linked.length ? linked.map(homeworkItemHtml).join('')
-                : '<p class="profile-standing-note">К этому уроку задание не назначено.</p>') + '</div>' +
+            courseworkFilesHtml(lesson.files || [], 'Материалы урока') +
           '</article>';
         });
         return html + '</div></section>';
@@ -1231,17 +1320,6 @@
         });
         html += '</div></section>';
 
-        html += '<section class="profile-section"><div class="profile-section-head">' +
-          '<h2 class="kicker">Домашние задания<span class="cur">_</span></h2>' +
-          '<p>' + (homework.length ? homework.length : 'нет') + '</p></div>';
-        if (!homework.length) {
-          html += '<p class="profile-standing-note">Заданий пока нет.</p>';
-        } else {
-          html += '<div class="hw-list">';
-          homework.forEach(function (h) { html += homeworkItemHtml(h); });
-          html += '</div>';
-        }
-        html += '</section>';
         return html;
       }
 
@@ -1283,14 +1361,19 @@
       function paintPane() {
         var pane = document.getElementById('profilePane');
         if (!pane) return;
-        pane.innerHTML = profileTab === 'settings' ? paneSettings()
+        pane.innerHTML = standaloneLessons ? paneLessons()
+          : profileTab === 'settings' ? paneSettings()
           : profileTab === 'results' ? paneResults()
           : profileTab === 'classes' ? paneClasses()
-          : profileTab === 'lessons' ? paneLessons()
           : paneMe();
-        pane.setAttribute('aria-labelledby', 'ptab-' + profileTab);
+        pane.setAttribute('aria-labelledby', standaloneLessons ? 'lessonsTitle' : 'ptab-' + profileTab);
         [].slice.call(app.querySelectorAll('[data-profile-tab]')).forEach(function (button) {
           var on = button.getAttribute('data-profile-tab') === profileTab;
+          button.classList.toggle('is-on', on);
+          button.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        [].slice.call(app.querySelectorAll('[data-lesson-view]')).forEach(function (button) {
+          var on = button.getAttribute('data-lesson-view') === lessonView;
           button.classList.toggle('is-on', on);
           button.setAttribute('aria-selected', on ? 'true' : 'false');
         });
@@ -1298,12 +1381,26 @@
         wirePane();
       }
 
-      render('<h1 class="profile-title">Профиль</h1>' + profileTabsHtml(profileTab) +
-        '<div class="profile-pane" id="profilePane" role="tabpanel" tabindex="-1"></div>');
+      render(standaloneLessons
+        ? '<h1 class="profile-title" id="lessonsTitle">Мои уроки</h1>' +
+          '<div class="lesson-view-tabs" role="tablist" aria-label="Уроки и задания">' +
+            '<button class="lesson-view-tab' + (lessonView === 'lessons' ? ' is-on' : '') + '" type="button" role="tab" ' +
+              'aria-selected="' + (lessonView === 'lessons' ? 'true' : 'false') + '" data-lesson-view="lessons">Уроки</button>' +
+            '<button class="lesson-view-tab' + (lessonView === 'homework' ? ' is-on' : '') + '" type="button" role="tab" ' +
+              'aria-selected="' + (lessonView === 'homework' ? 'true' : 'false') + '" data-lesson-view="homework">Задания</button>' +
+          '</div><div class="profile-pane lesson-standalone-pane" id="profilePane" role="tabpanel" tabindex="-1"></div>'
+        : '<h1 class="profile-title">Профиль</h1>' + profileTabsHtml(profileTab) +
+          '<div class="profile-pane" id="profilePane" role="tabpanel" tabindex="-1"></div>');
 
       [].slice.call(app.querySelectorAll('[data-profile-tab]')).forEach(function (button) {
         button.onclick = function () {
           profileTab = button.getAttribute('data-profile-tab');
+          paintPane();
+        };
+      });
+      [].slice.call(app.querySelectorAll('[data-lesson-view]')).forEach(function (button) {
+        button.onclick = function () {
+          lessonView = button.getAttribute('data-lesson-view');
           paintPane();
         };
       });
@@ -1313,15 +1410,29 @@
       [].slice.call(app.querySelectorAll('[data-homework-submit]')).forEach(function (form) {
         form.onsubmit = function (event) {
           event.preventDefault();
+          var files = [].slice.call(form.elements.files.files || []);
           var button = form.querySelector('button[type="submit"]');
           var note = form.querySelector('.hw-submit-state');
+          if (files.length > 8 || files.some(function (file) { return file.size > 20 * 1024 * 1024; })) {
+            note.textContent = 'Выберите до 8 файлов, каждый не больше 20 МБ.';
+            return;
+          }
           button.disabled = true;
           button.textContent = 'Отправляем…';
           note.textContent = '';
           api('/api/homework/' + form.getAttribute('data-homework-submit') + '/submit', {
             studentToken: token,
             responseText: form.responseText.value,
-            attachmentUrl: form.attachmentUrl.value
+            hasFiles: files.length > 0 || Number(form.getAttribute('data-existing-files')) > 0
+          }).then(function () {
+            var chain = Promise.resolve();
+            files.forEach(function (file) {
+              chain = chain.then(function () {
+                note.textContent = 'Загружаем «' + file.name + '»…';
+                return uploadHomeworkFile(form.getAttribute('data-homework-submit'), token, file);
+              });
+            });
+            return chain;
           }).then(function () {
             note.textContent = 'Работа отправлена.';
             setTimeout(showProfile, 500);
@@ -1329,9 +1440,18 @@
             button.disabled = false;
             button.textContent = 'Отправить ещё раз';
             note.textContent = error && error.status === 400
-              ? 'Напишите ответ или дайте ссылку на работу.'
+              ? 'Напишите ответ или приложите файл.'
               : 'Не удалось отправить. Попробуйте ещё раз.';
           });
+        };
+      });
+      [].slice.call(app.querySelectorAll('[data-coursework-file]')).forEach(function (button) {
+        button.onclick = function () {
+          button.disabled = true;
+          openCourseworkFile(button.getAttribute('data-coursework-file'),
+            button.getAttribute('data-coursework-name'), token)
+            .catch(function () { window.alert('Не удалось открыть файл. Попробуйте ещё раз.'); })
+            .then(function () { button.disabled = false; });
         };
       });
       [].slice.call(app.querySelectorAll('[data-result-id], [data-open-result]')).forEach(function (b) {
@@ -1677,7 +1797,7 @@
       };
     }
     document.documentElement.classList.toggle('is-exam', isExam);
-    document.documentElement.classList.toggle('has-tabbar', !isExam);
+    document.documentElement.classList.add('has-tabbar');
 
     var items = navItems();
     [document.getElementById('tabbar'), document.getElementById('sitenavTabs')].forEach(function (host) {
@@ -1699,7 +1819,15 @@
         b.setAttribute('aria-label', item.label);
         if (item.on()) b.setAttribute('aria-current', 'page');
         b.onclick = function () {
-          if (state.phase === 'exam') return;
+          if (state.phase === 'exam') {
+            systemDialog = true;
+            var leaveExam = window.confirm('Выйти из экзамена? Ответы сохранятся, и вы сможете вернуться позже.');
+            systemDialog = false;
+            if (!leaveExam) return;
+            stopTimer();
+            state.resumable = true;
+            save();
+          }
           item.act();
         };
         host.appendChild(b);
@@ -1715,6 +1843,8 @@
     if (state.phase === 'welcome') return showWelcome();
     if (state.phase === 'lead') return showLead();
     if (state.phase === 'leadDone') return showLeadDone();
+    if (state.phase === 'lessons') return showProfile();
+    if (state.phase === 'exams') return showExamCatalog();
     if (state.phase === 'reg') return showReg();
     if (state.phase === 'profile') return showProfile();
     if (state.phase === 'exam') return showStep();
@@ -1742,7 +1872,7 @@
        же показывает, сколько пройдено: заливка идёт слоем ПОД текстом,
        поэтому надпись остаётся читаемой в любой теме. */
     function examButton(id) {
-      if (!draft) return '<button class="btn" id="' + id + '">Сдать экзамен →</button>';
+      if (!draft) return '<button class="btn" id="' + id + '">Выбрать экзамен →</button>';
       return '<button class="btn is-progress" id="' + id + '" ' +
         'style="--progress: ' + donePct + '%" ' +
         'aria-label="Продолжить экзамен, пройдено ' + donePct + ' процентов">' +
@@ -1820,7 +1950,7 @@
         '<div class="btn-row"><a class="btn is-pill kb-teaser-all" href="stati/">Все статьи →</a></div>' +
       '</section>'
     );
-    var startExam = function () { state.phase = 'reg'; show(); };
+    var startExam = function () { state.phase = 'exams'; show(); };
     /* Незаконченный экзамен продолжаем с того же вопроса — именно это
        обещает текст при выходе, поэтому анкету заново не показываем. */
     var resume = function () {
@@ -2358,10 +2488,10 @@
      и пугали объёмом. Последним шагом — выбор дня и времени. */
   function showLead(forceSignup) {
     if (!forceSignup && studentToken()) {
-      profileTab = 'lessons';
-      state.phase = 'profile';
+      state.phase = 'lessons';
       return showProfile();
     }
+    state.phase = 'lead';
     setBar(null);
     document.title = 'Запись на уроки · таджвид.рф';
     var requestId = '';
@@ -2480,6 +2610,87 @@
         day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
       }).format(new Date(value));
     } catch (error) { return value; }
+  }
+
+  function showExamCatalog() {
+    state.phase = 'exams';
+    paintNav();
+    setBar(null);
+    document.title = 'Экзамены · таджвид.рф';
+    var token = studentToken();
+    var draft = state.resumable === true && !!state.student;
+
+    function paint(data) {
+      var progress = progressFromResults(data && data.results || []);
+      var pendingHomework = (data && data.homework || []).filter(function (item) {
+        return item.status !== 'accepted' && !item.done;
+      });
+      var previousReady = !!progress.canOpen2;
+      var courseworkReady = pendingHomework.length === 0;
+      var level2Ready = !!token && previousReady && courseworkReady;
+      var firstResult = progress.level1;
+      var firstStatus = firstResult
+        ? 'Лучший результат · ' + Math.round(Number(firstResult.percent) || 0) + '%'
+        : 'Доступен сразу';
+      var level2Reason = !token
+        ? 'Сначала сдайте первый уровень и сохраните результат в кабинете.'
+        : !previousReady
+          ? 'Нужен результат 100% за первый уровень.'
+          : !courseworkReady
+            ? 'Сначала завершите обязательные задания: осталось ' + pendingHomework.length + '.'
+            : 'Доступен.';
+
+      var html = '<section class="exam-catalog" aria-labelledby="examCatalogTitle">' +
+        '<p class="kicker">Экзамены<span class="cur">_</span></p>' +
+        '<h1 id="examCatalogTitle">Выберите уровень</h1>' +
+        '<p class="lede">Экзамен не начнётся сам. Сначала проверьте уровень и нажмите «Начать».</p>' +
+        '<div class="exam-catalog-list">' +
+          '<article class="exam-level-choice is-open"><header><span>01</span><div><h2>Первый уровень</h2>' +
+            '<p>' + esc(firstStatus) + '</p></div></header><p>' + esc(LEVELS[0].topic) + '</p>' +
+            '<button class="btn" type="button" data-start-exam="1">' +
+              (draft ? 'Продолжить текущую попытку' : 'Начать первый уровень') + '</button></article>' +
+          '<article class="exam-level-choice' + (level2Ready ? ' is-open' : ' is-locked') + '"><header><span>02</span><div><h2>Второй уровень</h2>' +
+            '<p>' + esc(level2Reason) + '</p></div></header><p>' + esc(LEVELS[1].topic) + '</p>' +
+            (level2Ready
+              ? '<button class="btn" type="button" data-start-exam="2">Открыть второй уровень</button>'
+              : pendingHomework.length
+                ? '<button class="btn is-ghost" type="button" data-open-assignments>Открыть задания</button>' : '') + '</article>' +
+        '</div>' +
+        '<div class="exam-future-levels"><p>Следующие уровни</p><div>' +
+          [3, 4, 5, 6].map(function (level) { return '<span><b>0' + level + '</b><small>закрыт</small></span>'; }).join('') +
+        '</div><p class="profile-standing-note">Они появятся после того, как преподаватель добавит программу и ключ проверки.</p></div>' +
+      '</section>';
+      render(html);
+      var startFirst = app.querySelector('[data-start-exam="1"]');
+      if (startFirst) startFirst.onclick = function () {
+        state.phase = draft ? 'exam' : 'reg';
+        save();
+        show();
+      };
+      var startSecond = app.querySelector('[data-start-exam="2"]');
+      if (startSecond) startSecond.onclick = function () { location.href = 'level2.html'; };
+      var assignments = app.querySelector('[data-open-assignments]');
+      if (assignments) assignments.onclick = function () {
+        lessonView = 'homework';
+        state.phase = 'lessons';
+        show();
+      };
+    }
+
+    if (!token) return paint(null);
+    loadingScreen('Экзамены', 'Проверяем ваш прогресс…');
+    var seq = screenToken();
+    apiGet('/api/student/' + encodeURIComponent(token)).then(function (data) {
+      if (isStale(seq)) return;
+      paint(data);
+    }).catch(function (error) {
+      if (isStale(seq)) return;
+      if (error && error.status === 404) {
+        try { localStorage.removeItem(STUDENT_KEY); } catch (storageError) { /* приватный режим */ }
+        return paint(null);
+      }
+      errorScreen('Не удалось загрузить уровни', 'Проверьте интернет и попробуйте ещё раз.', showExamCatalog);
+    });
   }
 
   function prepareExamAttempt(token, requestId, onReady) {
@@ -3766,13 +3977,19 @@
   } else if (hashResult && state.phase !== 'exam') {
     showSavedResult(hashResult[1]);
   } else if (hashSection && state.phase !== 'exam' && state.phase !== 'done') {
-    if (hashSection[1].toLowerCase() === 'lessons') state.phase = 'lead';
+    if (hashSection[1].toLowerCase() === 'lessons') state.phase = studentToken() ? 'lessons' : 'lead';
     if (hashSection[1].toLowerCase() === 'profile') {
       state.phase = 'profile';
-      if (hashSection[2]) profileTab = hashSection[2].toLowerCase();
+      if (hashSection[2]) {
+        profileTab = hashSection[2].toLowerCase();
+        if (profileTab === 'lessons') {
+          state.phase = studentToken() ? 'lessons' : 'lead';
+          profileTab = 'me';
+        }
+      }
     }
     if (hashSection[1].toLowerCase() === 'exam') {
-      state.phase = state.resumable && state.student ? 'exam' : 'reg';
+      state.phase = 'exams';
     }
     show();
   } else {
