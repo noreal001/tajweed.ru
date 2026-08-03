@@ -176,8 +176,8 @@
   }
 
   function taskThree() {
-    return countTask(3, 'Количество харакатов мадда', 12, DATA.maddWords, 'madd',
-      'Укажите длительность буквы мадд в харакатах.');
+    return countTask(3, 'Количество харакятов мадда', 12, DATA.maddWords, 'madd',
+      'Укажите длительность буквы мадд в харакятах.');
   }
 
   function taskFour() {
