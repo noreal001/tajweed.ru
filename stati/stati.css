@@ -205,8 +205,14 @@
   line-height: 1.5;
 }
 
+/* Линии со всех сторон во ВСЕХ таблицах базы знаний.
+   Решение владельца 04.08.2026: «везде, где ты показываешь таблицы,
+   используешь линии — так легче воспринимается для глаз».
+   Раньше полная сетка была только у таблицы начертаний, остальные
+   шли лишь с нижними линиями. */
 .kb-table th {
-  padding: 8px 6px;
+  padding: 8px 7px;
+  border: 1px solid var(--line);
   border-bottom: 1px solid var(--line-strong);
   color: var(--text-faint);
   font-family: var(--font-mono);
@@ -219,8 +225,8 @@
 }
 
 .kb-table td {
-  padding: 10px 6px;
-  border-bottom: 1px solid var(--line);
+  padding: 10px 7px;
+  border: 1px solid var(--line);
   vertical-align: top;
   overflow-wrap: break-word; /* рвём слово только если иначе никак */
 }
