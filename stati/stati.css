@@ -186,41 +186,106 @@
   line-height: 1.65;
 }
 
-/* Таблица правил: волосяные линии, без заливок. */
+/* Таблица правил: волосяные линии, без заливок.
+   ГЛАВНОЕ ПРАВИЛО — на телефоне таблица обязана помещаться в экран
+   целиком. Раньше здесь стоял min-width 480px, из-за него страница
+   уезжала вбок на ширине 390 и обрезался даже обычный текст.
+   Ширину теперь делят колонки, а не задаёт содержимое. */
 .kb-table-wrap {
   margin-top: 22px;
-  overflow-x: auto;
+  overflow-x: auto;          /* страховка, а не рабочий режим */
+  -webkit-overflow-scrolling: touch;
 }
 
 .kb-table {
-  min-width: 480px;
   width: 100%;
+  table-layout: fixed;       /* колонки делят ширину поровну, а не растут */
   border-collapse: collapse;
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .kb-table th {
-  padding: 10px 14px;
+  padding: 8px 6px;
   border-bottom: 1px solid var(--line-strong);
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: var(--mono-md);
+  font-size: 9.5px;
   font-weight: 500;
-  letter-spacing: var(--track-pill);
+  letter-spacing: .06em;
   text-align: left;
   text-transform: uppercase;
+  overflow-wrap: break-word; /* переносим по словам, рвём только если не влезает */
 }
 
 .kb-table td {
-  padding: 12px 14px;
+  padding: 10px 6px;
   border-bottom: 1px solid var(--line);
   vertical-align: top;
+  overflow-wrap: break-word; /* рвём слово только если иначе никак */
 }
 
 .kb-table td:first-child {
-  white-space: nowrap;
   font-weight: 650;
+}
+
+/* Ширины колонок задаём в ПРОЦЕНТАХ, а не в em.
+   Грабля: em у шапки считается от её шрифта (9.5px), а у ячеек от 14px,
+   поэтому одна и та же запись в em давала колонки разной ширины,
+   и шапка налезала сама на себя. Проценты считаются от таблицы. */
+.kb-table--cols4 th:nth-child(1), .kb-table--cols4 td:nth-child(1) { width: 9%;  white-space: nowrap; }
+.kb-table--cols4 th:nth-child(2), .kb-table--cols4 td:nth-child(2) { width: 14%; }
+.kb-table--cols4 th:nth-child(3), .kb-table--cols4 td:nth-child(3) { width: 26%; }
+
+.kb-table--cols5 th:nth-child(1), .kb-table--cols5 td:nth-child(1) { width: 22%; }
+.kb-table--cols5 th:nth-child(4), .kb-table--cols5 td:nth-child(4) { width: 12%; white-space: nowrap; }
+
+.kb-table--cols3 th:nth-child(1), .kb-table--cols3 td:nth-child(1) { width: 26%; }
+
+/* Арабский в таблице крупнее текста — иначе огласовки не разглядеть. */
+.kb-table .kb-ar {
+  font-size: 1.5em;
+  line-height: 1.9;
+}
+
+/* ── Сетка форм буквы ──────────────────────────────────────
+   Для таблиц вида «отдельно / в начале / в середине / в конце»:
+   полные линии со всех сторон, содержимое по центру. Так формы
+   читаются как разграфлённый бланк, а не как список.
+   Решение владельца 03.08.2026. */
+.kb-table--grid {
+  font-size: 13px;
+}
+
+.kb-table--grid th,
+.kb-table--grid td {
+  padding: 8px 4px;
+  border: 1px solid var(--line);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.kb-table--grid th {
+  border-bottom-color: var(--line-strong);
+  font-size: 9px;
+  letter-spacing: .04em;
+}
+
+.kb-table--grid td {
+  font-weight: 400;
+}
+
+.kb-table--grid .kb-ar {
+  font-size: 2em;
+  line-height: 1.6;
+}
+
+@media (min-width: 560px) {
+  .kb-table { font-size: 15px; }
+  .kb-table th { padding: 10px 12px; font-size: var(--mono-md); letter-spacing: var(--track-pill); }
+  .kb-table td { padding: 12px 12px; }
+  .kb-table--grid th,
+  .kb-table--grid td { padding: 12px 8px; }
 }
 
 /* Вопросы-ответы: карточки-раскрывашки без браузерных треугольников. */
@@ -788,4 +853,108 @@
   .kb-404 .welcome-hero {
     min-height: min(46vh, 320px);
   }
+}
+
+/* ── Тест на закрепление ───────────────────────────────────
+   Ставится в конце статьи базы знаний. Проверяет ровно то, что
+   разобрано в ЭТОЙ статье, а не курс целиком: ученик, изучивший
+   алфавит, не может сдавать экзамен по таджвиду.
+   Решение владельца 03.08.2026.
+   Работает без JS: ответ лежит в <details>. */
+.kb-quiz {
+  margin-top: 34px;
+  padding-top: 26px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.kb-quiz-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.kb-quiz h2 {
+  margin: 0;
+}
+
+.kb-quiz-count {
+  font-family: var(--font-mono);
+  font-size: var(--mono-md);
+  letter-spacing: var(--track-pill);
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+.kb-quiz-lead {
+  margin: 0 0 20px;
+  color: var(--text-soft);
+  font-size: 15px;
+}
+
+.kb-q {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+}
+
+.kb-q-num {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--mono-md);
+  letter-spacing: var(--track-pill);
+  color: var(--text-faint);
+}
+
+.kb-q-text {
+  margin: 0 0 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.kb-q-opts {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+
+.kb-q-opts li {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.kb-q details > summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: var(--mono-md);
+  letter-spacing: var(--track-pill);
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.kb-q details > summary::-webkit-details-marker { display: none; }
+
+.kb-q details > summary::after {
+  content: " ▸";
+}
+
+.kb-q details[open] > summary::after {
+  content: " ▾";
+}
+
+.kb-q details > p {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.kb-q-right {
+  font-weight: 650;
 }
