@@ -196,9 +196,21 @@
   btn.setAttribute('aria-controls', 'kb-quiz');
   btn.setAttribute('aria-expanded', 'false');
 
+  /* Высота шапки разная по ширинам (на 768 она втрое выше, чем на 390),
+     поэтому фиксированное значение не годится — пишем измеренное. */
+  function syncNavHeight() {
+    var nav = document.querySelector('.sitenav');
+    if (!nav) return;
+    document.documentElement.style.setProperty('--nav-h',
+      Math.round(nav.getBoundingClientRect().height) + 'px');
+  }
+  syncNavHeight();
+  window.addEventListener('resize', syncNavHeight);
+
   btn.addEventListener('click', function (e) {
     e.preventDefault();
     setHidden(false);
+    syncNavHeight();
     btn.setAttribute('aria-expanded', 'true');
     var first = quiz.querySelector('.kb-q');
     (first || quiz).scrollIntoView({ behavior: 'smooth', block: 'start' });
