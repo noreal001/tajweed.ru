@@ -175,3 +175,40 @@
     cnt.textContent = n + ' ' + w;
   }
 })();
+
+/* ── «Проверьте себя» открывает вопросы ────────────────────────────
+   Владелец 04.08.2026: «проверь себя когда нажимаешь — и там пять
+   вопросов». Баннер стоит перед блоком; вопросы прячем ТОЛЬКО из JS,
+   поэтому без скриптов они остаются видимыми и ничего не ломается. */
+(function () {
+  var quiz = document.getElementById('kb-quiz');
+  if (!quiz) return;
+  var btn = document.querySelector('.cta-banner a[href="#kb-quiz"]');
+  if (!btn) return;
+  var list = quiz.querySelectorAll('.kb-q');
+  if (!list.length) return;
+
+  function setHidden(on) {
+    for (var i = 0; i < list.length; i++) { list[i].hidden = on; }
+    quiz.setAttribute('data-collapsed', on ? '1' : '0');
+  }
+  setHidden(true);
+  btn.setAttribute('aria-controls', 'kb-quiz');
+  btn.setAttribute('aria-expanded', 'false');
+
+  btn.addEventListener('click', function (e) {
+    e.preventDefault();
+    setHidden(false);
+    btn.setAttribute('aria-expanded', 'true');
+    var first = quiz.querySelector('.kb-q');
+    (first || quiz).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    try { history.replaceState(null, '', '#kb-quiz'); } catch (err) { /* ок */ }
+  });
+
+  /* Пришли по прямой ссылке с якорем — показываем сразу, иначе человек
+     попадёт на пустой блок и решит, что вопросов нет. */
+  if (location.hash === '#kb-quiz') {
+    setHidden(false);
+    btn.setAttribute('aria-expanded', 'true');
+  }
+})();
