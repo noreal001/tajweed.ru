@@ -145,3 +145,33 @@
     document.body.appendChild(script);
   }
 })();
+
+/* ── Случайные вопросы после статьи ────────────────────────────────
+   Решение владельца 04.08.2026: «чтобы они генерировались разные
+   вопросы» — при каждом заходе ученик видит другую пятёрку.
+
+   Сервер отдаёт ВЕСЬ банк вопросов; здесь остаются случайные N
+   (data-quiz-show), остальные удаляются, номера проставляются заново.
+   Без JS видны все вопросы — деградация мягкая, ничего не ломается. */
+(function () {
+  var quiz = document.getElementById('kb-quiz');
+  if (!quiz) return;
+  var show = parseInt(quiz.getAttribute('data-quiz-show'), 10) || 5;
+  var all = Array.prototype.slice.call(quiz.querySelectorAll('.kb-q'));
+  if (all.length <= show) return;            // банк ещё не вырос — трогать нечего
+
+  for (var i = all.length - 1; i > 0; i--) { // тасование Фишера—Йетса
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = all[i]; all[i] = all[j]; all[j] = t;
+  }
+  all.slice(show).forEach(function (el) { el.remove(); });
+  quiz.querySelectorAll('.kb-q-num').forEach(function (el, k) {
+    el.textContent = 'Вопрос ' + (k + 1);
+  });
+  var cnt = quiz.querySelector('.kb-quiz-count');
+  if (cnt) {
+    var n = show, w = n % 10 === 1 && n % 100 !== 11 ? 'вопрос'
+          : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? 'вопроса' : 'вопросов';
+    cnt.textContent = n + ' ' + w;
+  }
+})();
