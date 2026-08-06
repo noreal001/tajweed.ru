@@ -2254,10 +2254,17 @@
       var honesty = (idx === WIZARD_STEPS.length - 1 && opts.isExam)
         ? '<p class="notice">Имя, фамилия, город и телефон уйдут преподавателю Деабу Анасу Т. вместе с ответами — чтобы он знал, чью работу проверяет, и мог связаться. Ещё сайт отметит, сколько раз вы уходили со вкладки, и покажет это ему. Больше никуда данные не передаются.</p>'
         : '';
+      /* Первый экран анкеты объясняет, куда человек попал. Без этого
+         запись на урок открывалась вопросом «Как вас зовут?» — владелец
+         06.08 сказал прямо: непонятно, что это вообще и зачем спрашивают. */
+      var intro = (idx === 0 && opts.intro) ? opts.intro : '';
       render(
         '<section class="wizard">' +
           scale() +
-          '<p class="kicker">Шаг ' + (idx + 1) + ' из ' + total + '<span class="cur">_</span></p>' +
+          '<p class="kicker">' +
+            (opts.title ? esc(opts.title) + ' · ' : '') +
+            'Шаг ' + (idx + 1) + ' из ' + total + '<span class="cur">_</span></p>' +
+          intro +
           '<h1 class="wizard-q">' + esc(st.label) + '</h1>' +
           '<div class="field wizard-field">' +
             '<label class="visually-hidden" for="wInput">' + esc(st.hint) + '</label>' +
@@ -2501,6 +2508,17 @@
     } catch (e) { requestId = uuid(); }
 
     personWizard({
+      title: 'Запись на урок',
+      intro:
+        '<div class="wizard-intro">' +
+          '<h2 class="wizard-intro-h">Вы записываетесь на урок таджвида</h2>' +
+          '<p>Занятия ведёт преподаватель <strong>Деаб Анас Т.</strong> 🇵🇸 ' +
+          'Заявка ни к чему не обязывает: преподаватель свяжется с вами и вы ' +
+          'договоритесь о времени и формате.</p>' +
+          '<p>Четыре коротких вопроса — как к вам обращаться и как с вами ' +
+          'связаться, — потом выберете удобное время. Данные получит только ' +
+          'преподаватель.</p>' +
+        '</div>',
       finishLabel: 'Дальше →',
       onDone: function () { /* последний шаг — выбор времени ниже */ },
       extraStep: function (data, scaleHtml, goBack) {

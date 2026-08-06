@@ -1022,10 +1022,29 @@ html.is-exam .statement, html.is-exam .read-rows, html.is-exam .compose-given {
 .wstep.is-done::after { content: ""; position: absolute; inset: 0; background-image: var(--hatch); }
 .wstep.is-now { background: var(--text); }
 
+/* Пояснение на первом шаге анкеты: куда человек попал и зачем спрашивают.
+   Чертёжный бланк — волосяная рамка, радиус 0, без подложки под текстом. */
+.wizard-intro {
+  margin: 14px 0 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+}
+.wizard-intro-h {
+  margin: 0 0 8px;
+  font-size: clamp(18px, 4.2vw, 22px);
+  line-height: 1.22;
+  text-wrap: balance;
+}
+.wizard-intro p { margin: 0 0 7px; font-size: 14px; line-height: 1.5; }
+.wizard-intro p:last-child { margin-bottom: 0; }
+
 .wizard-q {
   font-size: clamp(28px, 6vw, 40px);
   text-wrap: balance;
 }
+/* Когда над вопросом стоит пояснение, вопрос уже не «первый экран» —
+   ему не нужен размер заголовка страницы, иначе блок не влезает в 390×844. */
+.wizard-intro + .wizard-q { font-size: clamp(24px, 5.2vw, 32px); }
 
 .wizard-field { margin-top: 26px; }
 
