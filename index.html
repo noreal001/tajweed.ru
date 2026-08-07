@@ -43,8 +43,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Amiri+Quran&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=20260807-1">
-  <link rel="stylesheet" href="assets/folio.css?v=20260807-1">
+  <link rel="stylesheet" href="assets/style.css?v=20260807-2">
+  <link rel="stylesheet" href="assets/folio.css?v=20260807-2">
   <script>
     /* Тема ставится до отрисовки, иначе моргает при загрузке.
        По умолчанию — белый бланк; тёмная включается только явно. */
@@ -92,6 +92,21 @@
           { "@type": "SiteNavigationElement", "position": 2, "name": "Уроки таджвида", "url": "https://xn--80aefbin9d.xn--p1ai/#lessons" },
           { "@type": "SiteNavigationElement", "position": 3, "name": "База знаний", "url": "https://xn--80aefbin9d.xn--p1ai/stati/" },
           { "@type": "SiteNavigationElement", "position": 4, "name": "Личный кабинет", "url": "https://xn--80aefbin9d.xn--p1ai/#profile" }
+        ]
+      },
+      {
+        "@type": "ItemList",
+        "name": "Чаще всего ищут",
+        "itemListOrder": "https://schema.org/ItemListOrderDescending",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Арабский алфавит", "url": "https://xn--80aefbin9d.xn--p1ai/stati/arabskiy-alfavit/" },
+          { "@type": "ListItem", "position": 2, "name": "Что такое таджвид", "url": "https://xn--80aefbin9d.xn--p1ai/stati/chto-takoe-tadzhvid/" },
+          { "@type": "ListItem", "position": 3, "name": "Нун сакина и танвин", "url": "https://xn--80aefbin9d.xn--p1ai/stati/nun-sakina/" },
+          { "@type": "ListItem", "position": 4, "name": "Арабский язык с нуля", "url": "https://xn--80aefbin9d.xn--p1ai/stati/arabskiy-s-nulya/" },
+          { "@type": "ListItem", "position": 5, "name": "Муаллим сани", "url": "https://xn--80aefbin9d.xn--p1ai/stati/muallim-sani/" },
+          { "@type": "ListItem", "position": 6, "name": "Огласовки в арабском", "url": "https://xn--80aefbin9d.xn--p1ai/stati/oglasovki-i-tashdid/" },
+          { "@type": "ListItem", "position": 7, "name": "Махраджи букв", "url": "https://xn--80aefbin9d.xn--p1ai/stati/mahradzhi/" },
+          { "@type": "ListItem", "position": 8, "name": "Правила таджвида", "url": "https://xn--80aefbin9d.xn--p1ai/stati/pravila-tadzhvida/" }
         ]
       }
     ]
@@ -172,10 +187,19 @@
             и прогресс по уровням.</li>
           <li><a href="kontakty/">Контакты</a> — кто ведёт занятия и как связаться.</li>
         </ul>
-        <h2>Статьи о таджвиде</h2>
-        <ul>
+        <h2 id="popularTitle">Чаще всего ищут</h2>
+        <ul id="popularList">
+          <li><a href="stati/arabskiy-alfavit/">Арабский алфавит</a></li>
           <li><a href="stati/chto-takoe-tadzhvid/">Что такое таджвид</a></li>
+          <li><a href="stati/nun-sakina/">Нун сакина и танвин</a></li>
+          <li><a href="stati/arabskiy-s-nulya/">Арабский язык с нуля</a></li>
+          <li><a href="stati/muallim-sani/">Муаллим сани</a></li>
+          <li><a href="stati/oglasovki-i-tashdid/">Огласовки в арабском</a></li>
+          <li><a href="stati/mahradzhi/">Махраджи букв</a></li>
           <li><a href="stati/pravila-tadzhvida/">Правила таджвида</a></li>
+        </ul>
+        <h2>Ещё статьи о таджвиде</h2>
+        <ul>
           <li><a href="stati/tadzhvid-dlya-nachinayushchih/">Таджвид для начинающих</a></li>
           <li><a href="stati/uroki-tadzhvida/">Уроки таджвида</a></li>
           <li><a href="stati/chtenie-korana-s-tadzhvidom/">Чтение Корана с таджвидом</a></li>
@@ -190,9 +214,9 @@
     <div class="noscript">Для прохождения экзамена включите JavaScript. Записаться на занятия можно через <a href="https://tajweed-backend-production.up.railway.app/apply-form">обычную HTML-форму</a>.</div>
   </noscript>
 
-  <script src="assets/config.js?v=20260807-1"></script>
+  <script src="assets/config.js?v=20260807-2"></script>
   <script src="assets/data.js"></script>
-  <script src="assets/app.js?v=20260807-1"></script>
-  <script src="assets/nozoom.js?v=20260807-1" defer></script>
+  <script src="assets/app.js?v=20260807-2"></script>
+  <script src="assets/nozoom.js?v=20260807-2" defer></script>
 </body>
 </html>

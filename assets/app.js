@@ -1940,9 +1940,19 @@
          и людям по пути, и поисковикам видно без выполнения скриптов. */
       '<section class="kb-teaser" aria-labelledby="kbTitle">' +
         '<p class="kicker" id="kbTitle">База знаний<span class="cur">_</span></p>' +
-        '<ul class="kb-teaser-list">' +
+        '<p class="kicker is-under">Чаще всего ищут<span class="cur">_</span></p>' +
+        '<ul class="kb-teaser-list is-popular">' +
+          '<li><a href="stati/arabskiy-alfavit/">Арабский алфавит</a></li>' +
           '<li><a href="stati/chto-takoe-tadzhvid/">Что такое таджвид</a></li>' +
+          '<li><a href="stati/nun-sakina/">Нун сакина и танвин</a></li>' +
+          '<li><a href="stati/arabskiy-s-nulya/">Арабский язык с нуля</a></li>' +
+          '<li><a href="stati/muallim-sani/">Муаллим сани</a></li>' +
+          '<li><a href="stati/oglasovki-i-tashdid/">Огласовки в арабском</a></li>' +
+          '<li><a href="stati/mahradzhi/">Махраджи букв</a></li>' +
           '<li><a href="stati/pravila-tadzhvida/">Правила таджвида</a></li>' +
+        '</ul>' +
+        '<p class="kicker is-under">Ещё<span class="cur">_</span></p>' +
+        '<ul class="kb-teaser-list">' +
           '<li><a href="stati/tadzhvid-dlya-nachinayushchih/">Таджвид для начинающих</a></li>' +
           '<li><a href="stati/uroki-tadzhvida/">Уроки таджвида</a></li>' +
           '<li><a href="stati/chtenie-korana-s-tadzhvidom/">Чтение Корана с таджвидом</a></li>' +
